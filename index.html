@@ -4,57 +4,138 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Documentt</title>
+
+  <link rel="stylesheet" href="css/universal.css">
+
   <style>
-  .button_small{
-  background:none;
-  border:none;
-  text-decoration:underline;
+  
+
+
+:root {
+  --header_bg--height: 35px;
 }
 
 .header_bg{
+  /* 大小边距等 */
   width:100%;
-  padding:16px;
+  height: var(--header_bg--height);
+  padding:10px 10px;
   margin:0;
+  /* 内容剧中 */
   display:flex;
   align-items:center;
-  }
+  justify-content:space-between;
+}
 
 .header_left{
-width:60%;
-height: auto;
-margin:0;
-padding:0;
+  width:auto;
+  height:100%;
+  margin:0;
+  padding:0;
 }
 
 .header_right{
-width:40%;
-height: auto;
-margin:0;
-padding:0;
+  flex:1;
+  height:100%;
+  margin:0;
+  padding:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
 }
 
 
 
+
+
+
+#header_panel_left{
+  /* 左侧弹出面板 */
+  position:fixed;
+  left:5px;
+  top:5px;
+  bottom:5px;
+  width:265px;
+  box-sizing:border-box;
+  padding-top: var(--header_bg--height);
+  border:0.2em solid #000;
+  background:#fff;
+  transform:translateX(-102%);
+  transition:transform .28s ease;
+  z-index:10;
+  overflow:auto;
+}
+
+#header_panel_left.open{
+  /* 面板打开状态 */
+  transform:translateX(0);
+}
+
+#logo{
+  height:100%;
+  width:auto;
+  display:block;
+  position:relative;
+  z-index:20;
+}
+
+.header_panel_left_content{
+  /* 面板内容区域 */
+  width:100%;
+  height:100%;
+  box-sizing:border-box;
+  background:#ccc;
+}
+
+.hero{
+  margin-top: var(--header_bg--height);
+}
 </style>
-
-
 </head>
 <body>
  <div class="header_bg">
-     <div class="header_left">
-          <img src="image/brand/logob_black.png" style="width:100%;"alt="header_logo">
-    </div>
+    <div id="header_left" class="header_left">
+      <img id="logo" src="image/brand/logoa_black.png" alt="header_logo">
+      </div>
      <div class="header_right">
         <button class="button_small">
             Cart
-            </button>
-            
+        </button>   
     </div>
 </div>
-
 <div class="hero">
           <img src="image/test/1.jpg" style="width:100%;"alt="hero_img">
     </div>
+
+<!-- Side panel (hidden by default) -->
+<div id="header_panel_left" aria-hidden="true">
+  <div class="header_panel_left_content"></div>
+</div>
+<!-- 检测 logo 是否被点击及处理，Nav 打开关闭 -->
+<script>
+  (function(){
+    var headerLeft = document.getElementById('header_left');
+    var panel = document.getElementById('header_panel_left');
+    if(!headerLeft || !panel) return;
+
+    // 点击 header_left：切换左侧面板显示状态
+    headerLeft.addEventListener('click', function(e){
+      e.stopPropagation();
+      panel.classList.toggle('open');
+      var opened = panel.classList.contains('open');
+      panel.setAttribute('aria-hidden', opened ? 'false' : 'true');
+    });
+
+    // 点击面板外部区域：如果面板已打开，则关闭它
+    document.addEventListener('click', function(e){
+      if (!panel.classList.contains('open')) return;
+      if (!panel.contains(e.target) && !headerLeft.contains(e.target)) {
+        panel.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+      }
+    });
+  })();
+</script>
 
 </body>
 </html>
