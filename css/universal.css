@@ -11,9 +11,9 @@ body{
   background:none;
   border:none;
   
-  -webkit-text-stroke: 0.05em #000;
+  -webkit-text-stroke: 0.0em #000;
 
-  border-bottom: 0.2em solid #000;
+  border-bottom: 0.15em solid #000;
   text-decoration:none;
   padding:0;
   font-size:13px;

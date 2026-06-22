@@ -12,21 +12,29 @@
 
 
 :root {
-  --header_bg--height: 35px;
+  --header_bg--height: clamp(28px, 8vw, 35px);
 }
 
+/* ====================================================================
+   头部容器
+   ==================================================================== */
 .header_bg{
-  /* 大小边距等 */
+  /* // 基本尺寸与间距 */
   width:100%;
   height: var(--header_bg--height);
-  padding:10px 10px;
-  margin:0;
-  /* 内容剧中 */
+  box-sizing: border-box;
+  padding:0px 12px;
+  margin-top:12px;
+  
+  /* // 弹性布局与对齐 */
   display:flex;
   align-items:center;
   justify-content:space-between;
 }
 
+/* ====================================================================
+   头部左侧（Logo 区域）
+   ==================================================================== */
 .header_left{
   width:auto;
   height:100%;
@@ -34,14 +42,21 @@
   padding:0;
 }
 
+/* ====================================================================
+   头部右侧（按钮区域）
+   ==================================================================== */
 .header_right{
   flex:1;
   height:100%;
   margin:0;
-  padding:0;
+  padding:0 12px;
   display:flex;
-  justify-content:center;
+  justify-content:flex-end;
   align-items:center;
+}
+
+#menu_button{
+  margin-left:24px;
 }
 
 
@@ -49,29 +64,57 @@
 
 
 
-#header_panel_left{
-  /* 左侧弹出面板 */
+#header_panel_menu{
+  /* // 定位与尺寸 */
   position:fixed;
-  left:5px;
-  top:5px;
-  bottom:5px;
-  width:265px;
+  left: calc(-1 * (var(--header_bg--height) * 7.7 + 12px));
+  top: 6px;
+  bottom:6px;
+  width: calc(var(--header_bg--height) * 7.7);
   box-sizing:border-box;
+  
+  /* // 样式与动画 */
   padding-top: var(--header_bg--height);
   border:0.2em solid #000;
   background:#fff;
-  transform:translateX(-102%);
-  transition:transform .28s ease;
+  transition:left .28s ease;
+  z-index:11;
+  overflow:auto;
+}
+
+#header_panel_menu.open{
+  /* 菜单打开时的位置 */
+  left:6px;
+}
+
+/* ====================================================================
+   购物车面板（Z-Index: 10）
+   ==================================================================== */
+#header_panel_cart{
+  /* // 定位与尺寸 */
+  position:fixed;
+  left: calc(-1 * (var(--header_bg--height) * 7.7 + 12px));
+  top: 6px;
+  bottom:6px;
+  width: calc(var(--header_bg--height) * 7.7);
+  box-sizing:border-box;
+  
+  /* // 样式与动画 */
+  padding-top: var(--header_bg--height);
+  border:0.2em solid #000;
+  background:#fff;
+  transition:left .28s ease;
   z-index:10;
   overflow:auto;
 }
 
-#header_panel_left.open{
-  /* 面板打开状态 */
-  transform:translateX(0);
+#header_panel_cart.open{
+  /* 购物车打开时的位置（具体值由 JS 动态设置） */
+  left:6px;
 }
 
 #logo{
+  /* Logo 位于所有面板上方 */
   height:100%;
   width:auto;
   display:block;
@@ -79,15 +122,24 @@
   z-index:20;
 }
 
-.header_panel_left_content{
-  /* 面板内容区域 */
+.header_panel_menu_content{
+  /* 菜单面板内容容器 */
   width:100%;
   height:100%;
   box-sizing:border-box;
-  background:#ccc;
+  background:#ffffff;
+}
+
+.header_panel_cart_content{
+  /* 购物车面板内容容器 */
+  width:100%;
+  height:100%;
+  box-sizing:border-box;
+  background:#ffffff;
 }
 
 .hero{
+  /* 下推位置以避开头部 */
   margin-top: var(--header_bg--height);
 }
 </style>
@@ -98,44 +150,201 @@
       <img id="logo" src="image/brand/logoa_black.png" alt="header_logo">
       </div>
      <div class="header_right">
-        <button class="button_small">
+        <button class="button_small" id="cart_button">
             Cart
-        </button>   
+        </button>
+        <button class="button_small" id="menu_button">
+            Menu
+        </button>
     </div>
 </div>
 <div class="hero">
-          <img src="image/test/1.jpg" style="width:100%;"alt="hero_img">
+        <!--  <img src="image/test/1.jpg" style="width:100%;"alt="hero_img"> -->
     </div>
 
-<!-- Side panel (hidden by default) -->
-<div id="header_panel_left" aria-hidden="true">
-  <div class="header_panel_left_content"></div>
+<!-- 菜单面板（默认隐藏） -->
+<div id="header_panel_menu" aria-hidden="true">
+  <div class="header_panel_menu_content"></div>
 </div>
-<!-- 检测 logo 是否被点击及处理，Nav 打开关闭 -->
+<!-- 购物车面板（默认隐藏） -->
+<div id="header_panel_cart" aria-hidden="true">
+  <div class="header_panel_cart_content"></div>
+</div>
+<!-- 双面板导航系统 -->
 <script>
   (function(){
-    var headerLeft = document.getElementById('header_left');
-    var panel = document.getElementById('header_panel_left');
-    if(!headerLeft || !panel) return;
+    // ======================================================================
+    // 元素获取与验证
+    // ======================================================================
+    var cartButton = document.getElementById('cart_button');
+    var menuButton = document.getElementById('menu_button');
+    var cartPanel = document.getElementById('header_panel_cart');
+    var menuPanel = document.getElementById('header_panel_menu');
+    if(!cartButton || !menuButton || !cartPanel || !menuPanel) return;
 
-    // 点击 header_left：切换左侧面板显示状态
-    headerLeft.addEventListener('click', function(e){
+    // // 面板样式尺寸常量
+    var panelWidth = 'calc(var(--header_bg--height) * 7.7)';
+    var panelGap = 6;
+
+    // ======================================================================
+    // 状态管理
+    // ======================================================================
+    var state = {
+      cartOpen: false,
+      menuOpen: false
+    };
+
+    // ======================================================================
+    // 工具函数
+    // ======================================================================
+
+    // // 检查是否为小屏幕（< 725px）
+    function isNarrow() {
+      return window.innerWidth < 725;
+    }
+
+    // // 更新面板位置和样式
+    function updatePanels() {
+      if (!isNarrow()) {
+        // 大屏幕模式：面板可并行显示（堆叠）
+        // // 菜单面板位置控制
+        if (state.menuOpen) {
+          menuPanel.style.left = '6px';
+          menuPanel.classList.add('open');
+        } else {
+          menuPanel.style.left = 'calc(-1 * (var(--header_bg--height) * 7.7 + 12px))';
+          menuPanel.classList.remove('open');
+        }
+
+        // // 购物车面板位置控制
+        if (state.cartOpen) {
+          if (state.menuOpen) {
+            // 菜单已打开，购物车出现在菜单右侧
+            cartPanel.style.left = 'calc(var(--header_bg--height) * 7.7 + 12px)';
+          } else {
+            // 菜单关闭，购物车显示在左侧
+            cartPanel.style.left = '6px';
+          }
+          cartPanel.classList.add('open');
+        } else {
+          if (state.menuOpen) {
+            // 购物车关闭但菜单打开，购物车隐藏在菜单下方
+            cartPanel.style.left = '6px';
+          } else {
+            // 两个都关闭，购物车隐藏屏幕外
+            cartPanel.style.left = 'calc(-1 * (var(--header_bg--height) * 7.7 + 12px))';
+          }
+          cartPanel.classList.remove('open');
+        }
+      } else {
+        // 小屏幕模式：面板互斥（每次只显示一个）
+        // // 菜单面板位置
+        if (state.menuOpen) {
+          menuPanel.style.left = '6px';
+          menuPanel.classList.add('open');
+        } else {
+          menuPanel.style.left = 'calc(-1 * (var(--header_bg--height) * 7.7 + 12px))';
+          menuPanel.classList.remove('open');
+        }
+
+        // // 购物车面板位置
+        if (state.cartOpen) {
+          cartPanel.style.left = '6px';
+          cartPanel.classList.add('open');
+        } else {
+          cartPanel.style.left = 'calc(-1 * (var(--header_bg--height) * 7.7 + 12px))';
+          cartPanel.classList.remove('open');
+        }
+      }
+
+      // // 无障碍属性：同步更新 aria-hidden
+      menuPanel.setAttribute('aria-hidden', state.menuOpen ? 'false' : 'true');
+      cartPanel.setAttribute('aria-hidden', state.cartOpen ? 'false' : 'true');
+    }
+
+    // ======================================================================
+    // 事件监听器
+    // ======================================================================
+
+    // // 购物车按钮点击事件
+    cartButton.addEventListener('click', function(e){
       e.stopPropagation();
-      panel.classList.toggle('open');
-      var opened = panel.classList.contains('open');
-      panel.setAttribute('aria-hidden', opened ? 'false' : 'true');
+      if (!isNarrow()) {
+        // 大屏幕：购物车独立切换
+        state.cartOpen = !state.cartOpen;
+        updatePanels();
+        return;
+      }
+
+      // // 小屏幕：面板互斥切换（同时动画）
+      if (state.cartOpen) {
+        // 购物车已打开，关闭它
+        state.cartOpen = false;
+      } else {
+        if (state.menuOpen) {
+          // 菜单已打开，同时关闭菜单、打开购物车
+          state.menuOpen = false;
+          state.cartOpen = true;
+        } else {
+          // 都关闭，直接打开购物车
+          state.cartOpen = true;
+        }
+      }
+      updatePanels();
     });
 
-    // 点击面板外部区域：如果面板已打开，则关闭它
+    // // 菜单按钮点击事件
+    menuButton.addEventListener('click', function(e){
+      e.stopPropagation();
+      if (!isNarrow()) {
+        // 大屏幕：菜单独立切换
+        state.menuOpen = !state.menuOpen;
+        updatePanels();
+        return;
+      }
+
+      // // 小屏幕：面板互斥切换（同时动画）
+      if (state.menuOpen) {
+        // 菜单已打开，关闭它
+        state.menuOpen = false;
+      } else {
+        if (state.cartOpen) {
+          // 购物车已打开，同时关闭购物车、打开菜单
+          state.cartOpen = false;
+          state.menuOpen = true;
+        } else {
+          // 都关闭，直接打开菜单
+          state.menuOpen = true;
+        }
+      }
+      updatePanels();
+    });
+
+    // // 外部点击事件：关闭所有打开的面板
     document.addEventListener('click', function(e){
-      if (!panel.classList.contains('open')) return;
-      if (!panel.contains(e.target) && !headerLeft.contains(e.target)) {
-        panel.classList.remove('open');
-        panel.setAttribute('aria-hidden', 'true');
+      if (!state.cartOpen && !state.menuOpen) return;
+      if (!cartPanel.contains(e.target) && !menuPanel.contains(e.target) &&
+          !cartButton.contains(e.target) && !menuButton.contains(e.target)) {
+        state.cartOpen = false;
+        state.menuOpen = false;
+        updatePanels();
       }
     });
+
+    // // 窗口改变大小事件
+    window.addEventListener('resize', function(){
+      // 重新评估面板位置（处理屏幕宽度跨越 725px 断点的情况）
+      updatePanels();
+    });
+
+    // ======================================================================
+    // 初始化
+    // ======================================================================
+    updatePanels();
   })();
 </script>
 
 </body>
 </html>
+
+
