@@ -1,6 +1,7 @@
 :root {
   --mobile_view_threshold: 767px; /* 小屏阈值：小于此值视为移动端，此handle用于更新对应的script，css的@media需要单独修改！ */
   --gap-unit: 4px;
+  --stroke--width: 0.17rem;
 }
 
 body{
@@ -10,7 +11,7 @@ body{
        font-family:"helvetica";
       color:#000;
       min-height:100vh;
-      -webkit-text-stroke: 0.05em #000;
+      -webkit-text-stroke: 0.03em #000;
       
      
     }
@@ -20,9 +21,9 @@ body{
   background:none;
   border:none;
   
-  -webkit-text-stroke: 0.0em #000;
 
-  border-bottom: 0.15em solid #000;
+
+  border-bottom: var(--stroke--width) solid #000;
   text-decoration:none;
   padding:0;
   font-size:1.1em;
