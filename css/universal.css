@@ -31,7 +31,12 @@ body{
   cursor:pointer;
 }
 
+@media (max-width: 767px) {
 
+  :root {--stroke--width: 0.14rem;}
+
+  body{-webkit-text-stroke: 0.025em #000;}
+}
 
 @media (min-width: 1000px) {
   :root {
