@@ -1,7 +1,12 @@
 html {
-  overscroll-behavior: none;
+  overscroll-behavior: auto;
   touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
+  /* 防止 Safari 横屏或某些情况下自动放大文字 */
+  -webkit-text-size-adjust: 100%;
+  /* 禁止文字被选中 */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 :root {
@@ -20,30 +25,6 @@ body{
       min-height:100vh;
       min-height:100dvh;
       -webkit-text-stroke: 0.03em #000;
-
-
-
-        /* 禁止文字被选中 */
-
-  user-select: none;
-
-  -webkit-user-select: none;
-
-  /* 禁止 iPhone Safari 长按弹出复制/分享菜单 */
-
-  -webkit-touch-callout: none;
-
-  /* 防止 Safari 横屏或某些情况下自动放大文字 */
-
-  -webkit-text-size-adjust: 100%;
-
-  /* 关闭滚到顶部/底部后的橡皮筋 overscroll 行为 */
-
-  overscroll-behavior: none;
-
-  /* 保留滚动和点击，但尽量禁止双击缩放等额外缩放手势 */
-
-  touch-action: manipulation;
       
      
     }
