@@ -12,25 +12,29 @@
 
 
 :root {
-  --header_bg--height: clamp(28px, 8vw, 35px);
+  --header_topbar--height: clamp(28px, 8vw, 35px);
   --gap-unit: 4px;
 }
 
 /* ====================================================================
    1. 头部容器
    ==================================================================== */
-.header_bg{
+#header_topbar{
   /* // 基本尺寸与间距 */
   width:100%;
-  height: var(--header_bg--height);
+  height: var(--header_topbar--height);
   box-sizing: border-box;
   padding:0 calc(var(--gap-unit) * 3);
-  margin-top:calc(var(--gap-unit) * 3);
   
   /* // 弹性布局与对齐 */
   display:flex;
   align-items:center;
   justify-content:space-between;
+
+position:fixed;
+top:calc(var(--gap-unit) * 3);
+  left:0;
+  z-index:20;
 }
 
 /* ====================================================================
@@ -41,6 +45,7 @@
   height:100%;
   margin:0;
   padding:0;
+  
 }
 
 /* ====================================================================
@@ -68,16 +73,14 @@
 #header_panel_menu{
   /* // 定位与尺寸 */
   position:fixed;
-  left: calc(-1 * (var(--header_bg--height) * 7.7 + var(--gap-unit) * 3));
+  left: calc(-1 * (var(--header_topbar--height) * 7.7 + var(--gap-unit) * 3));
   top: calc(var(--gap-unit) * 1.5);
   bottom:calc(var(--gap-unit) * 1.5);
-  width: calc(var(--header_bg--height) * 7.7);
+  width: calc(var(--header_topbar--height) * 7.7);
   box-sizing:border-box;
   
   /* // 样式与动画 */
-  padding-top: var(--header_bg--height);
-  border:0.2em solid #000;
-  background:#fff;
+
   transition:left .28s ease;
   z-index:11;
   overflow:hidden;
@@ -94,19 +97,17 @@
 #header_panel_cart{
   /* // 定位与尺寸 */
   position:fixed;
-  left: calc(-1 * (var(--header_bg--height) * 7.7 + var(--gap-unit) * 3));
+  left: calc(-1 * (var(--header_topbar--height) * 7.7 + var(--gap-unit) * 3));
   top: calc(var(--gap-unit) * 1.5);
   bottom:calc(var(--gap-unit) * 1.5);
-  width: calc(var(--header_bg--height) * 7.7);
+  width: calc(var(--header_topbar--height) * 7.7);
   box-sizing:border-box;
   
   /* // 样式与动画 */
-  padding-top: var(--header_bg--height);
-  border:0.2em solid #000;
-  background:#fff;
+  
   transition:left .28s ease;
   z-index:10;
-  overflow:auto;
+  overflow:hidden;
 }
 
 #header_panel_cart.open{
@@ -123,13 +124,28 @@
   z-index:20;
 }
 
+.header_panel_wrapper{
+  width:100%;
+  height:100%;
+  
+
+  box-sizing:border-box;
+  background:rgb(255, 255, 255);
+  overflow:hidden;
+
+  border:0.2em solid #000;
+  
+}
+
 .header_panel_menu_content,
 .header_panel_cart_content{
   /* 面板内容容器使用 flex column 布局 */
   width:100%;
-  height:100%;
+  
   box-sizing:border-box;
-  background:#ffffff;
+  height:calc(100% - var(--header_topbar--height));
+  margin-top: var(--header_topbar--height);
+  background:transparent;
   display:flex;
   flex-direction:column;
 }
@@ -203,20 +219,23 @@
 
 .hero{
   /* 下推位置以避开头部 */
-  margin-top: var(--header_bg--height);
+  margin-top: var(--header_topbar--height);
 }
 
 /* ====================================================================
    移动端样式（当视口宽度小于 --mobile_view_threshold 时生效）
    ==================================================================== */
-@media (max-width: calc(var(--mobile_view_threshold) - 1px)) {
-
-  
+@media (max-width: 767px) {
+  .header_panel_wrapper{
+    max-height:600px;
+    
+  }
 }
 </style>
 </head>
 <body>
- <div class="header_bg">
+<div id="header_main">
+ <div id="header_topbar">
     <div id="header_left" class="header_left">
       <img id="logo" src="image/brand/logoa_black.png" alt="header_logo">
       </div>
@@ -229,40 +248,46 @@
         </button>
     </div>
 </div>
-<div class="hero">
-        <!--  <img src="image/test/1.jpg" style="width:100%;"alt="hero_img"> -->
-    </div>
 
 <!-- 菜单面板（默认隐藏） -->
 <div id="header_panel_menu" aria-hidden="true">
-  <div class="header_panel_menu_content">
-    <div class="panel_inner">
-      <div class="panel_menu_group panel_menu_group_primary">
-        <a href="#" class="panel_menu_item" data-page="home">Home</a>
-        <a href="#" class="panel_menu_item" data-page="wearable">Wearable</a>
-        <a href="#" class="panel_menu_item" data-page="bags">Bags</a>
-        <a href="#" class="panel_menu_item" data-page="self-defense-weapon">Self-Defense Weapon</a>
-        <a href="#" class="panel_menu_item" data-page="life-style">Life Style</a>
-        <a href="#" class="panel_menu_item" data-page="arts">“Arts”</a>
+  <div class="header_panel_wrapper">
+    <div class="header_panel_menu_content">
+      <div class="panel_inner">
+        <div class="panel_menu_group panel_menu_group_primary">
+          <a href="#" class="panel_menu_item" data-page="home">Home</a>
+          <a href="#" class="panel_menu_item" data-page="wearable">Wearable</a>
+          <a href="#" class="panel_menu_item" data-page="bags">Bags</a>
+          <a href="#" class="panel_menu_item" data-page="self-defense-weapon">Self-Defense Weapon</a>
+          <a href="#" class="panel_menu_item" data-page="life-style">Life Style</a>
+          <a href="#" class="panel_menu_item" data-page="arts">“Arts”</a>
+        </div>
+
+        <div class="panel_menu_group panel_menu_group_secondary">
+          <a href="#" class="panel_menu_item" data-page="tracking">Tracking</a>
+          <a href="#" class="panel_menu_item" data-page="guest-service">Guest Service</a>
+          <a href="#" class="panel_menu_item" data-page="about">About</a>
+        </div>
       </div>
 
-      <div class="panel_menu_group panel_menu_group_secondary">
-        <a href="#" class="panel_menu_item" data-page="tracking">Tracking</a>
-        <a href="#" class="panel_menu_item" data-page="guest-service">Guest Service</a>
-        <a href="#" class="panel_menu_item" data-page="about">About</a>
+      <div class="panel_menu_checkout">
+        <div class="panel_menu_checkout_total">Cart Total: 451.00 usd</div>
+        <button class="panel_menu_checkout_button" type="button">Check Out</button>
       </div>
-    </div>
-
-    <div class="panel_menu_checkout">
-      <div class="panel_menu_checkout_total">Cart Total: 451.00 usd</div>
-      <button class="panel_menu_checkout_button" type="button">Check Out</button>
     </div>
   </div>
 </div>
 <!-- 购物车面板（默认隐藏） -->
 <div id="header_panel_cart" aria-hidden="true">
-  <div class="header_panel_cart_content"></div>
+  <div class="header_panel_wrapper">
+    <div class="header_panel_cart_content"></div>
+  </div>
 </div>
+</div>
+
+<div class="hero">
+        <!--  <img src="image/test/1.jpg" style="width:100%;"alt="hero_img"> -->
+    </div>
 
 </body>
 </html>

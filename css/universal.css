@@ -1,5 +1,5 @@
 :root {
-  --mobile_view_threshold: 767px; /* 小屏阈值：小于此值视为移动端 */
+  --mobile_view_threshold: 767px; /* 小屏阈值：小于此值视为移动端，此handle用于更新对应的script，css的@media需要单独修改！ */
   --gap-unit: 4px;
 }
 
