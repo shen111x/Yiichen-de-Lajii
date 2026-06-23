@@ -13,7 +13,6 @@
 
 :root {
   --header_topbar--height: clamp(28px, 8vw, 35px);
-  --gap-unit: 4px;
 }
 
 /* ====================================================================
@@ -76,7 +75,7 @@ top:calc(var(--gap-unit) * 3);
   left: calc(-1 * (var(--header_topbar--height) * 7.7 + var(--gap-unit) * 3));
   top: calc(var(--gap-unit) * 1.5);
   bottom:calc(var(--gap-unit) * 1.5);
-  width: calc(var(--header_topbar--height) * 7.7);
+  width: calc(var(--header_topbar--height) * 9.8);
   box-sizing:border-box;
   
   /* // 样式与动画 */
@@ -100,7 +99,7 @@ top:calc(var(--gap-unit) * 3);
   left: calc(-1 * (var(--header_topbar--height) * 7.7 + var(--gap-unit) * 3));
   top: calc(var(--gap-unit) * 1.5);
   bottom:calc(var(--gap-unit) * 1.5);
-  width: calc(var(--header_topbar--height) * 7.7);
+  width: calc(var(--header_topbar--height) * 7.8);
   box-sizing:border-box;
   
   /* // 样式与动画 */
@@ -143,8 +142,8 @@ top:calc(var(--gap-unit) * 3);
   width:100%;
   
   box-sizing:border-box;
-  height:calc(100% - var(--header_topbar--height));
-  margin-top: var(--header_topbar--height);
+  height:calc(100% - var(--header_topbar--height) - var(--gap-unit) * 1.5);
+  margin-top: calc(var(--header_topbar--height) + var(--gap-unit) * 1.5);
   background:transparent;
   display:flex;
   flex-direction:column;
@@ -152,7 +151,7 @@ top:calc(var(--gap-unit) * 3);
 
 .header_panel_menu_content{
   padding:calc(var(--gap-unit) * 1.5);
-  padding-top:calc(var(--gap-unit) * 0.5);
+  padding-top:0;
 }
 
 .panel_inner{
@@ -231,6 +230,8 @@ top:calc(var(--gap-unit) * 3);
     
   }
 }
+
+
 </style>
 </head>
 <body>

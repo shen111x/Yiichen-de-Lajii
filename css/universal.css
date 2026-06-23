@@ -30,3 +30,11 @@ body{
   color:#000;
   cursor:pointer;
 }
+
+
+
+@media (min-width: 1000px) {
+  :root {
+    --gap-unit: 6px;
+  }
+}

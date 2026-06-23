@@ -125,6 +125,23 @@ function initHeaderPanels() {
     return window.innerWidth < thresholdNumber;
   }
 
+  function getGapUnit() {
+    var gapUnit = getComputedStyle(document.documentElement).getPropertyValue('--gap-unit') || '4px';
+    return parseFloat(gapUnit) || 4;
+  }
+
+  function getPanelOpenLeft() {
+    return getGapUnit() * 1.5;
+  }
+
+  function getPanelClosedLeft(panel) {
+    return -panel.getBoundingClientRect().width - getGapUnit() * 3;
+  }
+
+  function getCartStackedLeft() {
+    return getPanelOpenLeft() + menuPanel.getBoundingClientRect().width + getGapUnit() * 1.5;
+  }
+
   /* ================================
      panel 视觉更新
      核心 hook：把 state 转换成 left、open class 和 aria-hidden。
@@ -133,34 +150,34 @@ function initHeaderPanels() {
   function updatePanels() {
     if (!isNarrow()) {
       if (state.menuOpen) {
-        menuPanel.style.left = 'calc(var(--gap-unit) * 1.5)';
+        menuPanel.style.left = getPanelOpenLeft() + 'px';
         menuPanel.classList.add('open');
       } else {
-        menuPanel.style.left = 'calc(-1 * (var(--header_topbar--height) * 7.7 + var(--gap-unit) * 3))';
+        menuPanel.style.left = getPanelClosedLeft(menuPanel) + 'px';
         menuPanel.classList.remove('open');
       }
 
       if (state.cartOpen) {
-        cartPanel.style.left = state.menuOpen ? 'calc(var(--header_topbar--height) * 7.7 + var(--gap-unit) * 3)' : 'calc(var(--gap-unit) * 1.5)';
+        cartPanel.style.left = (state.menuOpen ? getCartStackedLeft() : getPanelOpenLeft()) + 'px';
         cartPanel.classList.add('open');
       } else {
-        cartPanel.style.left = state.menuOpen ? 'calc(var(--gap-unit) * 1.5)' : 'calc(-1 * (var(--header_topbar--height) * 7.7 + var(--gap-unit) * 3))';
+        cartPanel.style.left = state.menuOpen ? getPanelOpenLeft() + 'px' : getPanelClosedLeft(cartPanel) + 'px';
         cartPanel.classList.remove('open');
       }
     } else {
       if (state.menuOpen) {
-        menuPanel.style.left = 'calc(var(--gap-unit) * 1.5)';
+        menuPanel.style.left = getPanelOpenLeft() + 'px';
         menuPanel.classList.add('open');
       } else {
-        menuPanel.style.left = 'calc(-1 * (var(--header_topbar--height) * 7.7 + var(--gap-unit) * 3))';
+        menuPanel.style.left = getPanelClosedLeft(menuPanel) + 'px';
         menuPanel.classList.remove('open');
       }
 
       if (state.cartOpen) {
-        cartPanel.style.left = 'calc(var(--gap-unit) * 1.5)';
+        cartPanel.style.left = getPanelOpenLeft() + 'px';
         cartPanel.classList.add('open');
       } else {
-        cartPanel.style.left = 'calc(-1 * (var(--header_topbar--height) * 7.7 + var(--gap-unit) * 3))';
+        cartPanel.style.left = getPanelClosedLeft(cartPanel) + 'px';
         cartPanel.classList.remove('open');
       }
     }
