@@ -1,8 +1,15 @@
+:root {
+  --mobile_view_threshold: 767px; /* 小屏阈值：小于此值视为移动端 */
+  --gap-unit: 4px;
+}
+
 body{
       margin:0;
       padding:0;
-       font-size:13px;
-  color:#000;
+       font-size:1rem;
+       font-family:"helvetica";
+      color:#000;
+      min-height:100vh;
 
     }
 
@@ -16,7 +23,7 @@ body{
   border-bottom: 0.15em solid #000;
   text-decoration:none;
   padding:0;
-  font-size:13px;
+  font-size:1.1em;
   color:#000;
   cursor:pointer;
 }

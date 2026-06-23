@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentt</title>
+
+  <link rel="stylesheet" href="css/universal.css">
+
+  <style>
+  
+
+
+:root {
+  --header_bg--height: clamp(28px, 8vw, 35px);
+  --gap-unit: 4px;
+}
+
+/* ====================================================================
+   1. 头部容器
+   ==================================================================== */
+.header_bg{
+  /* // 基本尺寸与间距 */
+  width:100%;
+  height: var(--header_bg--height);
+  box-sizing: border-box;
+  padding:0 calc(var(--gap-unit) * 3);
+  margin-top:calc(var(--gap-unit) * 3);
+  
+  /* // 弹性布局与对齐 */
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+/* ====================================================================
+   2. 头部左侧（Logo 区域）
+   ==================================================================== */
+.header_left{
+  width:auto;
+  height:100%;
+  margin:0;
+  padding:0;
+}
+
+/* ====================================================================
+   3. 头部右侧（按钮区域）
+   ==================================================================== */
+.header_right{
+  flex:1;
+  height:100%;
+  margin:0;
+  padding:0 calc(var(--gap-unit) * 3);
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+}
+
+#menu_button{
+  margin-left:calc(var(--gap-unit) * 6);
+}
+
+
+
+
+
+
+#header_panel_menu{
+  /* // 定位与尺寸 */
+  position:fixed;
+  left: calc(-1 * (var(--header_bg--height) * 7.7 + var(--gap-unit) * 3));
+  top: calc(var(--gap-unit) * 1.5);
+  bottom:calc(var(--gap-unit) * 1.5);
+  width: calc(var(--header_bg--height) * 7.7);
+  box-sizing:border-box;
+  
+  /* // 样式与动画 */
+  padding-top: var(--header_bg--height);
+  border:0.2em solid #000;
+  background:#fff;
+  transition:left .28s ease;
+  z-index:11;
+  overflow:hidden;
+}
+
+#header_panel_menu.open{
+  /* 菜单打开时的位置 */
+  left:calc(var(--gap-unit) * 1.5);
+}
+
+/* ====================================================================
+   4. 购物车面板（Z-Index: 10）
+   ==================================================================== */
+#header_panel_cart{
+  /* // 定位与尺寸 */
+  position:fixed;
+  left: calc(-1 * (var(--header_bg--height) * 7.7 + var(--gap-unit) * 3));
+  top: calc(var(--gap-unit) * 1.5);
+  bottom:calc(var(--gap-unit) * 1.5);
+  width: calc(var(--header_bg--height) * 7.7);
+  box-sizing:border-box;
+  
+  /* // 样式与动画 */
+  padding-top: var(--header_bg--height);
+  border:0.2em solid #000;
+  background:#fff;
+  transition:left .28s ease;
+  z-index:10;
+  overflow:auto;
+}
+
+#header_panel_cart.open{
+  /* 购物车打开时的位置（具体值由 JS 动态设置） */
+  left:calc(var(--gap-unit) * 1.5);
+}
+
+#logo{
+  /* Logo 位于所有面板上方 */
+  height:100%;
+  width:auto;
+  display:block;
+  position:relative;
+  z-index:20;
+}
+
+.header_panel_menu_content,
+.header_panel_cart_content{
+  /* 面板内容容器使用 flex column 布局 */
+  width:100%;
+  height:100%;
+  box-sizing:border-box;
+  background:#ffffff;
+  display:flex;
+  flex-direction:column;
+}
+
+.header_panel_menu_content{
+  padding:calc(var(--gap-unit) * 1.5);
+}
+
+.panel_inner{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+}
+
+.panel_menu_group{
+  display:flex;
+  flex-direction:column;
+}
+
+.panel_menu_group_primary{
+  gap: 0.25em;
+  margin-top:clamp(1em, 5vh, 1.5em);
+}
+
+.panel_menu_group_secondary{
+  gap: 0.25em;
+  margin-top:clamp(1em, 5vh, 1.5em);
+}
+
+.panel_menu_item{
+  display:inline-block;
+  color:#000;
+  text-decoration:none;
+  font-size:clamp(1.1em, 5vh, 1.3em);
+  -webkit-text-stroke: 0.065em #000;
+  line-height:1.35;
+}
+
+.panel_menu_item_active{
+  text-decoration:underline;
+  text-decoration-thickness:0.17em;
+  text-underline-offset:0.3em;
+}
+
+.panel_menu_checkout{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  flex:none;
+  gap:0.5em;
+  padding-top:0;
+}
+
+.panel_menu_checkout_total{
+  text-align:center;
+  font-size:1em;
+}
+
+.panel_menu_checkout_button{
+  width:100%;
+  height:2em;
+  margin:0;
+  background:transparent;
+  border:0.15em solid #000;
+  color:#000;
+  font-size:inherit;
+  cursor:pointer;
+}
+
+.hero{
+  /* 下推位置以避开头部 */
+  margin-top: var(--header_bg--height);
+}
+
+/* ====================================================================
+   移动端样式（当视口宽度小于 --mobile_view_threshold 时生效）
+   ==================================================================== */
+@media (max-width: calc(var(--mobile_view_threshold) - 1px)) {
+
+  
+}
+</style>
+</head>
+<body>
+ <div class="header_bg">
+    <div id="header_left" class="header_left">
+      <img id="logo" src="image/brand/logoa_black.png" alt="header_logo">
+      </div>
+     <div class="header_right">
+        <button class="button_small" id="cart_button">
+            Cart
+        </button>
+        <button class="button_small" id="menu_button">
+            Menu
+        </button>
+    </div>
+</div>
+<div class="hero">
+        <!--  <img src="image/test/1.jpg" style="width:100%;"alt="hero_img"> -->
+    </div>
+
+<!-- 菜单面板（默认隐藏） -->
+<div id="header_panel_menu" aria-hidden="true">
+  <div class="header_panel_menu_content">
+    <div class="panel_inner">
+      <div class="panel_menu_group panel_menu_group_primary">
+        <a href="#" class="panel_menu_item" data-page="home">Home</a>
+        <a href="#" class="panel_menu_item" data-page="wearable">Wearable</a>
+        <a href="#" class="panel_menu_item" data-page="bags">Bags</a>
+        <a href="#" class="panel_menu_item" data-page="self-defense-weapon">Self-Defense Weapon</a>
+        <a href="#" class="panel_menu_item" data-page="life-style">Life Style</a>
+        <a href="#" class="panel_menu_item" data-page="arts">“Arts”</a>
+      </div>
+
+      <div class="panel_menu_group panel_menu_group_secondary">
+        <a href="#" class="panel_menu_item" data-page="tracking">Tracking</a>
+        <a href="#" class="panel_menu_item" data-page="guest-service">Guest Service</a>
+        <a href="#" class="panel_menu_item" data-page="about">About</a>
+      </div>
+    </div>
+
+    <div class="panel_menu_checkout">
+      <div class="panel_menu_checkout_total">Cart Total: 451.00 usd</div>
+      <button class="panel_menu_checkout_button" type="button">Check Out</button>
+    </div>
+  </div>
+</div>
+<!-- 购物车面板（默认隐藏） -->
+<div id="header_panel_cart" aria-hidden="true">
+  <div class="header_panel_cart_content"></div>
+</div>
+
+</body>
+</html>
