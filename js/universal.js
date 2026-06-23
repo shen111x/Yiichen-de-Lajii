@@ -103,6 +103,9 @@ function initHeaderPanels() {
 
   if (!cartButton || !menuButton || !cartPanel || !menuPanel) return;
 
+  var cartPanelWrapper = cartPanel.querySelector('.header_panel_wrapper');
+  var menuPanelWrapper = menuPanel.querySelector('.header_panel_wrapper');
+
   /* ================================
      panel 状态数据
      核心 hook：用 state 记录 cartOpen 和 menuOpen 两个开关。
@@ -232,7 +235,8 @@ function initHeaderPanels() {
   document.addEventListener('click', function(event) {
     if (!state.cartOpen && !state.menuOpen) return;
 
-    if (!cartPanel.contains(event.target) && !menuPanel.contains(event.target) &&
+    if ((!cartPanelWrapper || !cartPanelWrapper.contains(event.target)) &&
+        (!menuPanelWrapper || !menuPanelWrapper.contains(event.target)) &&
         !cartButton.contains(event.target) && !menuButton.contains(event.target)) {
       state.cartOpen = false;
       state.menuOpen = false;
