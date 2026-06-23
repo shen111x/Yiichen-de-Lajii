@@ -1,3 +1,9 @@
+html {
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
 :root {
   --mobile_view_threshold: 767px; /* 小屏阈值：小于此值视为移动端，此handle用于更新对应的script，css的@media需要单独修改！ */
   --gap-unit: 4px;
@@ -12,6 +18,7 @@ body{
        font-family:"helvetica";
       color:#000;
       min-height:100vh;
+      min-height:100dvh;
       -webkit-text-stroke: 0.03em #000;
 
 

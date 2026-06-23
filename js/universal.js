@@ -4,6 +4,8 @@
 
 var siteRoot = getSiteRoot();
 
+initViewportGuards();
+
 /* ================================
    header 组件加载
    核心 hook：fetch header.html 后插入 #header_container，再启动 initHeader。
@@ -33,6 +35,91 @@ function initHeader() {
   setHeaderPaths();
   setActiveHeaderMenuItem();
   initHeaderPanels();
+}
+
+/* ================================
+   viewport 手势保护
+   核心 hook：压掉 iOS 双击/双指缩放，并尽量阻止页面边缘橡皮筋。
+   ================================ */
+
+function initViewportGuards() {
+  var touchStartY = 0;
+  var lastTouchEndTime = 0;
+  var lastTouchEndX = 0;
+  var lastTouchEndY = 0;
+
+  function preventGesture(event) {
+    event.preventDefault();
+  }
+
+  function getScrollableParent(target) {
+    var node = target;
+
+    while (node && node !== document.body && node !== document.documentElement) {
+      var style = getComputedStyle(node);
+      var canScrollY = /(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight;
+
+      if (canScrollY) return node;
+
+      node = node.parentElement;
+    }
+
+    return document.scrollingElement || document.documentElement;
+  }
+
+  function canScrollInDirection(scroller, deltaY) {
+    if (!scroller || scroller.scrollHeight <= scroller.clientHeight) return false;
+
+    if (deltaY > 0) {
+      return scroller.scrollTop > 0;
+    }
+
+    return scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight;
+  }
+
+  document.addEventListener('gesturestart', preventGesture, { passive: false });
+  document.addEventListener('gesturechange', preventGesture, { passive: false });
+  document.addEventListener('gestureend', preventGesture, { passive: false });
+
+  document.addEventListener('dblclick', preventGesture, { passive: false, capture: true });
+
+  document.addEventListener('touchstart', function(event) {
+    if (event.touches.length > 1) {
+      event.preventDefault();
+      return;
+    }
+
+    touchStartY = event.touches[0].clientY;
+  }, { passive: false });
+
+  document.addEventListener('touchmove', function(event) {
+    if (event.touches.length > 1) {
+      event.preventDefault();
+      return;
+    }
+
+    var deltaY = event.touches[0].clientY - touchStartY;
+    var scroller = getScrollableParent(event.target);
+
+    if (!canScrollInDirection(scroller, deltaY)) {
+      event.preventDefault();
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', function(event) {
+    var touch = event.changedTouches[0];
+    var now = Date.now();
+    var movedX = Math.abs(touch.clientX - lastTouchEndX);
+    var movedY = Math.abs(touch.clientY - lastTouchEndY);
+
+    if (now - lastTouchEndTime < 300 && movedX < 24 && movedY < 24) {
+      event.preventDefault();
+    }
+
+    lastTouchEndTime = now;
+    lastTouchEndX = touch.clientX;
+    lastTouchEndY = touch.clientY;
+  }, { passive: false });
 }
 
 /* ================================
