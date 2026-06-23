@@ -10,7 +10,9 @@ body{
        font-family:"helvetica";
       color:#000;
       min-height:100vh;
-
+      -webkit-text-stroke: 0.05em #000;
+      
+     
     }
 
 
