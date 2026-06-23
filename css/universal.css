@@ -2,6 +2,7 @@
   --mobile_view_threshold: 767px; /* 小屏阈值：小于此值视为移动端，此handle用于更新对应的script，css的@media需要单独修改！ */
   --gap-unit: 4px;
   --stroke--width: 0.17rem;
+  --base--font--size: clamp(1.0em, 5vh, 1.1em);
 }
 
 body{
@@ -12,6 +13,30 @@ body{
       color:#000;
       min-height:100vh;
       -webkit-text-stroke: 0.03em #000;
+
+
+
+        /* 禁止文字被选中 */
+
+  user-select: none;
+
+  -webkit-user-select: none;
+
+  /* 禁止 iPhone Safari 长按弹出复制/分享菜单 */
+
+  -webkit-touch-callout: none;
+
+  /* 防止 Safari 横屏或某些情况下自动放大文字 */
+
+  -webkit-text-size-adjust: 100%;
+
+  /* 关闭滚到顶部/底部后的橡皮筋 overscroll 行为 */
+
+  overscroll-behavior: none;
+
+  /* 保留滚动和点击，但尽量禁止双击缩放等额外缩放手势 */
+
+  touch-action: manipulation;
       
      
     }
@@ -26,7 +51,7 @@ body{
   border-bottom: var(--stroke--width) solid #000;
   text-decoration:none;
   padding:0;
-  font-size:1.1em;
+  font-size:var(--base--font--size);
   color:#000;
   cursor:pointer;
 }
