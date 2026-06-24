@@ -37,7 +37,7 @@ function initHeader() {
 
 /* ================================
    header 路径计算
-   核心 hook：用 currentScript 推出 siteRoot，再给 header 里的资源补路径。
+   核心 hook：用 currentScript 推出 siteRoot，再按菜单文字自动生成链接路径。
    ================================ */
 
 function getSiteRoot() {
@@ -49,22 +49,33 @@ function getSiteRoot() {
   return scriptPath.replace(/js\/universal\.js(\?.*)?$/, '');
 }
 
+function getSlugFromText(text) {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[“”"']/g, '')
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function setHeaderPaths() {
   var logo = document.getElementById('logo');
-  var homeLink = document.querySelector('#header_panel_menu .panel_menu_item[data-page="home"]');
-  var wearableLink = document.querySelector('#header_panel_menu .panel_menu_item[data-page="wearable"]');
+  var menuItems = document.querySelectorAll('#header_panel_menu .panel_menu_item');
 
   if (logo) {
     logo.src = siteRoot + 'image/brand/logoa_black.png';
   }
 
-  if (homeLink) {
-    homeLink.href = siteRoot + 'index.html';
-  }
+  menuItems.forEach(function(item) {
+    var slug = getSlugFromText(item.textContent || '');
 
-  if (wearableLink) {
-    wearableLink.href = siteRoot + 'wearable/';
-  }
+    if (!slug) return;
+
+    item.href = slug === 'home'
+      ? siteRoot + 'index.html'
+      : siteRoot + slug + '/';
+  });
 }
 
 /* ================================
@@ -87,7 +98,7 @@ function setActiveHeaderMenuItem() {
 
 /* ====================================================================
    页头 panel 交互部分
-   核心 hook：管理 cart/menu 两个 panel 的打开状态、位置和事件。
+   核心 hook：管理 cart/menu 两个 panel 的打开状态和事件。
    ==================================================================== */
 
 function initHeaderPanels() {
@@ -100,8 +111,9 @@ function initHeaderPanels() {
   var menuButton = document.getElementById('menu_button');
   var cartPanel = document.getElementById('header_panel_cart');
   var menuPanel = document.getElementById('header_panel_menu');
+  var headerMain = document.getElementById('header_main');
 
-  if (!cartButton || !menuButton || !cartPanel || !menuPanel) return;
+  if (!cartButton || !menuButton || !cartPanel || !menuPanel || !headerMain) return;
 
   var cartPanelWrapper = cartPanel.querySelector('.header_panel_wrapper');
   var menuPanelWrapper = menuPanel.querySelector('.header_panel_wrapper');
@@ -122,71 +134,26 @@ function initHeaderPanels() {
      ================================ */
 
   function isNarrow() {
-    var threshold = getComputedStyle(document.documentElement).getPropertyValue('--mobile_view_threshold') || '725px';
+    var threshold = getComputedStyle(document.documentElement)
+      .getPropertyValue('--mobile_view_threshold') || '725px';
     var thresholdNumber = parseInt(threshold, 10) || 725;
 
     return window.innerWidth < thresholdNumber;
   }
 
-  function getGapUnit() {
-    var gapUnit = getComputedStyle(document.documentElement).getPropertyValue('--gap-unit') || '4px';
-    return parseFloat(gapUnit) || 4;
-  }
-
-  function getPanelOpenLeft() {
-    return getGapUnit() * 1.5;
-  }
-
-  function getPanelClosedLeft(panel) {
-    return -panel.getBoundingClientRect().width - getGapUnit() * 3;
-  }
-
-  function getCartStackedLeft() {
-    return getPanelOpenLeft() + menuPanel.getBoundingClientRect().width + getGapUnit() * 1.5;
-  }
-
   /* ================================
      panel 视觉更新
-     核心 hook：把 state 转换成 left、open class 和 aria-hidden。
+     核心 hook：把 state 转换成状态 class 和 aria。
      ================================ */
 
   function updatePanels() {
-    if (!isNarrow()) {
-      if (state.menuOpen) {
-        menuPanel.style.left = getPanelOpenLeft() + 'px';
-        menuPanel.classList.add('open');
-      } else {
-        menuPanel.style.left = getPanelClosedLeft(menuPanel) + 'px';
-        menuPanel.classList.remove('open');
-      }
-
-      if (state.cartOpen) {
-        cartPanel.style.left = (state.menuOpen ? getCartStackedLeft() : getPanelOpenLeft()) + 'px';
-        cartPanel.classList.add('open');
-      } else {
-        cartPanel.style.left = state.menuOpen ? getPanelOpenLeft() + 'px' : getPanelClosedLeft(cartPanel) + 'px';
-        cartPanel.classList.remove('open');
-      }
-    } else {
-      if (state.menuOpen) {
-        menuPanel.style.left = getPanelOpenLeft() + 'px';
-        menuPanel.classList.add('open');
-      } else {
-        menuPanel.style.left = getPanelClosedLeft(menuPanel) + 'px';
-        menuPanel.classList.remove('open');
-      }
-
-      if (state.cartOpen) {
-        cartPanel.style.left = getPanelOpenLeft() + 'px';
-        cartPanel.classList.add('open');
-      } else {
-        cartPanel.style.left = getPanelClosedLeft(cartPanel) + 'px';
-        cartPanel.classList.remove('open');
-      }
-    }
+    headerMain.classList.toggle('menu-open', state.menuOpen);
+    headerMain.classList.toggle('cart-open', state.cartOpen);
 
     menuPanel.setAttribute('aria-hidden', state.menuOpen ? 'false' : 'true');
     cartPanel.setAttribute('aria-hidden', state.cartOpen ? 'false' : 'true');
+    menuButton.setAttribute('aria-expanded', state.menuOpen ? 'true' : 'false');
+    cartButton.setAttribute('aria-expanded', state.cartOpen ? 'true' : 'false');
   }
 
   /* ================================
@@ -235,9 +202,12 @@ function initHeaderPanels() {
   document.addEventListener('click', function(event) {
     if (!state.cartOpen && !state.menuOpen) return;
 
-    if ((!cartPanelWrapper || !cartPanelWrapper.contains(event.target)) &&
-        (!menuPanelWrapper || !menuPanelWrapper.contains(event.target)) &&
-        !cartButton.contains(event.target) && !menuButton.contains(event.target)) {
+    if (
+      (!cartPanelWrapper || !cartPanelWrapper.contains(event.target)) &&
+      (!menuPanelWrapper || !menuPanelWrapper.contains(event.target)) &&
+      !cartButton.contains(event.target) &&
+      !menuButton.contains(event.target)
+    ) {
       state.cartOpen = false;
       state.menuOpen = false;
       updatePanels();
