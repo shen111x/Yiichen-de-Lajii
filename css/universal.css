@@ -21,6 +21,7 @@ html {
   /* 禁止文字被选中 */
   user-select: none;
   -webkit-user-select: none;
+  background-color: var(--page-white);
 }
 
 body {
