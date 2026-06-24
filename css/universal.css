@@ -2,7 +2,7 @@
   --mobile_view_threshold: 767px; /* 小屏阈值：小于此值视为移动端，此handle用于更新对应的script，css的@media需要单独修改！ */
   --gap-unit: 4px;
   --stroke--width: 0.17rem;
-  --base--font--size: clamp(1.0em, 5vh, 1.1em);
+  --base--font--size: clamp(1.0em, 5vh, 1.1em);  /* 这个是中间商，目的是把一个变量包到变量，实际的1em的anchor在universal的body的fontsize=1em*/
 }
 
 /* ====================================================================
@@ -46,10 +46,12 @@ h2 {
   line-height: normal;
   color: #000;
   -webkit-text-stroke: 0.03em #000;
+  
 }
 
 h1 {
   font-size: calc(var(--base--font--size) * 1.4);
+  -webkit-text-stroke: 0.06em #000;
 }
 
 h2 {
