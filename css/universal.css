@@ -3,7 +3,6 @@
   --gap-unit: 4px;
   --stroke--width: 0.17rem;
   --base--font--size: clamp(1.0em, 5vh, 1.1em);  /* 这个是中间商，目的是把一个变量包到变量，实际的1em的anchor在universal的body的fontsize=1em*/
-  --page-white: rgb(255, 255, 255);
 }
 
 /* ====================================================================
@@ -21,7 +20,6 @@ html {
   /* 禁止文字被选中 */
   user-select: none;
   -webkit-user-select: none;
-  background-color: #ffffff;
 }
 
 body {
@@ -35,7 +33,6 @@ body {
   font-size: 1rem;
   color: #000;
   -webkit-text-stroke: 0.03em #000;
-  background-color: #ffffff;
 }
 
 /* ====================================================================

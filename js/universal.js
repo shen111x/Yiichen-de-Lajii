@@ -235,19 +235,6 @@ function initHeaderPanels() {
     }
   });
 
-
-  document.addEventListener("touchstart", () => {
-
-  const video = document.getElementById("hero_video");
-
-  if (!video) return;
-
-  video.muted = true;
-
-  video.play().catch(() => {});
-
-}, { once:true });
-
   /* ================================
      panel resize 同步
      核心 hook：窗口尺寸变化后重新按当前 state 渲染 panel。
@@ -262,34 +249,6 @@ function initHeaderPanels() {
 /* ========================================================================================================================================
    全局代码部分
    ======================================================================================================================================== */
-
-
-   /* ================================ 微信视频强制播放=============================== */
-const video = document.getElementById("hero_video");
-
-if (video) {
-  video.muted = true;
-  video.playsInline = true;
-
-  const playPromise = video.play();
-
-  if (playPromise !== undefined) {
-    playPromise.catch(() => {
-      video.load();
-    });
-  }
-}
-
-
-document.addEventListener("touchstart", () => {
-  const video = document.getElementById("hero_video");
-  if (!video) return;
-
-  video.muted = true;
-  video.play().catch(() => {});
-}, { once:true });
-
-
 
 
 /* ================================
