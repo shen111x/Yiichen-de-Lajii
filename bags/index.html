@@ -13,14 +13,21 @@
       width: 100vw;
       min-height: 100vh;
       box-sizing: border-box;
-      padding: calc(var(--header_topbar--height) + var(--gap-unit) * 6) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+      padding: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) * 2 + var(--gap-unit) * 9) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
 
       background: rgb(255, 255, 255);
     }
 
     .product_body_topbar {
+      position: fixed;
+      top: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) + var(--gap-unit) * 6);
+      left: 0;
+      z-index: 9;
+
       width: 100%;
-      height: var(--header_topbar--height);
+      height: var(--header_topbar--height, clamp(28px, 8vw, 35px));
+      box-sizing: border-box;
+      padding: 0 calc(var(--gap-unit) * 3);
 
       display: flex;
       align-items: center;
@@ -31,7 +38,7 @@
     }
 
     .product_body_topbar_left {
-      width: calc( var(--header_topbar--height) * 7.2);
+      width: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) * 7.2);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -67,11 +74,7 @@
     .product_body_topbar_right {
       flex: 1;
       max-width: 150px;
-
-    
-
       margin-right:clamp(0px, calc(4vw + 1vw - 16px), calc(var(--gap-unit) * 3));
-    
 
       display: flex;
       align-items: center;
@@ -80,9 +83,6 @@
     }
 
     .product_body_topbar_right_addToCart {
-     
-
-
       width: 61%;
       height: 100%;
       box-sizing: border-box;
@@ -91,7 +91,6 @@
       align-items: center;
       justify-content: center;
 
-      
       border: var(--stroke--width) solid #000;
       cursor: pointer;
     }
@@ -118,23 +117,23 @@
 <body data-page="bags" style="height:2000px;">
   <header id="header_container"></header>
 
-  <div class="product_body_main">
-    <div class="product_body_topbar">
-      <div class="product_body_topbar_left">
-        <div class="product_body_topbar_left_nameWrapper">
-          <p>Typography Flag Tee R.O.C.</p>
-        </div>
-
-        <div class="product_body_topbar_left_priceWrapper">
-          <p>127.43 usd</p>
-        </div>
+  <div class="product_body_topbar">
+    <div class="product_body_topbar_left">
+      <div class="product_body_topbar_left_nameWrapper">
+        <p>Typography Flag Tee R.O.C.</p>
       </div>
 
-      <div class="product_body_topbar_right">
-        <div class="product_body_topbar_right_addToCart">Add</div>
+      <div class="product_body_topbar_left_priceWrapper">
+        <p>127.43 usd</p>
       </div>
     </div>
 
+    <div class="product_body_topbar_right">
+      <div class="product_body_topbar_right_addToCart">Add</div>
+    </div>
+  </div>
+
+  <div class="product_body_main">
     <div class="product_body_goback">
       <img src="../image/icon/goback.svg" alt="goback_icon">
     </div>
@@ -142,7 +141,7 @@
     <div style="display: flex;
       align-items: center;
       justify-content: center;">
-      <img src="../image/Test/2.jpg" style="height:70vh; margin-top: var(--header_topbar--height)" alt="product_img">
+      <img src="../image/test/2.jpg" style="height:70vh; margin-top: var(--header_topbar--height)" alt="product_img">
     </div>
   </div>
 
