@@ -3,6 +3,7 @@
   --gap-unit: 4px;
   --stroke--width: 0.17rem;
   --base--font--size: clamp(1.0em, 5vh, 1.1em);  /* 这个是中间商，目的是把一个变量包到变量，实际的1em的anchor在universal的body的fontsize=1em*/
+  --page-white: rgb(255, 255, 255);
 }
 
 /* ====================================================================
@@ -10,6 +11,7 @@
    ==================================================================== */
 
 html {
+  overflow-x: hidden;
   overscroll-behavior: auto;
   touch-action: manipulation;
 
@@ -22,6 +24,7 @@ html {
 }
 
 body {
+  overflow-x: hidden;
   margin: 0;
   padding: 0;
   min-height: 100vh;

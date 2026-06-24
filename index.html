@@ -15,7 +15,7 @@
       box-sizing: border-box;
       padding: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) + var(--gap-unit) * 6) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
 
-      background: rgb(255, 255, 255);
+      background: var(--page-white);
     }
 
     .home_body_hero {
@@ -51,6 +51,24 @@
 
     
     }
+
+    .home_body_hero_surfButton {
+      width: 75px;
+      height: var(--header_topbar--height, clamp(28px, 8vw, 35px));
+      box-sizing: border-box;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      color: #000;
+      text-decoration: none;
+      border: var(--stroke--width) solid #000;
+    }
+
+    .home_body_copyrightContainer {
+      margin-top: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) * 3);
+    }
   </style>
 </head>
 
@@ -81,13 +99,15 @@
         <h1>" Satellite Man "
           <br>Summer 2026
         </h1>
-        <p>I don't see you, I don't hug you.
-
-If you hug me, I am of no value.
+        <p>If you hug me, I am of no value.
 
 Shop our latest collection for those experiencing weak signal.</p>
       </div>
+
+      <a class="home_body_hero_surfButton" href="bags/">Surf Now</a>
     </div>
+
+    <div id="copyright_container" class="home_body_copyrightContainer"></div>
   </div>
 
   <script src="js/universal.js"></script>

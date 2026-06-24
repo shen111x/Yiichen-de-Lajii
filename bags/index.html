@@ -10,12 +10,13 @@
 
   <style>
     .product_body_main {
+      position: relative;
       width: 100vw;
       min-height: 100vh;
       box-sizing: border-box;
       padding: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) * 2 + var(--gap-unit) * 9) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
 
-      background: rgb(255, 255, 255);
+      background: var(--page-white);
     }
 
     .product_body_topbar {
@@ -35,6 +36,8 @@
       gap: calc(var(--gap-unit) * 3);
 
       font-size: calc(var(--base--font--size)*0.85);
+      background: var(--page-white);
+      box-shadow: 0 0 0 calc(var(--gap-unit) * 3) var(--page-white);
     }
 
     .product_body_topbar_left {
@@ -93,9 +96,16 @@
 
       border: var(--stroke--width) solid #000;
       cursor: pointer;
+
+      filter:brightness(0.97);
     }
 
     .product_body_goback {
+      position: absolute;
+      top: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) * 2 + var(--gap-unit) * 9);
+      left: calc(var(--gap-unit) * 3);
+      z-index: 2;
+
       width: var(--header_topbar--height, clamp(28px, 8vw, 35px));
       height: var(--header_topbar--height, clamp(28px, 8vw, 35px));
 
@@ -121,15 +131,101 @@
     .product_body_imgWrapper img {
       width: auto;
       height: auto;
-      max-width: 110vw;
+      max-width: 130vw;
       max-height: 70vh;
-      margin-top:calc( var(--header_topbar--height * 2 + var(--gap-unit) * 9));
       display: block;
+    }
+
+    .product_body_dropdownSection {
+      margin-top: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) + var(--gap-unit) * 3);
+    }
+
+    .product_body_dropdown {
+      border-top: var(--stroke--width) solid #000;
+      pointer-events: auto;
+    }
+
+    .product_body_dropdown:last-child {
+      border-bottom: var(--stroke--width) solid #000;
+    }
+
+    .product_body_dropdown_summary {
+      min-height: var(--header_topbar--height, clamp(28px, 8vw, 35px));
+      box-sizing: border-box;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: calc(var(--gap-unit) * 3);
+
+      cursor: pointer;
+      list-style: none;
+      pointer-events: auto;
+    }
+
+    .product_body_dropdown_summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .product_body_dropdown_icon {
+      flex: none;
+      position: relative;
+      width: 0.85em;
+      height: 0.85em;
+    }
+
+    .product_body_dropdown_icon::before,
+    .product_body_dropdown_icon::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      background: #000;
+      transform: translate(-50%, -50%);
+    }
+
+    .product_body_dropdown_icon::before {
+      width: 100%;
+      height: var(--stroke--width);
+    }
+
+    .product_body_dropdown_icon::after {
+      width: var(--stroke--width);
+      height: 100%;
+      transition: opacity .28s ease;
+    }
+
+    .product_body_dropdown[open] .product_body_dropdown_icon::after {
+      opacity: 0;
+    }
+
+    .product_body_dropdown_content {
+      box-sizing: border-box;
+      height: 0;
+      overflow: hidden;
+      transition: height .28s ease;
+    }
+
+    .product_body_dropdown_content_inner {
+      overflow: hidden;
+    }
+
+    .product_body_dropdown_content_inner p {
+      padding: calc(var(--gap-unit) * 6) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 8);
+    }
+
+    .product_body_dropdown_content p {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .product_body_copyrightContainer {
+      margin-top: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) * 3);
     }
   </style>
 </head>
 
-<body data-page="bags" style="height:2000px;">
+<body data-page="bags">
   <header id="header_container"></header>
 
   <div class="product_body_topbar">
@@ -156,8 +252,117 @@
     <div class="product_body_imgWrapper">
       <img src="../image/test/2.jpg" alt="product_img">
     </div>
+
+    <div class="product_body_dropdownSection">
+      <details class="product_body_dropdown">
+        <summary class="product_body_dropdown_summary"><span>Detail</span><span class="product_body_dropdown_icon"></span></summary>
+        <div class="product_body_dropdown_content">
+          <div class="product_body_dropdown_content_inner">
+            <p>Oversized fit<br>Dropped shoulders<br>Heavyweight cotton jersey</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="product_body_dropdown">
+        <summary class="product_body_dropdown_summary"><span>Size</span><span class="product_body_dropdown_icon"></span></summary>
+        <div class="product_body_dropdown_content">
+          <div class="product_body_dropdown_content_inner">
+            <p>One size<br>Width: 38 cm<br>Height: 42 cm<br>Handle drop: 28 cm</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="product_body_dropdown">
+        <summary class="product_body_dropdown_summary"><span>Shipping</span><span class="product_body_dropdown_icon"></span></summary>
+        <div class="product_body_dropdown_content">
+          <div class="product_body_dropdown_content_inner">
+            <p>Ships within 3-7 business days<br>Tracking will be sent after dispatch</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="product_body_dropdown">
+        <summary class="product_body_dropdown_summary"><span>Care</span><span class="product_body_dropdown_icon"></span></summary>
+        <div class="product_body_dropdown_content">
+          <div class="product_body_dropdown_content_inner">
+            <p>Spot clean only<br>Do not bleach<br>Dry flat away from direct sunlight</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="product_body_dropdown">
+        <summary class="product_body_dropdown_summary"><span>Log</span><span class="product_body_dropdown_icon"></span></summary>
+        <div class="product_body_dropdown_content">
+          <div class="product_body_dropdown_content_inner">
+            <p>Designed by Yiichen de Lajii<br>Product record: Typography Flag Tee R.O.C.</p>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <div id="copyright_container" class="product_body_copyrightContainer"></div>
   </div>
 
   <script src="../js/universal.js"></script>
+  <script>
+    var productDropdowns = Array.prototype.slice.call(
+      document.querySelectorAll('.product_body_dropdown')
+    ).map(function(dropdown) {
+      return {
+        dropdown: dropdown,
+        summary: dropdown.querySelector('.product_body_dropdown_summary'),
+        content: dropdown.querySelector('.product_body_dropdown_content'),
+        inner: dropdown.querySelector('.product_body_dropdown_content_inner')
+      };
+    }).filter(function(item) {
+      return item.summary && item.content && item.inner;
+    });
+
+    function openProductDropdown(item) {
+      item.dropdown.setAttribute('open', '');
+      item.content.style.height = '0px';
+
+      requestAnimationFrame(function() {
+        item.content.style.height = item.inner.scrollHeight + 'px';
+      });
+    }
+
+    function closeProductDropdown(item) {
+      item.content.style.height = item.inner.scrollHeight + 'px';
+
+      requestAnimationFrame(function() {
+        item.content.style.height = '0px';
+      });
+    }
+
+    productDropdowns.forEach(function(item, index) {
+      item.dropdown.removeAttribute('open');
+      item.content.style.height = '0px';
+
+      item.summary.addEventListener('click', function(event) {
+        event.preventDefault();
+
+        if (item.dropdown.hasAttribute('open')) return;
+
+        productDropdowns.forEach(function(otherItem) {
+          if (otherItem !== item && otherItem.dropdown.hasAttribute('open')) {
+            closeProductDropdown(otherItem);
+          }
+        });
+
+        openProductDropdown(item);
+      });
+
+      item.content.addEventListener('transitionend', function(event) {
+        if (event.propertyName !== 'height') return;
+
+        if (item.content.style.height === '0px') {
+          item.dropdown.removeAttribute('open');
+        } else {
+          item.content.style.height = 'auto';
+        }
+      });
+    });
+  </script>
 </body>
 </html>

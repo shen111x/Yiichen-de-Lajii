@@ -24,6 +24,20 @@ fetch(siteRoot + 'components/header.html')
     console.error('加载 header.html 失败：', error);
   });
 
+fetch(siteRoot + 'components/copyright.html')
+  .then(function(response) {
+    return response.text();
+  })
+  .then(function(html) {
+    var container = document.getElementById('copyright_container');
+    if (container) {
+      container.innerHTML = html;
+    }
+  })
+  .catch(function(error) {
+    console.error('加载 copyright.html 失败：', error);
+  });
+
 /* ================================
    header 初始化入口
    核心 hook：统一触发路径修正、当前页高亮和 panel 交互。
