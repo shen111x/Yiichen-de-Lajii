@@ -32,7 +32,13 @@ fetch(siteRoot + 'components/copyright.html')
     var container = document.getElementById('copyright_container');
     if (container) {
       var doc = new DOMParser().parseFromString(html, 'text/html');
-      container.innerHTML = doc.body ? doc.body.innerHTML : html;
+      var styles = doc.head ? doc.head.querySelectorAll('style') : [];
+      var styleHtml = Array.prototype.map.call(styles, function(style) {
+        return style.outerHTML;
+      }).join('');
+      var bodyHtml = doc.body ? doc.body.innerHTML : html;
+
+      container.innerHTML = styleHtml + bodyHtml;
     }
   })
   .catch(function(error) {
