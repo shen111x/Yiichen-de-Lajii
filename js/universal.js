@@ -214,6 +214,19 @@ function initHeaderPanels() {
     }
   });
 
+
+  document.addEventListener("touchstart", () => {
+
+  const video = document.getElementById("hero_video");
+
+  if (!video) return;
+
+  video.muted = true;
+
+  video.play().catch(() => {});
+
+}, { once:true });
+
   /* ================================
      panel resize 同步
      核心 hook：窗口尺寸变化后重新按当前 state 渲染 panel。
@@ -245,6 +258,15 @@ if (video) {
     });
   }
 }
+
+
+document.addEventListener("touchstart", () => {
+  const video = document.getElementById("hero_video");
+  if (!video) return;
+
+  video.muted = true;
+  video.play().catch(() => {});
+}, { once:true });
 
 
 
