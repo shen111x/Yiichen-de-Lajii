@@ -50,12 +50,18 @@ h2 {
 }
 
 h1 {
-  font-size: calc(var(--base--font--size) * 1.4);
-  -webkit-text-stroke: 0.06em #000;
+  font-size: calc(var(--base--font--size) * 1.5);
+  -webkit-text-stroke: 0.05em #000;
 }
 
 h2 {
   font-size: calc(var(--base--font--size) * 1.15);
+}
+
+p{
+
+  -webkit-text-stroke: 0.0em #000;
+
 }
 
 /* ====================================================================
