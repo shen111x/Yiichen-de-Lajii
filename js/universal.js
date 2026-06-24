@@ -230,6 +230,25 @@ function initHeaderPanels() {
    ======================================================================================================================================== */
 
 
+   /* ================================ 微信视频强制播放=============================== */
+const video = document.getElementById("hero_video");
+
+if (video) {
+  video.muted = true;
+  video.playsInline = true;
+
+  const playPromise = video.play();
+
+  if (playPromise !== undefined) {
+    playPromise.catch(() => {
+      video.load();
+    });
+  }
+}
+
+
+
+
 /* ================================
    关闭 快速双击缩放
    核心 hook：拦截 300ms 内、位置接近的第二次 touchend，防止 Safari 双击放大。
