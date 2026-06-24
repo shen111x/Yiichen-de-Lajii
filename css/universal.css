@@ -21,7 +21,7 @@ html {
   /* 禁止文字被选中 */
   user-select: none;
   -webkit-user-select: none;
-  background-color: var(--page-white);
+  background-color: #ffffff;
 }
 
 body {
@@ -35,7 +35,7 @@ body {
   font-size: 1rem;
   color: #000;
   -webkit-text-stroke: 0.03em #000;
-  background-color: var(--page-white);
+  background-color: #ffffff;
 }
 
 /* ====================================================================
