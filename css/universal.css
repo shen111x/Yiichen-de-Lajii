@@ -35,6 +35,7 @@ body {
   font-size: 1rem;
   color: #000;
   -webkit-text-stroke: 0.03em #000;
+  background-color: var(--page-white);
 }
 
 /* ====================================================================
