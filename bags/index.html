@@ -7,30 +7,138 @@
   <title>Yiichen de Lajii</title>
 
   <link rel="stylesheet" href="../css/universal.css">
+
+  <style>
+    .product_body_main {
+      width: 100vw;
+      min-height: 100vh;
+      box-sizing: border-box;
+      padding: calc(var(--header_topbar--height) + var(--gap-unit) * 6) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+
+      background: rgb(255, 255, 255);
+    }
+
+    .product_body_topbar {
+      width: 100%;
+      height: var(--header_topbar--height);
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: calc(var(--gap-unit) * 3);
+
+      font-size: calc(var(--base--font--size)*0.85);
+    }
+
+    .product_body_topbar_left {
+      width: calc( var(--header_topbar--height) * 7.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 66px;
+      min-width: 0;
+    }
+
+    .product_body_topbar_left_nameWrapper,
+    .product_body_topbar_left_priceWrapper {
+      min-width: 0;
+      flex: 0 1 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product_body_topbar_left_nameWrapper {
+      align-items: flex-start;
+    }
+
+    .product_body_topbar_left_priceWrapper {
+      align-items: flex-end;
+      width: min-content;
+    }
+
+    .product_body_topbar_left_nameWrapper p,
+    .product_body_topbar_left_priceWrapper p {
+      margin: 0;
+
+      line-height: 1.1;
+      text-align: center;
+    }
+
+    .product_body_topbar_right {
+      flex: 1;
+      max-width: 150px;
+
+    
+
+      margin-right:clamp(0px, calc(4vw + 1vw - 16px), calc(var(--gap-unit) * 3));
+    
+
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+    }
+
+    .product_body_topbar_right_addToCart {
+     
+
+
+      width: 61%;
+      height: 100%;
+      box-sizing: border-box;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      
+      border: var(--stroke--width) solid #000;
+      cursor: pointer;
+    }
+
+    .product_body_goback {
+      width: var(--header_topbar--height, clamp(28px, 8vw, 35px));
+      height: var(--header_topbar--height, clamp(28px, 8vw, 35px));
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      cursor: pointer;
+    }
+
+    .product_body_goback img {
+      width: 50%;
+      height: auto;
+      display: block;
+    }
+  </style>
 </head>
 
-<body data-page="bags" style="width:100vw; height:100vh; background:none;">
+<body data-page="bags">
   <header id="header_container"></header>
 
-  <div class="product_body_main" style="width:100vw; height:100vh; background:rgb(169, 0, 0);">
-    <div class="product_body_">
+  <div class="product_body_main">
+    <div class="product_body_topbar">
+      <div class="product_body_topbar_left">
+        <div class="product_body_topbar_left_nameWrapper">
+          <p>Typography Flag Tee R.O.C.</p>
+        </div>
 
+        <div class="product_body_topbar_left_priceWrapper">
+          <p>451.00 usd</p>
+        </div>
+      </div>
+
+      <div class="product_body_topbar_right">
+        <div class="product_body_topbar_right_addToCart">Add</div>
+      </div>
     </div>
 
-
-
+    <div class="product_body_goback">
+      <img src="../image/icon/goback.svg" alt="goback_icon">
+    </div>
   </div>
-
-
-
-
-
-
-
-
-
-
-
 
   <script src="../js/universal.js"></script>
 </body>
