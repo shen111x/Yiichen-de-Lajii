@@ -7,10 +7,71 @@
   <title>Yiichen de Lajii</title>
 
   <link rel="stylesheet" href="css/universal.css">
+
+  <style>
+    .home_body_main {
+      width: 100vw;
+      min-height: 100vh;
+      box-sizing: border-box;
+      padding: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) + var(--gap-unit) * 6) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+
+      background: rgb(255, 255, 255);
+    }
+
+    .home_body_hero {
+      width: 100%;
+      height: auto;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      gap: calc(var(--gap-unit) * 3);
+    }
+
+    .home_body_hero_videoWrapper {
+      width: 100%;
+      height: 70vh;
+      max-width: 1080px;
+      overflow: hidden;
+    }
+
+    .home_body_hero_videoWrapper video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: center center;
+    }
+
+    .home_body_hero_textWrapper {
+      text-align: center;
+      max-width: 525px;
+      padding-top:5vh;
+
+    
+    }
+  </style>
 </head>
 
-<body data-page="home" style="width:100vw; height:100vh; background:rgb(255, 255, 255);">
+<body data-page="home">
   <header id="header_container"></header>
+
+  <div class="home_body_main">
+    <div class="home_body_hero">
+      <div class="home_body_hero_videoWrapper">
+        <video autoplay muted loop playsinline>
+          <source src="image/test/a.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+
+      <div class="home_body_hero_textWrapper">
+        <h1>Yiichen de Lajii</h1>
+        <p>Welcome to Yiichen de Lajii, a place where creativity meets innovation. Explore our collection of unique products and discover the art of living.</p>
+      </div>
+    </div>
+  </div>
 
   <script src="js/universal.js"></script>
 </body>
