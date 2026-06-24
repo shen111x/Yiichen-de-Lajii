@@ -31,7 +31,8 @@ fetch(siteRoot + 'components/copyright.html')
   .then(function(html) {
     var container = document.getElementById('copyright_container');
     if (container) {
-      container.innerHTML = html;
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      container.innerHTML = doc.body ? doc.body.innerHTML : html;
     }
   })
   .catch(function(error) {
