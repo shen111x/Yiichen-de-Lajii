@@ -43,7 +43,7 @@ body {
   font-family: "delajiisans", "helvetica";
   font-size: 1rem;
   color: #000;
-  -webkit-text-stroke: 0.03em #000;
+  -webkit-text-stroke: 0.02em #000;
   
 }
 
@@ -59,13 +59,13 @@ h2 {
   font-weight: normal;
   line-height: normal;
   color: #000;
-  -webkit-text-stroke: 0.03em #000;
+  -webkit-text-stroke: 0.02em #000;
   
 }
 
 h1 {
   font-size: calc(var(--base--font--size) * 2);
-  -webkit-text-stroke: 0.05em #000;
+  -webkit-text-stroke: 0.04em #000;
   line-height: 1.3em;
   
 }
@@ -79,7 +79,7 @@ p{
   margin:0;
   margin-top:1em;
   line-height: 1.3em;
-  -webkit-text-stroke: 0.0em #000;
+  -webkit-text-stroke: 0.01em #000;
 
 }
 
@@ -113,7 +113,7 @@ p{
   }
 
   body {
-    -webkit-text-stroke: 0.025em #000;
+    -webkit-text-stroke: 0.02em #000;
   }
 }
 
