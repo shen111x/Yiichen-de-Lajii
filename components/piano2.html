@@ -456,7 +456,7 @@ function output(gain){
 function playNote(freq){
   const a=ctx();
   const gain=a.createGain();
-  const volume=.2*Math.min(1.25, Math.max(1, Math.pow(523.25/freq,.2)));
+  const volume=.4*Math.min(1.25, Math.max(1, Math.pow(523.25/freq,.2)));
   output(gain);
 
   if(sample){
@@ -542,6 +542,7 @@ async function recordSample(){
 
   try{
     const a=ctx();
+    await a.resume?.();
     const stream=await navigator.mediaDevices.getUserMedia({audio:true});
     activeStream=stream;
     const canRecord=await preRecordCountdown(session);
@@ -555,37 +556,66 @@ async function recordSample(){
       return;
     }
 
-    const rec=new MediaRecorder(stream);
+    const source=a.createMediaStreamSource(stream);
+    const recorder=a.createScriptProcessor(4096,1,1);
+    const silence=a.createGain();
     const chunks=[];
-    activeRecorder=rec;
-    activeStream=stream;
+    let finished=false;
 
-    rec.ondataavailable=e=>chunks.push(e.data);
-    rec.onstop=async()=>{
+    silence.gain.value=0;
+    source.connect(recorder);
+    recorder.connect(silence);
+    silence.connect(a.destination);
+
+    recorder.onaudioprocess=e=>{
+      chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    };
+
+    const finish=()=>{
+      if(finished) return;
+      finished=true;
+      source.disconnect();
+      recorder.disconnect();
+      silence.disconnect();
       stream.getTracks().forEach(t=>t.stop());
       activeRecorder=null;
       activeStream=null;
 
-      if(session!==recordSession){
-        busy=false;
-        return;
-      }
+      try{
+        if(session===recordSession){
+          const length=chunks.reduce((sum,chunk)=>sum+chunk.length,0);
+          if(length){
+            const buffer=a.createBuffer(1,length,a.sampleRate);
+            const data=buffer.getChannelData(0);
+            let offset=0;
 
-      const blob=new Blob(chunks);
-      sample=await a.decodeAudioData(await blob.arrayBuffer());
-      recordBtn.textContent="●";
-      recordBtn.classList.remove("recording");
-      recordBtn.classList.add("ready");
-      clearRecordTimers();
-      clearResetProgress();
-      busy=false;
-      updatePlayableState();
+            chunks.forEach(chunk=>{
+              data.set(chunk,offset);
+              offset+=chunk.length;
+            });
+
+            sample=buffer;
+            recordBtn.classList.add("ready");
+          }else{
+            sample=null;
+          }
+        }
+      }finally{
+        recordBtn.textContent="●";
+        recordBtn.classList.remove("recording");
+        clearRecordTimers();
+        clearResetProgress();
+        busy=false;
+        updatePlayableState();
+      }
     };
+
+    activeRecorder={state:"recording", stop:finish};
+    activeStream=stream;
 
     setResetLabel("0");
     resetBtn.classList.add("progress", "sample-progress");
-    rec.start();
-    recordTimer=setTimeout(()=>rec.stop(),2000);
+    recordTimer=setTimeout(finish,2000);
   }catch(err){
     recordBtn.classList.remove("recording");
     clearResetProgress();
