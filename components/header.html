@@ -170,7 +170,8 @@
       background: transparent;
     }
 
-    .header_panel_menu_content {
+    .header_panel_menu_content,
+    .header_panel_cart_content {
       padding: 0 calc(var(--gap-unit) * 1.5) calc(var(--gap-unit) * 1.5);
     }
 
@@ -214,10 +215,19 @@
     }
 
     /* ====================================================================
-       8. 菜单底部 checkout
+       8. 面板底部模块
        ==================================================================== */
 
-    .panel_menu_checkout {
+    .panel_menu_piano {
+      flex: none;
+      display: block;
+      width: 100%;
+      aspect-ratio: 217 / 101;
+      border: 0;
+    }
+
+    .panel_cart_checkout {
+      margin-top: auto;
       flex: none;
       display: flex;
       flex-direction: column;
@@ -227,12 +237,12 @@
       padding-top: 0;
     }
 
-    .panel_menu_checkout_total {
+    .panel_cart_checkout_total {
       font-size: calc(var(--base--font--size) * 0.8);
       text-align: center;
     }
 
-    .panel_menu_checkout_button {
+    .panel_cart_checkout_button {
       width: 100%;
       height: var(--header_topbar--height);
       margin: 0;
@@ -308,10 +318,7 @@
             </div>
           </div>
 
-          <div class="panel_menu_checkout">
-            <div class="panel_menu_checkout_total">Cart Total: 451.00 usd</div>
-            <button class="panel_menu_checkout_button" type="button">Check Out</button>
-          </div>
+          <iframe class="panel_menu_piano" src="components/piano2.html" title="Piano" allow="microphone" scrolling="no"></iframe>
         </div>
       </div>
     </div>
@@ -319,7 +326,12 @@
     <!-- 购物车面板（默认隐藏） -->
     <div id="header_panel_cart" aria-hidden="true">
       <div class="header_panel_wrapper">
-        <div class="header_panel_cart_content"></div>
+        <div class="header_panel_cart_content">
+          <div class="panel_cart_checkout">
+            <div class="panel_cart_checkout_total">Cart Total: 451.00 usd</div>
+            <button class="panel_cart_checkout_button" type="button">Check Out</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

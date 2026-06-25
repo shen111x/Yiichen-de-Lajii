@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+:root{
+  --mobile_view_threshold:767px;
+  --base--font--size:clamp(1rem, 5vh, 1.1rem);
+  --stroke-ratio:0.17;
+  --piano-aspect-width:217;
+  --piano-aspect-height:101;
+  --dashboard-ratio:39fr;
+  --keyboard-ratio:65fr;
+  --global-stroke-width:calc(var(--base--font--size) * var(--stroke-ratio));
+  --stroke:var(--global-stroke-width);
+  --bottom-stroke-compensation:0.22;
+  --button-width:13cqw;
+  --reset-width:17.56cqw;
+  --button-height:6.81cqw;
+  --button-gap:1.95cqw;
+  --dashboard-padding-x:1.56cqw;
+  --dashboard-padding-y:1.56cqw;
+  --button-font-size:4.23cqw;
+  --record-font-size:3.9cqw;
+  --mode-font-size:2.93cqw;
+  --toggle-width:4.55cqw;
+  --toggle-travel:2.08cqw;
+  --slider-thumb-height:calc(var(--button-height) / 2);
+  --slider-track-width:calc((var(--button-width) * 2) + var(--reset-width) + (var(--button-gap) * 2));
+  --slider-thumb-width:var(--button-width);
+  --slider-input-width:var(--slider-track-width);
+  --logo-letter-spacing:-0.04em;
+  --logo-word-spacing:-0.16em;
+  --logo-font-size:7.16cqw;
+  --record-red:#8b0000;
+  --play-green:#0f5f2f;
+}
+
+@media (max-width: 767px) {
+  :root{
+    --stroke-ratio:0.14;
+  }
+}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:auto;
+  overflow:hidden;
+  box-sizing:border-box;
+  font-family:Arial, sans-serif;
+}
+
+.piano-main{
+  container-type:inline-size;
+  display:grid;
+  position:relative;
+  width:100%;
+  max-width:100%;
+  height:auto;
+  aspect-ratio:var(--piano-aspect-width) / var(--piano-aspect-height);
+  border:var(--stroke) solid #000;
+  box-sizing:border-box;
+  grid-template-rows:var(--dashboard-ratio) var(--keyboard-ratio);
+  background:#fff;
+}
+
+.piano-main::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:calc(var(--stroke) * var(--bottom-stroke-compensation));
+  background:#000;
+  pointer-events:none;
+}
+
+.piano-dashboard{
+  border-bottom:var(--stroke) solid #000;
+  display:grid;
+  grid-template-columns:207fr 10fr;
+  min-height:0;
+}
+
+.panel-left{
+  min-width:0;
+  padding:0 var(--dashboard-padding-x);
+  box-sizing:border-box;
+  display:grid;
+  grid-template-rows:minmax(0, 1fr) var(--slider-thumb-height) minmax(0, 1fr) var(--button-height) minmax(0, 1fr);
+}
+
+.panel-right{
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-end;
+  padding:var(--dashboard-padding-y) calc(var(--dashboard-padding-x) * 1.333) 0 0;
+  box-sizing:border-box;
+}
+
+.logo{
+  font-family:"Brush Script MT", "Brush Script Std", cursive;
+  font-size:var(--logo-font-size);
+  font-weight:400;
+  letter-spacing:var(--logo-letter-spacing);
+  word-spacing:var(--logo-word-spacing);
+  white-space:nowrap;
+}
+
+.slider-row{
+  grid-row:2;
+  width:var(--slider-track-width);
+  max-width:100%;
+  height:var(--slider-thumb-height);
+  display:flex;
+  align-items:center;
+  position:relative;
+  overflow:visible;
+}
+
+.slider-row::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:50%;
+  width:100%;
+  height:var(--stroke);
+  background:#000;
+  transform:translateY(-50%);
+}
+
+input[type="range"]{
+  position:absolute;
+  left:0;
+  width:var(--slider-input-width);
+  height:var(--slider-thumb-height);
+  margin:0;
+  appearance:none;
+  background:transparent;
+}
+
+input[type="range"]::-webkit-slider-runnable-track{
+  height:var(--stroke);
+  background:transparent;
+}
+
+input[type="range"]::-webkit-slider-thumb{
+  appearance:none;
+  width:var(--slider-thumb-width);
+  height:var(--slider-thumb-height);
+  margin-top:calc((var(--stroke) - var(--slider-thumb-height)) / 2);
+  background:#fff;
+  border:var(--stroke) solid #000;
+  border-radius:0;
+}
+
+input[type="range"]::-moz-range-track{
+  height:var(--stroke);
+  background:transparent;
+}
+
+input[type="range"]::-moz-range-thumb{
+  width:var(--slider-thumb-width);
+  height:var(--slider-thumb-height);
+  background:#fff;
+  border:var(--stroke) solid #000;
+  border-radius:0;
+}
+
+.controls{
+  grid-row:4;
+  display:flex;
+  align-items:center;
+  gap:var(--button-gap);
+}
+
+button{
+  width:var(--button-width);
+  height:var(--button-height);
+  padding:0;
+  background:#fff;
+  border:var(--stroke) solid #000;
+  font-size:var(--button-font-size);
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+}
+
+#record{
+  color:var(--record-red);
+  font-size:var(--record-font-size);
+}
+
+#record.recording{
+  background:#fff;
+  color:var(--record-red);
+}
+
+#record.ready,
+#record.music-recording{
+  background:#fff;
+  color:var(--record-red);
+}
+
+#play{
+  color:#bbb;
+}
+
+#play.ready{
+  color:var(--play-green);
+}
+
+#reset{
+  width:var(--reset-width);
+}
+
+#reset::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  width:0%;
+  background:#000;
+}
+
+#reset.progress::before{
+  animation:resetFill var(--record-duration, 1s) linear forwards;
+}
+
+#reset.sample-progress{
+  --record-duration:2s;
+}
+
+#reset.music-progress{
+  --record-duration:30s;
+}
+
+#reset .button-label{
+  position:relative;
+  z-index:1;
+}
+
+#reset.progress .button-label{
+  color:#fff;
+  mix-blend-mode:difference;
+}
+
+@keyframes resetFill{
+  from{width:0%;}
+  to{width:100%;}
+}
+
+.mode{
+  display:flex;
+  align-items:center;
+  gap:0.78cqw;
+  font-size:var(--mode-font-size);
+  line-height:1.2;
+}
+
+.toggle{
+  --toggle-gap:0.26cqw;
+  width:var(--toggle-width);
+  height:var(--button-height);
+  border:var(--stroke) solid #000;
+  box-sizing:border-box;
+  cursor:pointer;
+  position:relative;
+}
+
+.toggle::before{
+  content:"";
+  position:absolute;
+  left:var(--toggle-gap);
+  bottom:var(--toggle-gap);
+  width:calc(100% - (var(--toggle-gap) * 2));
+  aspect-ratio:1;
+  background:#000;
+  transition:transform .18s ease;
+}
+
+.toggle.on::before{
+  transform:translateY(calc((var(--button-height) - var(--toggle-width)) * -1));
+}
+
+.sample-state{
+  white-space:nowrap;
+}
+
+.keys{
+  position:relative;
+  flex:1;
+  min-height:0;
+  display:grid;
+  grid-template-columns:repeat(14, 1fr);
+  user-select:none;
+  touch-action:none;
+}
+
+.white{
+  position:relative;
+  grid-row:1;
+  width:100%;
+  height:100%;
+  background:#fff;
+  border-right:var(--stroke) solid #000;
+  box-sizing:border-box;
+}
+
+.white:nth-child(14){
+  border-right:0;
+}
+
+.black{
+  position:absolute;
+  top:0;
+  width:4%;
+  height:55%;
+  background:#000;
+  z-index:2;
+}
+
+.black:nth-child(15){left:5%;}
+.black:nth-child(16){left:12.15%;}
+.black:nth-child(17){left:26.45%;}
+.black:nth-child(18){left:33.6%;}
+.black:nth-child(19){left:40.75%;}
+.black:nth-child(20){left:55%;}
+.black:nth-child(21){left:62.15%;}
+.black:nth-child(22){left:76.45%;}
+.black:nth-child(23){left:83.6%;}
+.black:nth-child(24){left:90.75%;}
+
+.active{
+  filter:brightness(.75);
+}
+</style>
+</head>
+
+<body>
+
+<div class="piano-main">
+
+  <div class="piano-dashboard">
+    <div class="panel-left">
+
+      <div class="slider-row">
+        <input id="reverb" type="range" min="0" max="1" step="0.01" value="0.25">
+      </div>
+
+      <div class="controls">
+        <button id="record">●</button>
+        <button id="play">▶</button>
+        <button id="reset"><span id="resetLabel" class="button-label">Reset</span></button>
+
+        <div class="mode">
+          <div id="modeToggle" class="toggle"></div>
+          <div>
+            <div>Music</div>
+            <div class="sample-state">Sample: <span id="sampleStatus">on[off]</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="panel-right">
+      <div class="logo">Yiichen de Lajii
+      
+      </div>
+    </div>
+  </div>
+
+  <div class="keys" id="keys">
+    <div class="white" data-note="261.63"></div>
+    <div class="white" data-note="293.66"></div>
+    <div class="white" data-note="329.63"></div>
+    <div class="white" data-note="349.23"></div>
+    <div class="white" data-note="392.00"></div>
+    <div class="white" data-note="440.00"></div>
+    <div class="white" data-note="493.88"></div>
+
+    <div class="white" data-note="523.25"></div>
+    <div class="white" data-note="587.33"></div>
+    <div class="white" data-note="659.25"></div>
+    <div class="white" data-note="698.46"></div>
+    <div class="white" data-note="783.99"></div>
+    <div class="white" data-note="880.00"></div>
+    <div class="white" data-note="987.77"></div>
+
+    <div class="black" data-note="277.18"></div>
+    <div class="black" data-note="311.13"></div>
+    <div class="black" data-note="369.99"></div>
+    <div class="black" data-note="415.30"></div>
+    <div class="black" data-note="466.16"></div>
+
+    <div class="black" data-note="554.37"></div>
+    <div class="black" data-note="622.25"></div>
+    <div class="black" data-note="739.99"></div>
+    <div class="black" data-note="830.61"></div>
+    <div class="black" data-note="932.33"></div>
+  </div>
+
+</div>
+
+<script>
+let audio, sample=null, lastKey=null;
+let mode="sample";
+let music=[], musicRecording=false, musicStart=0;
+let busy=false, recordTimer=null, countTimer=null, activeRecorder=null, activeStream=null;
+let recordSession=0;
+
+const baseNote=261.63;
+const recordBtn=document.getElementById("record");
+const playBtn=document.getElementById("play");
+const resetBtn=document.getElementById("reset");
+const resetLabel=document.getElementById("resetLabel");
+const modeToggle=document.getElementById("modeToggle");
+const sampleStatus=document.getElementById("sampleStatus");
+const reverb=document.getElementById("reverb");
+
+function ctx(){
+  audio ||= new AudioContext();
+  return audio;
+}
+
+function output(gain){
+  const a=ctx();
+  const dry=a.createGain();
+  const echoAmount=Number(reverb.value);
+  const echoCount=Math.round(echoAmount*10);
+  const echoGap=.305 - echoAmount*.08;
+
+  dry.gain.value=1;
+
+  gain.connect(dry);
+  dry.connect(a.destination);
+
+  for(let i=1;i<=echoCount;i++){
+    const delay=a.createDelay();
+    const wet=a.createGain();
+
+    delay.delayTime.value=echoGap*i;
+    wet.gain.value=.22*(1 - (i-1)/(echoCount+1));
+
+    gain.connect(delay);
+    delay.connect(wet);
+    wet.connect(a.destination);
+  }
+}
+
+function playNote(freq){
+  const a=ctx();
+  const gain=a.createGain();
+  output(gain);
+
+  if(sample){
+    const src=a.createBufferSource();
+    const rate=freq/baseNote;
+    const duration=sample.duration/rate;
+
+    src.buffer=sample;
+    src.playbackRate.value=rate;
+    src.connect(gain);
+
+    gain.gain.setValueAtTime(.2,a.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001,a.currentTime+duration);
+
+    src.start();
+    src.stop(a.currentTime+duration);
+  }else{
+    const osc=a.createOscillator();
+    osc.type="triangle";
+    osc.frequency.value=freq;
+    osc.connect(gain);
+
+    gain.gain.setValueAtTime(.2,a.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001,a.currentTime+.45);
+
+    osc.start();
+    osc.stop(a.currentTime+.4);
+  }
+
+  if(mode==="music" && musicRecording){
+    music.push({t:performance.now()-musicStart, f:freq});
+  }
+}
+
+function wait(ms){
+  return new Promise(resolve=>setTimeout(resolve, ms));
+}
+
+function setResetLabel(text){
+  resetLabel.textContent=text;
+}
+
+function updatePlayableState(){
+  sampleStatus.textContent=sample ? "[on]off" : "on[off]";
+  playBtn.classList.toggle("ready", mode==="sample" ? Boolean(sample) : Boolean(music.length));
+}
+
+function clearRecordTimers(){
+  clearTimeout(recordTimer);
+  clearInterval(countTimer);
+  recordTimer=null;
+  countTimer=null;
+}
+
+function stopActiveRecorder(){
+  if(activeRecorder?.state==="recording") activeRecorder.stop();
+  activeStream?.getTracks().forEach(t=>t.stop());
+  activeRecorder=null;
+  activeStream=null;
+}
+
+function clearResetProgress(){
+  resetBtn.classList.remove("progress", "sample-progress", "music-progress");
+  setResetLabel("Reset");
+}
+
+async function preRecordCountdown(session){
+  for(const label of ["3", "2", "1", "Start"]){
+    if(session!==recordSession) return false;
+    setResetLabel(label);
+    await wait(500);
+  }
+  return session===recordSession;
+}
+
+async function recordSample(){
+  if(busy) return;
+  const session=++recordSession;
+  busy=true;
+  recordBtn.textContent="●";
+  recordBtn.classList.remove("ready", "music-recording");
+  recordBtn.classList.add("recording");
+
+  try{
+    const a=ctx();
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    activeStream=stream;
+    const canRecord=await preRecordCountdown(session);
+
+    if(!canRecord){
+      stream.getTracks().forEach(t=>t.stop());
+      recordBtn.classList.remove("recording");
+      clearResetProgress();
+      activeStream=null;
+      busy=false;
+      return;
+    }
+
+    const rec=new MediaRecorder(stream);
+    const chunks=[];
+    activeRecorder=rec;
+    activeStream=stream;
+
+    rec.ondataavailable=e=>chunks.push(e.data);
+    rec.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      activeRecorder=null;
+      activeStream=null;
+
+      if(session!==recordSession){
+        busy=false;
+        return;
+      }
+
+      const blob=new Blob(chunks);
+      sample=await a.decodeAudioData(await blob.arrayBuffer());
+      recordBtn.textContent="●";
+      recordBtn.classList.remove("recording");
+      recordBtn.classList.add("ready");
+      clearRecordTimers();
+      clearResetProgress();
+      busy=false;
+      updatePlayableState();
+    };
+
+    setResetLabel("0");
+    resetBtn.classList.add("progress", "sample-progress");
+    rec.start();
+    recordTimer=setTimeout(()=>rec.stop(),2000);
+  }catch(err){
+    recordBtn.classList.remove("recording");
+    clearResetProgress();
+    activeStream?.getTracks().forEach(t=>t.stop());
+    activeStream=null;
+    activeRecorder=null;
+    busy=false;
+  }
+}
+
+async function recordMusic(){
+  if(busy) return;
+  const session=++recordSession;
+  busy=true;
+  music=[];
+  musicRecording=false;
+  updatePlayableState();
+  recordBtn.classList.remove("ready", "recording");
+  recordBtn.classList.add("music-recording");
+
+  if(!await preRecordCountdown(session)){
+    recordBtn.classList.remove("music-recording");
+    clearResetProgress();
+    busy=false;
+    updatePlayableState();
+    return;
+  }
+
+  let remaining=30;
+  musicRecording=true;
+  musicStart=performance.now();
+  setResetLabel(remaining);
+  resetBtn.classList.add("progress", "music-progress");
+
+  countTimer=setInterval(()=>{
+    remaining-=1;
+    setResetLabel(Math.max(remaining, 0));
+  },1000);
+
+  recordTimer=setTimeout(stopMusicRecord,30000);
+}
+
+function stopMusicRecord(cancelSession=false){
+  if(cancelSession) recordSession+=1;
+  if(!musicRecording && !busy) return;
+  musicRecording=false;
+  busy=false;
+  clearRecordTimers();
+  clearResetProgress();
+  recordBtn.classList.remove("music-recording");
+  updatePlayableState();
+}
+
+function playback(){
+  if(mode==="sample" && sample){
+    playNote(baseNote);
+  }
+
+  if(mode==="music"){
+    music.forEach(n=>{
+      setTimeout(()=>playNote(n.f),n.t);
+    });
+  }
+}
+
+function reset(){
+  recordSession+=1;
+  stopActiveRecorder();
+  clearRecordTimers();
+  busy=false;
+
+  if(mode==="sample"){
+    sample=null;
+    recordBtn.textContent="●";
+  }else{
+    music=[];
+    musicRecording=false;
+  }
+
+  clearResetProgress();
+  recordBtn.classList.remove("recording", "ready", "music-recording");
+  updatePlayableState();
+}
+
+recordBtn.onclick=()=>{
+  if(mode==="sample"){
+    recordSample();
+    return;
+  }
+
+  if(busy){
+    stopMusicRecord(true);
+    return;
+  }
+
+  recordMusic();
+};
+playBtn.onclick=playback;
+resetBtn.onclick=reset;
+
+modeToggle.onclick=()=>{
+  mode = mode==="sample" ? "music" : "sample";
+  modeToggle.classList.toggle("on", mode==="music");
+  updatePlayableState();
+};
+
+updatePlayableState();
+
+function trigger(x,y){
+  const key=document.elementFromPoint(x,y);
+  if(!key?.dataset.note || key===lastKey) return;
+
+  lastKey?.classList.remove("active");
+  key.classList.add("active");
+  lastKey=key;
+
+  playNote(+key.dataset.note);
+}
+
+window.addEventListener("pointerdown",e=>trigger(e.clientX,e.clientY));
+window.addEventListener("pointermove",e=>{
+  if(e.buttons || e.pointerType==="touch") trigger(e.clientX,e.clientY);
+});
+window.addEventListener("pointerup",()=>{
+  lastKey?.classList.remove("active");
+  lastKey=null;
+});
+</script>
+
+</body>
+</html>

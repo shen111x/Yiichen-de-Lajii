@@ -82,10 +82,15 @@ function getSlugFromText(text) {
 
 function setHeaderPaths() {
   var logo = document.getElementById('logo');
+  var piano = document.querySelector('.panel_menu_piano');
   var menuItems = document.querySelectorAll('#header_panel_menu .panel_menu_item');
 
   if (logo) {
     logo.src = siteRoot + 'image/brand/logoa_black.png';
+  }
+
+  if (piano) {
+    piano.src = siteRoot + 'components/piano2.html';
   }
 
   menuItems.forEach(function(item) {
