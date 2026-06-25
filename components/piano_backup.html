@@ -176,15 +176,11 @@ input[type="range"]::-moz-range-thumb{
 }
 
 button{
-  -webkit-appearance:none;
-  appearance:none;
   width:var(--button-width);
   height:var(--button-height);
   padding:0;
   background:#fff;
   border:var(--stroke) solid #000;
-  border-radius:0;
-  color:#000;
   font-size:var(--button-font-size);
   cursor:pointer;
   position:relative;
@@ -456,7 +452,6 @@ function output(gain){
 function playNote(freq){
   const a=ctx();
   const gain=a.createGain();
-  const volume=.2*Math.min(1.25, Math.max(1, Math.pow(523.25/freq,.2)));
   output(gain);
 
   if(sample){
@@ -468,7 +463,7 @@ function playNote(freq){
     src.playbackRate.value=rate;
     src.connect(gain);
 
-    gain.gain.setValueAtTime(volume,a.currentTime);
+    gain.gain.setValueAtTime(.2,a.currentTime);
     gain.gain.exponentialRampToValueAtTime(.001,a.currentTime+duration);
 
     src.start();
@@ -479,7 +474,7 @@ function playNote(freq){
     osc.frequency.value=freq;
     osc.connect(gain);
 
-    gain.gain.setValueAtTime(volume,a.currentTime);
+    gain.gain.setValueAtTime(.2,a.currentTime);
     gain.gain.exponentialRampToValueAtTime(.001,a.currentTime+.45);
 
     osc.start();
