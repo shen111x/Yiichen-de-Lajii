@@ -415,7 +415,7 @@ let busy=false, recordTimer=null, countTimer=null, activeRecorder=null, activeSt
 let recordSession=0;
 
 const baseNote=261.63;
-const masterVolume=1;
+const masterVolume=.75;
 const recordBtn=document.getElementById("record");
 const playBtn=document.getElementById("play");
 const resetBtn=document.getElementById("reset");
@@ -457,7 +457,7 @@ function output(gain){
 function playNote(freq){
   const a=ctx();
   const gain=a.createGain();
-  const volume=masterVolume*Math.min(1.25, Math.max(1, Math.pow(523.25/freq,.2)));
+  const volume=masterVolume*Math.min(1.55, Math.max(1, Math.pow(523.25/freq,.5)));
   output(gain);
 
   if(sample){
