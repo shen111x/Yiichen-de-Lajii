@@ -13,7 +13,7 @@
       width: 100vw;
       min-height: 100vh;
       box-sizing: border-box;
-      padding: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) + var(--gap-unit) * 6) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+      padding: calc(var(--header_topbar--height) + var(--gap-unit) * 6) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
 
       background: #ffffff;
     }
@@ -47,15 +47,20 @@
     .home_body_hero_textWrapper {
       text-align: center;
       max-width: 525px;
-      padding-top: calc(var(--gap-unit) * 3);
-      padding-bottom: calc(var(--gap-unit) * 3);
+      padding: 0.75em 0 0.85em;
+    }
 
-    
+    .home_body_hero_textWrapper h1 {
+      margin: 0;
+    }
+
+    .home_body_hero_textWrapper p {
+      margin: 0.85em 0 0;
     }
 
     .home_body_hero_surfButton {
       width: 100px;
-      height: var(--header_topbar--height, clamp(28px, 8vw, 35px));
+      height: var(--header_topbar--height);
       box-sizing: border-box;
 
       display: flex;
@@ -68,7 +73,7 @@
     }
 
     .home_body_copyrightContainer {
-      margin-top: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) * 3);
+      margin-top: calc(var(--header_topbar--height) * 3);
     }
   </style>
 </head>
@@ -98,15 +103,17 @@
         </h1>
         <p>“ If you hug me, I am of no value. ”
 
-Shop our latest collection for those experiencing signal loss.</p>
+            Shop our latest collection for those experiencing signal loss.</p>
       </div>
 
       <a class="home_body_hero_surfButton" href="bags/">Surf Now</a>
+
     </div>
 
     <div id="copyright_container" class="home_body_copyrightContainer"></div>
   </div>
-。
+
+
   <script src="js/universal.js"></script>
 </body>
 </html>

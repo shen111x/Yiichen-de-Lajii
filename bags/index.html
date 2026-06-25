@@ -14,19 +14,19 @@
       width: 100vw;
       min-height: 100vh;
       box-sizing: border-box;
-      padding: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) * 2 + var(--gap-unit) * 9) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+      padding: calc(var(--header_topbar--height) * 2 + var(--gap-unit) * 9) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
 
       background: #ffffff;
     }
 
     .product_body_topbar {
       position: fixed;
-      top: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) + var(--gap-unit) * 6);
+      top: calc(var(--header_topbar--height) + var(--gap-unit) * 6);
       left: 0;
       z-index: 9;
 
       width: 100%;
-      height: var(--header_topbar--height, clamp(28px, 8vw, 35px));
+      height: var(--header_topbar--height);
       box-sizing: border-box;
       padding: 0 calc(var(--gap-unit) * 3);
       overscroll-behavior: none;
@@ -41,7 +41,7 @@
     }
 
     .product_body_topbar_left {
-      width: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) * 7.2);
+      width: calc(var(--header_topbar--height) * 7.2);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -102,12 +102,12 @@
 
     .product_body_goback {
       position: absolute;
-      top: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) * 2 + var(--gap-unit) * 9);
+      top: calc(var(--header_topbar--height) * 2 + var(--gap-unit) * 9);
       left: calc(var(--gap-unit) * 3);
       z-index: 2;
 
-      width: var(--header_topbar--height, clamp(28px, 8vw, 35px));
-      height: var(--header_topbar--height, clamp(28px, 8vw, 35px));
+      width: var(--header_topbar--height);
+      height: var(--header_topbar--height);
 
       display: flex;
       align-items: center;
@@ -137,7 +137,7 @@
     }
 
     .product_body_dropdownSection {
-      margin-top: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) + var(--gap-unit) * 3);
+      margin-top: calc(var(--header_topbar--height) + var(--gap-unit) * 3);
     }
 
     .product_body_dropdown {
@@ -150,7 +150,7 @@
     }
 
     .product_body_dropdown_summary {
-      min-height: var(--header_topbar--height, clamp(28px, 8vw, 35px));
+      min-height: var(--header_topbar--height);
       box-sizing: border-box;
 
       display: flex;
@@ -222,7 +222,7 @@
     }
 
     .product_body_copyrightContainer {
-      margin-top: calc(var(--header_topbar--height, clamp(28px, 8vw, 35px)) * 3);
+      margin-top: calc(var(--header_topbar--height) * 3);
     }
   </style>
 </head>
