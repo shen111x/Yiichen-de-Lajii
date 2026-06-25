@@ -59,17 +59,20 @@
 
     .product_body_topbar_left_nameWrapper {
       align-items: flex-start;
+      width: max-content;
+      max-width: 100%;
     }
 
     .product_body_topbar_left_priceWrapper {
       align-items: flex-end;
-      width: min-content;
+      width: max-content;
     }
 
     .product_body_topbar_left_nameWrapper p,
     .product_body_topbar_left_priceWrapper p {
       margin: 0;
 
+    
       line-height: 1.1;
       text-align: center;
     }
@@ -96,6 +99,7 @@
 
       border: var(--stroke--width) solid #000;
       cursor: pointer;
+      font-size: var(--button--font--size);
 
       filter:brightness(0.97);
     }
@@ -162,6 +166,7 @@
       cursor: pointer;
       list-style: none;
       pointer-events: auto;
+      font-size: var(--button--font--size);
     }
 
     .product_body_dropdown_summary::-webkit-details-marker {

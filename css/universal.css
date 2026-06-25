@@ -11,7 +11,8 @@
   --gap-unit: 4px;
   --stroke--width: 0.17rem;
   --header_topbar--height: 35px;
-  --base--font--size: clamp(1.0em, 5vh, 1.1em);  /* 这个是中间商，目的是把一个变量包到变量，实际的1em的anchor在universal的body的fontsize=1em*/
+  --base--font--size: clamp(1rem, 5vh, 1.1rem);  /* 这个是中间商，目的是把一个变量包到变量，实际的1rem的anchor在universal的body的fontsize=1rem*/
+  --button--font--size: var(--base--font--size);
   --product_info--font--size: calc(var(--base--font--size) * 0.75);
 }
 
@@ -90,7 +91,8 @@ p{
   margin: 0;
   padding: 0;
 
-  font-size: var(--base--font--size);
+  font-family: inherit;
+  font-size: var(--button--font--size);
   color: #000;
   text-decoration: none;
 
