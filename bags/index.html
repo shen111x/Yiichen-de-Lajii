@@ -37,7 +37,7 @@
       justify-content: space-between;
       gap: calc(var(--gap-unit) * 3);
 
-      font-size: calc(var(--base--font--size)*0.85);
+      font-size: var(--product_info--font--size);
     }
 
     .product_body_topbar_left {
@@ -157,6 +157,7 @@
       align-items: center;
       justify-content: space-between;
       gap: calc(var(--gap-unit) * 3);
+      padding: 0 calc(var(--gap-unit) * 3);
 
       cursor: pointer;
       list-style: none;
@@ -170,8 +171,8 @@
     .product_body_dropdown_icon {
       flex: none;
       position: relative;
-      width: 0.85em;
-      height: 0.85em;
+      width: 0.72em;
+      height: 0.72em;
     }
 
     .product_body_dropdown_icon::before,
@@ -186,11 +187,11 @@
 
     .product_body_dropdown_icon::before {
       width: 100%;
-      height: var(--stroke--width);
+      height: calc(var(--stroke--width) * 0.72);
     }
 
     .product_body_dropdown_icon::after {
-      width: var(--stroke--width);
+      width: calc(var(--stroke--width) * 0.72);
       height: 100%;
       transition: opacity .28s ease;
     }
@@ -216,6 +217,7 @@
 
     .product_body_dropdown_content p {
       margin: 0;
+      font-size: var(--product_info--font--size);
       line-height: 1.2;
     }
 
@@ -342,7 +344,10 @@
       item.summary.addEventListener('click', function(event) {
         event.preventDefault();
 
-        if (item.dropdown.hasAttribute('open')) return;
+        if (item.dropdown.hasAttribute('open')) {
+          closeProductDropdown(item);
+          return;
+        }
 
         productDropdowns.forEach(function(otherItem) {
           if (otherItem !== item && otherItem.dropdown.hasAttribute('open')) {

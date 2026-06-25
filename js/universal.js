@@ -250,6 +250,28 @@ function initHeaderPanels() {
    全局代码部分
    ======================================================================================================================================== */
 
+/* ================================
+   通用返回按钮
+   核心 hook：点击 .product_body_goback 时返回用户来处，没有历史记录时回首页。
+   ================================ */
+
+function initGoBackButtons() {
+  var goBackButtons = document.querySelectorAll('.product_body_goback');
+
+  goBackButtons.forEach(function(button) {
+    button.addEventListener('click', function() {
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+
+      window.location.href = siteRoot + 'index.html';
+    });
+  });
+}
+
+initGoBackButtons();
+
 
 /* ================================
    关闭 快速双击缩放
