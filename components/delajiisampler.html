@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <style>
 :root{
-  --mobile_view_threshold:767px;
   --base--font--size:clamp(1rem, 5vh, 1.1rem);
   --stroke-ratio:0.17;
   --piano-aspect-width:217;
@@ -24,7 +23,6 @@
   --record-font-size:3.9cqw;
   --mode-font-size:2.93cqw;
   --toggle-width:4.55cqw;
-  --toggle-travel:2.08cqw;
   --slider-thumb-height:calc(var(--button-height) / 2);
   --slider-track-width:calc((var(--button-width) * 2) + var(--reset-width) + (var(--button-gap) * 2));
   --slider-thumb-width:var(--button-width);
@@ -194,17 +192,6 @@ button{
 #record{
   color:var(--record-red);
   font-size:var(--record-font-size);
-}
-
-#record.recording{
-  background:#fff;
-  color:var(--record-red);
-}
-
-#record.ready,
-#record.music-recording{
-  background:#fff;
-  color:var(--record-red);
 }
 
 #play{
@@ -432,6 +419,8 @@ const resetLabel=document.getElementById("resetLabel");
 const modeToggle=document.getElementById("modeToggle");
 const sampleStatus=document.getElementById("sampleStatus");
 const reverb=document.getElementById("reverb");
+const keys=document.getElementById("keys");
+const blackKeys=[...keys.querySelectorAll(".black")];
 
 function ctx(){
   audio ||= new AudioContext();
@@ -519,54 +508,72 @@ function playNote(freq, options={}){
     source.connect(gain);
   }
 
-  function playVoice(startTime, voiceVolume, isFirst, voicePeriod=notePeriod, toneProgress=0){
+  function connectSampleVoice(src, gain, toneProgress){
+    if(sample===defaultSample){
+      connectVoice(src,gain,toneProgress);
+      return;
+    }
+
+    const highpass=a.createBiquadFilter();
+    const lowpass=a.createBiquadFilter();
+
+    highpass.type="highpass";
+    highpass.frequency.value=80;
+    lowpass.type="lowpass";
+    lowpass.frequency.value=8000;
+
+    src.connect(highpass);
+    highpass.connect(lowpass);
+    connectVoice(lowpass,gain,toneProgress);
+  }
+
+  function playSource(source, gain, startTime, voiceVolume, duration, offset){
+    gain.gain.setValueAtTime(voiceVolume,startTime);
+    gain.gain.exponentialRampToValueAtTime(.001,startTime+duration);
+
+    if(offset===undefined){
+      source.start(startTime);
+    }else{
+      source.start(startTime,offset);
+    }
+
+    source.stop(startTime+duration);
+  }
+
+  function playSampleVoice(startTime, voiceVolume, isFirst, voicePeriod, toneProgress){
     const gain=a.createGain();
     output(gain);
 
+    const src=a.createBufferSource();
+    const rate=freq/baseNote;
+    const sourceOffset=isFirst ? 0 : sampleEchoOffset;
+    const availableDuration=Math.max(0,sample.duration-sourceOffset);
+    const playDuration=isFirst ? sample.duration/rate : Math.min(availableDuration/rate,voicePeriod);
+
+    src.buffer=sample;
+    src.playbackRate.value=rate;
+    connectSampleVoice(src,gain,toneProgress);
+    playSource(src,gain,startTime,voiceVolume,playDuration,sourceOffset);
+  }
+
+  function playOscVoice(startTime, voiceVolume, voicePeriod, toneProgress){
+    const gain=a.createGain();
+    const osc=a.createOscillator();
+
+    output(gain);
+    osc.type="triangle";
+    osc.frequency.value=freq;
+    connectVoice(osc,gain,toneProgress);
+    playSource(osc,gain,startTime,voiceVolume,voicePeriod);
+  }
+
+  function playVoice(startTime, voiceVolume, isFirst, voicePeriod=notePeriod, toneProgress=0){
     if(sample){
-      const src=a.createBufferSource();
-      const rate=freq/baseNote;
-      const sourceOffset=isFirst ? 0 : sampleEchoOffset;
-      const availableDuration=Math.max(0,sample.duration-sourceOffset);
-      const playDuration=isFirst ? sample.duration/rate : Math.min(availableDuration/rate,voicePeriod);
-
-      src.buffer=sample;
-      src.playbackRate.value=rate;
-
-      if(sample!==defaultSample){
-        const highpass=a.createBiquadFilter();
-        const lowpass=a.createBiquadFilter();
-
-        highpass.type="highpass";
-        highpass.frequency.value=80;
-        lowpass.type="lowpass";
-        lowpass.frequency.value=8000;
-
-        src.connect(highpass);
-        highpass.connect(lowpass);
-        connectVoice(lowpass,gain,toneProgress);
-      }else{
-        connectVoice(src,gain,toneProgress);
-      }
-
-      gain.gain.setValueAtTime(voiceVolume,startTime);
-      gain.gain.exponentialRampToValueAtTime(.001,startTime+playDuration);
-
-      src.start(startTime,sourceOffset);
-      src.stop(startTime+playDuration);
-    }else{
-      const osc=a.createOscillator();
-
-      osc.type="triangle";
-      osc.frequency.value=freq;
-      connectVoice(osc,gain,toneProgress);
-
-      gain.gain.setValueAtTime(voiceVolume,startTime);
-      gain.gain.exponentialRampToValueAtTime(.001,startTime+voicePeriod);
-
-      osc.start(startTime);
-      osc.stop(startTime+voicePeriod);
+      playSampleVoice(startTime,voiceVolume,isFirst,voicePeriod,toneProgress);
+      return;
     }
+
+    playOscVoice(startTime,voiceVolume,voicePeriod,toneProgress);
   }
 
   function scheduleSplitEcho(startTime, nextTime, voiceVolume, voicePeriod, toneProgress, chance){
@@ -629,9 +636,13 @@ function clearRecordTimers(){
   countTimer=null;
 }
 
+function stopStream(stream){
+  stream?.getTracks().forEach(t=>t.stop());
+}
+
 function stopActiveRecorder(){
   if(activeRecorder?.state==="recording") activeRecorder.stop();
-  activeStream?.getTracks().forEach(t=>t.stop());
+  stopStream(activeStream);
   activeRecorder=null;
   activeStream=null;
 }
@@ -666,7 +677,7 @@ async function recordSample(){
     const canRecord=await preRecordCountdown(session);
 
     if(!canRecord){
-      stream.getTracks().forEach(t=>t.stop());
+      stopStream(stream);
       recordBtn.classList.remove("recording");
       clearResetProgress();
       activeStream=null;
@@ -695,7 +706,7 @@ async function recordSample(){
       source.disconnect();
       recorder.disconnect();
       silence.disconnect();
-      stream.getTracks().forEach(t=>t.stop());
+      stopStream(stream);
       activeRecorder=null;
       activeStream=null;
 
@@ -739,7 +750,7 @@ async function recordSample(){
   }catch(err){
     recordBtn.classList.remove("recording");
     clearResetProgress();
-    activeStream?.getTracks().forEach(t=>t.stop());
+    stopStream(activeStream);
     activeStream=null;
     activeRecorder=null;
     busy=false;
@@ -798,30 +809,27 @@ function stopMusicPlayback(){
 }
 
 function playback(){
-  if(mode==="sample" && hasSampleTone()){
-    playNote(baseNote,{noEcho:true});
+  if(mode==="sample"){
+    if(hasSampleTone()) playNote(baseNote,{noEcho:true});
+    return;
   }
 
-  if(mode==="music"){
-    if(musicPlaying){
-      stopMusicPlayback();
-      return;
-    }
-
-    if(!music.length) return;
-
-    musicPlaying=true;
-    updatePlayableState();
-
-    music.forEach(n=>{
-      const timer=setTimeout(()=>playNote(n.f),n.t);
-      musicPlaybackTimers.push(timer);
-    });
-
-    const lastNoteTime=Math.max(...music.map(n=>n.t));
-    const finishTimer=setTimeout(stopMusicPlayback,lastNoteTime+(notePeriod*1000)+120);
-    musicPlaybackTimers.push(finishTimer);
+  if(musicPlaying){
+    stopMusicPlayback();
+    return;
   }
+
+  if(!music.length) return;
+
+  musicPlaying=true;
+  updatePlayableState();
+
+  music.forEach(n=>{
+    musicPlaybackTimers.push(setTimeout(()=>playNote(n.f),n.t));
+  });
+
+  const lastNoteTime=Math.max(...music.map(n=>n.t));
+  musicPlaybackTimers.push(setTimeout(stopMusicPlayback,lastNoteTime+(notePeriod*1000)+120));
 }
 
 function reset(){
@@ -872,13 +880,12 @@ updatePlayableState();
 loadDefaultSample();
 
 function expandedBlackKeyFromPoint(x,y){
-  const keys=document.getElementById("keys");
   const keysRect=keys.getBoundingClientRect();
 
   if(x<keysRect.left || x>keysRect.right) return null;
   if(y<keysRect.top || y>keysRect.top+(keysRect.height*.55)) return null;
 
-  const blacks=[...keys.querySelectorAll(".black")].map(key=>{
+  const blacks=blackKeys.map(key=>{
     const rect=key.getBoundingClientRect();
 
     return {
