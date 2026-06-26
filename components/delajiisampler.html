@@ -492,20 +492,11 @@ function output(gain){
   dry.connect(a.destination);
 }
 
-function playNote(freq){
+function playNote(freq, options={}){
   const a=ctx();
-  const echoCount=Math.round(Number(reverb.value)*10);
+  const echoCount=options.noEcho ? 0 : Math.round(Number(reverb.value)*10);
 
-  const minFreq = 261.63;
-  const maxFreq = 1046.50;
-
-  const minComp = 1.0;
-  const maxComp = 1.0;
-
-  const t = (maxFreq - freq) / (maxFreq - minFreq);
-  const comp = minComp + t * (maxComp - minComp);
-
-  const volume = masterVolume * comp;
+  const volume = masterVolume;
 
   function playVoice(startTime, voiceVolume, isFirst){
     const gain=a.createGain();
@@ -520,7 +511,22 @@ function playNote(freq){
 
       src.buffer=sample;
       src.playbackRate.value=rate;
-      src.connect(gain);
+
+      if(sample!==defaultSample){
+        const highpass=a.createBiquadFilter();
+        const lowpass=a.createBiquadFilter();
+
+        highpass.type="highpass";
+        highpass.frequency.value=80;
+        lowpass.type="lowpass";
+        lowpass.frequency.value=8000;
+
+        src.connect(highpass);
+        highpass.connect(lowpass);
+        lowpass.connect(gain);
+      }else{
+        src.connect(gain);
+      }
 
       gain.gain.setValueAtTime(voiceVolume,startTime);
       gain.gain.exponentialRampToValueAtTime(.001,startTime+playDuration);
@@ -544,7 +550,9 @@ function playNote(freq){
 
   for(let i=0;i<=echoCount;i++){
     const startTime=a.currentTime+i*(notePeriod+echoGap);
-    const echoVolume=volume*(i===0 ? 1 : .55*Math.pow(.78,i-1));
+    const echoProgress=Math.min(1,Math.max(0,(freq-261.63)/(987.77-261.63)));
+    const echoComp=3-(echoProgress*2);
+    const echoVolume=volume*(i===0 ? 1 : .55*Math.pow(.78,i-1)*echoComp);
 
     playVoice(startTime,echoVolume,i===0);
   }
@@ -750,7 +758,7 @@ function stopMusicPlayback(){
 
 function playback(){
   if(mode==="sample" && hasSampleTone()){
-    playNote(baseNote);
+    playNote(baseNote,{noEcho:true});
   }
 
   if(mode==="music"){
