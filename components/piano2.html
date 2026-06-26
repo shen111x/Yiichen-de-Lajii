@@ -457,7 +457,18 @@ function output(gain){
 function playNote(freq){
   const a=ctx();
   const gain=a.createGain();
-  const volume=masterVolume*Math.min(1.55, Math.max(1, Math.pow(523.25/freq,.5)));
+
+  const minFreq = 261.63;
+  const maxFreq = 1046.50;
+
+  const minComp = 1.0;
+  const maxComp = 3.0;
+
+  const t = (maxFreq - freq) / (maxFreq - minFreq);
+  const comp = minComp + t * (maxComp - minComp);
+
+  const volume = masterVolume * comp;
+
   output(gain);
 
   if(sample){
