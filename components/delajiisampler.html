@@ -830,8 +830,37 @@ modeToggle.onclick=()=>{
 updatePlayableState();
 loadDefaultSample();
 
-function trigger(x,y){
-  const key=document.elementFromPoint(x,y);
+function expandedBlackKeyFromPoint(x,y){
+  const keys=document.getElementById("keys");
+  const keysRect=keys.getBoundingClientRect();
+
+  if(x<keysRect.left || x>keysRect.right) return null;
+  if(y<keysRect.top || y>keysRect.top+(keysRect.height*.55)) return null;
+
+  const blacks=[...keys.querySelectorAll(".black")].map(key=>{
+    const rect=key.getBoundingClientRect();
+
+    return {
+      key,
+      center:rect.left+(rect.width/2)
+    };
+  });
+  const maxHalfWidth=keysRect.width/28;
+
+  for(let i=0;i<blacks.length;i++){
+    const expandedLeft=i===0 ? keysRect.left : (blacks[i-1].center+blacks[i].center)/2;
+    const expandedRight=i===blacks.length-1 ? keysRect.right : (blacks[i].center+blacks[i+1].center)/2;
+    const left=Math.max(expandedLeft,blacks[i].center-maxHalfWidth);
+    const right=Math.min(expandedRight,blacks[i].center+maxHalfWidth);
+
+    if(x>=left && x<right) return blacks[i].key;
+  }
+
+  return null;
+}
+
+function trigger(x,y,useExpandedBlackKeys=false){
+  const key=(useExpandedBlackKeys ? expandedBlackKeyFromPoint(x,y) : null) || document.elementFromPoint(x,y);
   if(!key?.dataset.note || key===lastKey) return;
 
   lastKey?.classList.remove("active");
@@ -841,9 +870,9 @@ function trigger(x,y){
   playNote(+key.dataset.note);
 }
 
-window.addEventListener("pointerdown",e=>trigger(e.clientX,e.clientY));
+window.addEventListener("pointerdown",e=>trigger(e.clientX,e.clientY,e.pointerType!=="mouse"));
 window.addEventListener("pointermove",e=>{
-  if(e.buttons || e.pointerType==="touch") trigger(e.clientX,e.clientY);
+  if(e.buttons || e.pointerType==="touch") trigger(e.clientX,e.clientY,e.pointerType!=="mouse");
 });
 window.addEventListener("pointerup",()=>{
   lastKey?.classList.remove("active");
