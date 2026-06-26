@@ -90,7 +90,7 @@ function setHeaderPaths() {
   }
 
   if (piano) {
-    piano.src = siteRoot + 'components/piano2.html';
+    piano.src = siteRoot + 'components/delajiisampler.html';
   }
 
   menuItems.forEach(function(item) {

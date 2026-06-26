@@ -31,7 +31,7 @@
   --slider-input-width:var(--slider-track-width);
   --logo-letter-spacing:-0.04em;
   --logo-word-spacing:-0.16em;
-  --logo-font-size:7.16cqw;
+  --logo-font-size:6.75cqw;
   --record-red:#8b0000;
   --play-green:#0f5f2f;
 }
@@ -176,11 +176,15 @@ input[type="range"]::-moz-range-thumb{
 }
 
 button{
+  -webkit-appearance:none;
+  appearance:none;
   width:var(--button-width);
   height:var(--button-height);
   padding:0;
   background:#fff;
   border:var(--stroke) solid #000;
+  border-radius:0;
+  color:#000;
   font-size:var(--button-font-size);
   cursor:pointer;
   position:relative;
@@ -404,13 +408,15 @@ button{
 </div>
 
 <script>
-let audio, sample=null, lastKey=null;
+let audio, defaultSample=null, sample=null, lastKey=null;
 let mode="sample";
 let music=[], musicRecording=false, musicStart=0;
 let busy=false, recordTimer=null, countTimer=null, activeRecorder=null, activeStream=null;
 let recordSession=0;
 
 const baseNote=261.63;
+const defaultSampleUrl="../sound/piano/delajiikey.wav";
+const masterVolume=.75;
 const recordBtn=document.getElementById("record");
 const playBtn=document.getElementById("play");
 const resetBtn=document.getElementById("reset");
@@ -422,6 +428,24 @@ const reverb=document.getElementById("reverb");
 function ctx(){
   audio ||= new AudioContext();
   return audio;
+}
+
+async function loadDefaultSample(){
+  try{
+    const a=ctx();
+    const response=await fetch(defaultSampleUrl);
+    const buffer=await response.arrayBuffer();
+
+    defaultSample=await a.decodeAudioData(buffer);
+    if(!sample){
+      sample=defaultSample;
+      recordBtn.classList.add("ready");
+      updatePlayableState();
+    }
+  }catch(err){
+    defaultSample=null;
+    updatePlayableState();
+  }
 }
 
 function output(gain){
@@ -452,6 +476,18 @@ function output(gain){
 function playNote(freq){
   const a=ctx();
   const gain=a.createGain();
+
+  const minFreq = 261.63;
+  const maxFreq = 1046.50;
+
+  const minComp = 1.0;
+  const maxComp = 2.75;
+
+  const t = (maxFreq - freq) / (maxFreq - minFreq);
+  const comp = minComp + t * (maxComp - minComp);
+
+  const volume = masterVolume * comp;
+
   output(gain);
 
   if(sample){
@@ -463,7 +499,7 @@ function playNote(freq){
     src.playbackRate.value=rate;
     src.connect(gain);
 
-    gain.gain.setValueAtTime(.2,a.currentTime);
+    gain.gain.setValueAtTime(volume,a.currentTime);
     gain.gain.exponentialRampToValueAtTime(.001,a.currentTime+duration);
 
     src.start();
@@ -474,7 +510,7 @@ function playNote(freq){
     osc.frequency.value=freq;
     osc.connect(gain);
 
-    gain.gain.setValueAtTime(.2,a.currentTime);
+    gain.gain.setValueAtTime(volume,a.currentTime);
     gain.gain.exponentialRampToValueAtTime(.001,a.currentTime+.45);
 
     osc.start();
@@ -537,6 +573,7 @@ async function recordSample(){
 
   try{
     const a=ctx();
+    await a.resume?.();
     const stream=await navigator.mediaDevices.getUserMedia({audio:true});
     activeStream=stream;
     const canRecord=await preRecordCountdown(session);
@@ -550,37 +587,66 @@ async function recordSample(){
       return;
     }
 
-    const rec=new MediaRecorder(stream);
+    const source=a.createMediaStreamSource(stream);
+    const recorder=a.createScriptProcessor(4096,1,1);
+    const silence=a.createGain();
     const chunks=[];
-    activeRecorder=rec;
-    activeStream=stream;
+    let finished=false;
 
-    rec.ondataavailable=e=>chunks.push(e.data);
-    rec.onstop=async()=>{
+    silence.gain.value=0;
+    source.connect(recorder);
+    recorder.connect(silence);
+    silence.connect(a.destination);
+
+    recorder.onaudioprocess=e=>{
+      chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    };
+
+    const finish=()=>{
+      if(finished) return;
+      finished=true;
+      source.disconnect();
+      recorder.disconnect();
+      silence.disconnect();
       stream.getTracks().forEach(t=>t.stop());
       activeRecorder=null;
       activeStream=null;
 
-      if(session!==recordSession){
-        busy=false;
-        return;
-      }
+      try{
+        if(session===recordSession){
+          const length=chunks.reduce((sum,chunk)=>sum+chunk.length,0);
+          if(length){
+            const buffer=a.createBuffer(1,length,a.sampleRate);
+            const data=buffer.getChannelData(0);
+            let offset=0;
 
-      const blob=new Blob(chunks);
-      sample=await a.decodeAudioData(await blob.arrayBuffer());
-      recordBtn.textContent="●";
-      recordBtn.classList.remove("recording");
-      recordBtn.classList.add("ready");
-      clearRecordTimers();
-      clearResetProgress();
-      busy=false;
-      updatePlayableState();
+            chunks.forEach(chunk=>{
+              data.set(chunk,offset);
+              offset+=chunk.length;
+            });
+
+            sample=buffer;
+            recordBtn.classList.add("ready");
+          }else{
+            sample=null;
+          }
+        }
+      }finally{
+        recordBtn.textContent="●";
+        recordBtn.classList.remove("recording");
+        clearRecordTimers();
+        clearResetProgress();
+        busy=false;
+        updatePlayableState();
+      }
     };
+
+    activeRecorder={state:"recording", stop:finish};
+    activeStream=stream;
 
     setResetLabel("0");
     resetBtn.classList.add("progress", "sample-progress");
-    rec.start();
-    recordTimer=setTimeout(()=>rec.stop(),2000);
+    recordTimer=setTimeout(finish,2000);
   }catch(err){
     recordBtn.classList.remove("recording");
     clearResetProgress();
@@ -653,7 +719,7 @@ function reset(){
   busy=false;
 
   if(mode==="sample"){
-    sample=null;
+    sample=defaultSample;
     recordBtn.textContent="●";
   }else{
     music=[];
@@ -688,6 +754,7 @@ modeToggle.onclick=()=>{
 };
 
 updatePlayableState();
+loadDefaultSample();
 
 function trigger(x,y){
   const key=document.elementFromPoint(x,y);
