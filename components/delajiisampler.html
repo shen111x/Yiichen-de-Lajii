@@ -417,6 +417,8 @@ let recordSession=0;
 const baseNote=261.63;
 const defaultSampleUrl="../sound/piano/delajiikey.wav";
 const masterVolume=.75;
+const notePeriod=.1;
+const echoGap=.001;
 const recordBtn=document.getElementById("record");
 const playBtn=document.getElementById("play");
 const resetBtn=document.getElementById("reset");
@@ -451,70 +453,66 @@ async function loadDefaultSample(){
 function output(gain){
   const a=ctx();
   const dry=a.createGain();
-  const echoAmount=Number(reverb.value);
-  const echoCount=Math.round(echoAmount*10);
-  const echoGap=.305 - echoAmount*.08;
 
   dry.gain.value=1;
 
   gain.connect(dry);
   dry.connect(a.destination);
-
-  for(let i=1;i<=echoCount;i++){
-    const delay=a.createDelay();
-    const wet=a.createGain();
-
-    delay.delayTime.value=echoGap*i;
-    wet.gain.value=.22*(1 - (i-1)/(echoCount+1));
-
-    gain.connect(delay);
-    delay.connect(wet);
-    wet.connect(a.destination);
-  }
 }
 
 function playNote(freq){
   const a=ctx();
-  const gain=a.createGain();
+  const echoCount=Math.round(Number(reverb.value)*10);
 
   const minFreq = 261.63;
   const maxFreq = 1046.50;
 
   const minComp = 1.0;
-  const maxComp = 1.5;
+  const maxComp = 1.0;
 
   const t = (maxFreq - freq) / (maxFreq - minFreq);
   const comp = minComp + t * (maxComp - minComp);
 
   const volume = masterVolume * comp;
 
-  output(gain);
+  function playVoice(startTime, voiceVolume, isFirst){
+    const gain=a.createGain();
+    output(gain);
 
-  if(sample){
-    const src=a.createBufferSource();
-    const rate=freq/baseNote;
-    const duration=sample.duration/rate;
+    if(sample){
+      const src=a.createBufferSource();
+      const rate=freq/baseNote;
+      const playDuration=isFirst ? sample.duration/rate : Math.min(sample.duration/rate,notePeriod);
 
-    src.buffer=sample;
-    src.playbackRate.value=rate;
-    src.connect(gain);
+      src.buffer=sample;
+      src.playbackRate.value=rate;
+      src.connect(gain);
 
-    gain.gain.setValueAtTime(volume,a.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.001,a.currentTime+duration);
+      gain.gain.setValueAtTime(voiceVolume,startTime);
+      gain.gain.exponentialRampToValueAtTime(.001,startTime+playDuration);
 
-    src.start();
-    src.stop(a.currentTime+duration);
-  }else{
-    const osc=a.createOscillator();
-    osc.type="triangle";
-    osc.frequency.value=freq;
-    osc.connect(gain);
+      src.start(startTime);
+      src.stop(startTime+playDuration);
+    }else{
+      const osc=a.createOscillator();
 
-    gain.gain.setValueAtTime(volume,a.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.001,a.currentTime+.45);
+      osc.type="triangle";
+      osc.frequency.value=freq;
+      osc.connect(gain);
 
-    osc.start();
-    osc.stop(a.currentTime+.4);
+      gain.gain.setValueAtTime(voiceVolume,startTime);
+      gain.gain.exponentialRampToValueAtTime(.001,startTime+notePeriod);
+
+      osc.start(startTime);
+      osc.stop(startTime+notePeriod);
+    }
+  }
+
+  for(let i=0;i<=echoCount;i++){
+    const startTime=a.currentTime+i*(notePeriod+echoGap);
+    const echoVolume=volume*(i===0 ? 1 : .55*Math.pow(.78,i-1));
+
+    playVoice(startTime,echoVolume,i===0);
   }
 
   if(mode==="music" && musicRecording){
