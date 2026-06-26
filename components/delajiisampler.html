@@ -215,6 +215,10 @@ button{
   color:var(--play-green);
 }
 
+#play.playing{
+  color:#000;
+}
+
 #reset{
   width:var(--reset-width);
 }
@@ -409,14 +413,16 @@ button{
 
 <script>
 let audio, defaultSample=null, sample=null, lastKey=null;
+let sampleEchoOffset=0;
 let mode="sample";
 let music=[], musicRecording=false, musicStart=0;
+let musicPlaying=false, musicPlaybackTimers=[];
 let busy=false, recordTimer=null, countTimer=null, activeRecorder=null, activeStream=null;
 let recordSession=0;
 
 const baseNote=261.63;
 const defaultSampleUrl="../sound/piano/delajiikey.wav";
-const masterVolume=.55;
+const masterVolume=.75;
 const notePeriod=.1;
 const echoGap=.0001;
 const recordBtn=document.getElementById("record");
@@ -441,6 +447,7 @@ async function loadDefaultSample(){
     defaultSample=await a.decodeAudioData(buffer);
     if(!sample){
       sample=defaultSample;
+      sampleEchoOffset=0;
       recordBtn.classList.add("ready");
       updatePlayableState();
     }
@@ -448,6 +455,31 @@ async function loadDefaultSample(){
     defaultSample=null;
     updatePlayableState();
   }
+}
+
+function findLoudestUnitOffset(buffer){
+  const data=buffer.getChannelData(0);
+  const sampleRate=buffer.sampleRate;
+  const unitSize=Math.max(1,Math.floor(notePeriod*sampleRate));
+  const hop=Math.max(1,Math.floor(unitSize/4));
+  let bestIndex=0;
+  let bestEnergy=0;
+
+  for(let i=0;i<=data.length-unitSize;i+=hop){
+    let energy=0;
+
+    for(let j=0;j<unitSize;j++){
+      const value=data[i+j];
+      energy+=value*value;
+    }
+
+    if(energy>bestEnergy){
+      bestEnergy=energy;
+      bestIndex=i;
+    }
+  }
+
+  return bestIndex/sampleRate;
 }
 
 function output(gain){
@@ -482,7 +514,9 @@ function playNote(freq){
     if(sample){
       const src=a.createBufferSource();
       const rate=freq/baseNote;
-      const playDuration=isFirst ? sample.duration/rate : Math.min(sample.duration/rate,notePeriod);
+      const sourceOffset=isFirst ? 0 : sampleEchoOffset;
+      const availableDuration=Math.max(0,sample.duration-sourceOffset);
+      const playDuration=isFirst ? sample.duration/rate : Math.min(availableDuration/rate,notePeriod);
 
       src.buffer=sample;
       src.playbackRate.value=rate;
@@ -491,7 +525,7 @@ function playNote(freq){
       gain.gain.setValueAtTime(voiceVolume,startTime);
       gain.gain.exponentialRampToValueAtTime(.001,startTime+playDuration);
 
-      src.start(startTime);
+      src.start(startTime,sourceOffset);
       src.stop(startTime+playDuration);
     }else{
       const osc=a.createOscillator();
@@ -535,6 +569,8 @@ function hasSampleTone(){
 function updatePlayableState(){
   sampleStatus.textContent=sample ? "[on]off" : "on[off]";
   playBtn.classList.toggle("ready", mode==="sample" ? hasSampleTone() : Boolean(music.length));
+  playBtn.classList.toggle("playing", mode==="music" && musicPlaying);
+  playBtn.textContent=mode==="music" && musicPlaying ? "■" : "▶";
 }
 
 function clearRecordTimers(){
@@ -628,9 +664,11 @@ async function recordSample(){
             });
 
             sample=buffer;
+            sampleEchoOffset=findLoudestUnitOffset(sample);
             recordBtn.classList.add("ready");
           }else{
             sample=null;
+            sampleEchoOffset=0;
           }
         }
       }finally{
@@ -661,6 +699,7 @@ async function recordSample(){
 
 async function recordMusic(){
   if(busy) return;
+  stopMusicPlayback();
   const session=++recordSession;
   busy=true;
   music=[];
@@ -702,26 +741,50 @@ function stopMusicRecord(cancelSession=false){
   updatePlayableState();
 }
 
+function stopMusicPlayback(){
+  musicPlaybackTimers.forEach(timer=>clearTimeout(timer));
+  musicPlaybackTimers=[];
+  musicPlaying=false;
+  updatePlayableState();
+}
+
 function playback(){
   if(mode==="sample" && hasSampleTone()){
     playNote(baseNote);
   }
 
   if(mode==="music"){
+    if(musicPlaying){
+      stopMusicPlayback();
+      return;
+    }
+
+    if(!music.length) return;
+
+    musicPlaying=true;
+    updatePlayableState();
+
     music.forEach(n=>{
-      setTimeout(()=>playNote(n.f),n.t);
+      const timer=setTimeout(()=>playNote(n.f),n.t);
+      musicPlaybackTimers.push(timer);
     });
+
+    const lastNoteTime=Math.max(...music.map(n=>n.t));
+    const finishTimer=setTimeout(stopMusicPlayback,lastNoteTime+(notePeriod*1000)+120);
+    musicPlaybackTimers.push(finishTimer);
   }
 }
 
 function reset(){
   recordSession+=1;
+  stopMusicPlayback();
   stopActiveRecorder();
   clearRecordTimers();
   busy=false;
 
   if(mode==="sample"){
     sample=defaultSample;
+    sampleEchoOffset=0;
     recordBtn.textContent="●";
   }else{
     music=[];
@@ -750,6 +813,7 @@ playBtn.onclick=playback;
 resetBtn.onclick=reset;
 
 modeToggle.onclick=()=>{
+  stopMusicPlayback();
   mode = mode==="sample" ? "music" : "sample";
   modeToggle.classList.toggle("on", mode==="music");
   updatePlayableState();
