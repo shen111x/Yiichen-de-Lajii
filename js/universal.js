@@ -100,6 +100,8 @@ function setHeaderPaths() {
 
     item.href = slug === 'home'
       ? siteRoot + 'index.html'
+      : (slug === 'wearable' || slug === 'bags')
+        ? siteRoot + 'pages/' + slug + '/'
       : siteRoot + slug + '/';
   });
 }
