@@ -528,9 +528,13 @@ function setResetLabel(text){
   resetLabel.textContent=text;
 }
 
+function hasSampleTone(){
+  return Boolean(sample || !defaultSample);
+}
+
 function updatePlayableState(){
   sampleStatus.textContent=sample ? "[on]off" : "on[off]";
-  playBtn.classList.toggle("ready", mode==="sample" ? Boolean(sample) : Boolean(music.length));
+  playBtn.classList.toggle("ready", mode==="sample" ? hasSampleTone() : Boolean(music.length));
 }
 
 function clearRecordTimers(){
@@ -699,7 +703,7 @@ function stopMusicRecord(cancelSession=false){
 }
 
 function playback(){
-  if(mode==="sample" && sample){
+  if(mode==="sample" && hasSampleTone()){
     playNote(baseNote);
   }
 
