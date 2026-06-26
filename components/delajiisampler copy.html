@@ -497,8 +497,29 @@ function playNote(freq, options={}){
   const echoCount=options.noEcho ? 0 : Math.round(Number(reverb.value)*10);
 
   const volume = masterVolume;
+  const randomize=.15;
+  const echoProgress=Math.min(1,Math.max(0,(freq-261.63)/(987.77-261.63)));
+  const echoDecay=.82-(echoProgress*.16);
 
-  function playVoice(startTime, voiceVolume, isFirst){
+  function varied(value){
+    return value*(1+((Math.random()*2-1)*randomize));
+  }
+
+  function connectVoice(source, gain, toneProgress){
+    if(toneProgress>0){
+      const tone=a.createBiquadFilter();
+
+      tone.type="lowpass";
+      tone.frequency.value=18000-(toneProgress*16400);
+      source.connect(tone);
+      tone.connect(gain);
+      return;
+    }
+
+    source.connect(gain);
+  }
+
+  function playVoice(startTime, voiceVolume, isFirst, voicePeriod=notePeriod, toneProgress=0){
     const gain=a.createGain();
     output(gain);
 
@@ -507,7 +528,7 @@ function playNote(freq, options={}){
       const rate=freq/baseNote;
       const sourceOffset=isFirst ? 0 : sampleEchoOffset;
       const availableDuration=Math.max(0,sample.duration-sourceOffset);
-      const playDuration=isFirst ? sample.duration/rate : Math.min(availableDuration/rate,notePeriod);
+      const playDuration=isFirst ? sample.duration/rate : Math.min(availableDuration/rate,voicePeriod);
 
       src.buffer=sample;
       src.playbackRate.value=rate;
@@ -523,9 +544,9 @@ function playNote(freq, options={}){
 
         src.connect(highpass);
         highpass.connect(lowpass);
-        lowpass.connect(gain);
+        connectVoice(lowpass,gain,toneProgress);
       }else{
-        src.connect(gain);
+        connectVoice(src,gain,toneProgress);
       }
 
       gain.gain.setValueAtTime(voiceVolume,startTime);
@@ -538,23 +559,43 @@ function playNote(freq, options={}){
 
       osc.type="triangle";
       osc.frequency.value=freq;
-      osc.connect(gain);
+      connectVoice(osc,gain,toneProgress);
 
       gain.gain.setValueAtTime(voiceVolume,startTime);
-      gain.gain.exponentialRampToValueAtTime(.001,startTime+notePeriod);
+      gain.gain.exponentialRampToValueAtTime(.001,startTime+voicePeriod);
 
       osc.start(startTime);
-      osc.stop(startTime+notePeriod);
+      osc.stop(startTime+voicePeriod);
     }
   }
 
-  for(let i=0;i<=echoCount;i++){
-    const startTime=a.currentTime+i*(notePeriod+echoGap);
-    const echoProgress=Math.min(1,Math.max(0,(freq-261.63)/(987.77-261.63)));
-    const echoDecay=.82-(echoProgress*.1);
-    const echoVolume=volume*(i===0 ? 1 : .55*Math.pow(echoDecay,i-1));
+  function scheduleSplitEcho(startTime, nextTime, voiceVolume, voicePeriod, toneProgress, chance){
+    if(chance<=0 || Math.random()>chance) return;
 
-    playVoice(startTime,echoVolume,i===0);
+    const splitTime=startTime+((nextTime-startTime)/2);
+    const splitVolume=voiceVolume*.55;
+    const splitPeriod=varied(voicePeriod);
+
+    playVoice(splitTime,splitVolume,false,splitPeriod,toneProgress);
+    scheduleSplitEcho(splitTime,nextTime,splitVolume,splitPeriod,toneProgress, chance*.1);
+  }
+
+  let startTime=a.currentTime;
+
+  for(let i=0;i<=echoCount;i++){
+    const voicePeriod=i===0 ? notePeriod : varied(notePeriod);
+    const toneProgress=echoCount>1 ? Math.max(0,(i-1)/(echoCount-1)) : 0;
+    const echoVolume=volume*(i===0 ? 1 : .55*Math.pow(echoDecay,i-1)*varied(1));
+    const nextTime=startTime+varied(notePeriod+echoGap);
+
+    playVoice(startTime,echoVolume,i===0,voicePeriod,toneProgress);
+
+    if(i>0){
+      const splitChance=echoCount>1 ? .8*((i-1)/(echoCount-1)) : 0;
+      scheduleSplitEcho(startTime,nextTime,echoVolume,voicePeriod,toneProgress,splitChance);
+    }
+
+    startTime=nextTime;
   }
 
   if(mode==="music" && musicRecording){
@@ -830,8 +871,37 @@ modeToggle.onclick=()=>{
 updatePlayableState();
 loadDefaultSample();
 
-function trigger(x,y){
-  const key=document.elementFromPoint(x,y);
+function expandedBlackKeyFromPoint(x,y){
+  const keys=document.getElementById("keys");
+  const keysRect=keys.getBoundingClientRect();
+
+  if(x<keysRect.left || x>keysRect.right) return null;
+  if(y<keysRect.top || y>keysRect.top+(keysRect.height*.55)) return null;
+
+  const blacks=[...keys.querySelectorAll(".black")].map(key=>{
+    const rect=key.getBoundingClientRect();
+
+    return {
+      key,
+      center:rect.left+(rect.width/2)
+    };
+  });
+  const maxHalfWidth=keysRect.width/28;
+
+  for(let i=0;i<blacks.length;i++){
+    const expandedLeft=i===0 ? keysRect.left : (blacks[i-1].center+blacks[i].center)/2;
+    const expandedRight=i===blacks.length-1 ? keysRect.right : (blacks[i].center+blacks[i+1].center)/2;
+    const left=Math.max(expandedLeft,blacks[i].center-maxHalfWidth);
+    const right=Math.min(expandedRight,blacks[i].center+maxHalfWidth);
+
+    if(x>=left && x<right) return blacks[i].key;
+  }
+
+  return null;
+}
+
+function trigger(x,y,useExpandedBlackKeys=false){
+  const key=(useExpandedBlackKeys ? expandedBlackKeyFromPoint(x,y) : null) || document.elementFromPoint(x,y);
   if(!key?.dataset.note || key===lastKey) return;
 
   lastKey?.classList.remove("active");
@@ -841,9 +911,9 @@ function trigger(x,y){
   playNote(+key.dataset.note);
 }
 
-window.addEventListener("pointerdown",e=>trigger(e.clientX,e.clientY));
+window.addEventListener("pointerdown",e=>trigger(e.clientX,e.clientY,e.pointerType!=="mouse"));
 window.addEventListener("pointermove",e=>{
-  if(e.buttons || e.pointerType==="touch") trigger(e.clientX,e.clientY);
+  if(e.buttons || e.pointerType==="touch") trigger(e.clientX,e.clientY,e.pointerType!=="mouse");
 });
 window.addEventListener("pointerup",()=>{
   lastKey?.classList.remove("active");
