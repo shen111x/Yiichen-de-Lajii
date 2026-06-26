@@ -551,7 +551,7 @@ function playNote(freq, options={}){
   for(let i=0;i<=echoCount;i++){
     const startTime=a.currentTime+i*(notePeriod+echoGap);
     const echoProgress=Math.min(1,Math.max(0,(freq-261.63)/(987.77-261.63)));
-    const echoDecay=.82-(echoProgress*.1);
+    const echoDecay=.82-(echoProgress*.16);
     const echoVolume=volume*(i===0 ? 1 : .55*Math.pow(echoDecay,i-1));
 
     playVoice(startTime,echoVolume,i===0);
