@@ -370,6 +370,8 @@ button{
   filter:none;
 }
 </style>
+<script defer src="../js/utility/disable-fast-double-tap-zoom.js"></script>
+<script defer src="../js/utility/disable-ios-pinch-zoom.js"></script>
 </head>
 
 <body>
@@ -444,6 +446,8 @@ let music=[], musicRecording=false, musicStart=0;
 let musicPlaying=false, musicPlaybackTimers=[];
 let busy=false, recordTimer=null, countTimer=null, activeRecorder=null, activeStream=null;
 let recordSession=0;
+let defaultSampleLoading=null;
+let playRequestId=0;
 
 const baseNote=261.63;
 const defaultSampleUrl="../sound/piano/delajiikey.wav";
@@ -499,6 +503,8 @@ function resetAudioAfterMicrophone(context){
 }
 
 async function loadDefaultSample(){
+  if(defaultSampleLoading) return defaultSampleLoading;
+  defaultSampleLoading=(async ()=>{
   try{
     const a=ctx();
     const response=await fetch(defaultSampleUrl);
@@ -515,6 +521,8 @@ async function loadDefaultSample(){
     defaultSample=null;
     updatePlayableState();
   }
+  })();
+  return defaultSampleLoading;
 }
 
 function findLoudestUnitOffset(buffer){
@@ -618,9 +626,17 @@ function output(gain){
   dry.connect(a.destination);
 }
 
-function playNote(freq, options={}){
+async function playNote(freq, options={}){
+  const shouldRecordMusic=mode==="music" && musicRecording;
+  const musicEventTime=performance.now()-musicStart;
   setAudioSessionType("playback");
   const a=ctx();
+  const requestId=++playRequestId;
+  const wasPending=a.state!=="running" || (!sample && defaultSampleLoading);
+  await a.resume?.();
+  if(!sample && defaultSampleLoading) await defaultSampleLoading;
+  if(wasPending && requestId!==playRequestId) return;
+
   const reverbProgress=Math.min(1,Math.max(0,Number(reverb.value)));
   const reverbTimeScale=1+((1-reverbProgress)*.5);
   const reverbVolumeScale=.8+(reverbProgress*.2);
@@ -733,8 +749,8 @@ function playNote(freq, options={}){
     startTime=nextTime;
   }
 
-  if(mode==="music" && musicRecording){
-    music.push({t:performance.now()-musicStart, f:freq});
+  if(shouldRecordMusic){
+    music.push({t:musicEventTime, f:freq});
   }
 }
 

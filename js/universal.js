@@ -285,32 +285,15 @@ initGoBackButtons();
 
 
 /* ================================
-   关闭 快速双击缩放
-   核心 hook：拦截 300ms 内、位置接近的第二次 touchend，防止 Safari 双击放大。
-   关闭方式：注释掉下面整个 IIFE。
-   其他 guard：如需单独启用 pinch / overscroll，请在页面 head 里引用 js/utility/ 对应文件。
+   全局缩放防护
+   核心 hook：统一加载 utility，避免每个页面单独引用。
    ================================ */
 
-(function() {
-  if (window.__disableFastDoubleTapZoomLoaded) return;
-  window.__disableFastDoubleTapZoomLoaded = true;
+function loadUtilityScript(path) {
+  var script = document.createElement('script');
+  script.src = siteRoot + path;
+  script.defer = true;
+  document.head.appendChild(script);
+}
 
-  var lastTouchEndTime = 0;
-  var lastTouchEndX = 0;
-  var lastTouchEndY = 0;
-
-  document.addEventListener('touchend', function(event) {
-    var touch = event.changedTouches[0];
-    var now = Date.now();
-    var movedX = Math.abs(touch.clientX - lastTouchEndX);
-    var movedY = Math.abs(touch.clientY - lastTouchEndY);
-
-    if (now - lastTouchEndTime < 300 && movedX < 24 && movedY < 24) {
-      event.preventDefault();
-    }
-
-    lastTouchEndTime = now;
-    lastTouchEndX = touch.clientX;
-    lastTouchEndY = touch.clientY;
-  }, { passive: false });
-}());
+loadUtilityScript('js/utility/disable-fast-double-tap-zoom.js');
