@@ -974,13 +974,16 @@ function playback(){
     musicPlaying=true;
     updatePlayableState();
 
+    const firstNoteTime=Math.min(...music.map(n=>n.t));
+    const playbackOffset=Math.max(0,firstNoteTime-1300);
+
     music.forEach(n=>{
-      const timer=setTimeout(()=>playNote(n.f),n.t);
+      const timer=setTimeout(()=>playNote(n.f),n.t-playbackOffset);
       musicPlaybackTimers.push(timer);
     });
 
     const lastNoteTime=Math.max(...music.map(n=>n.t));
-    const finishTimer=setTimeout(stopMusicPlayback,lastNoteTime+(notePeriod*1000)+120);
+    const finishTimer=setTimeout(stopMusicPlayback,lastNoteTime-playbackOffset+(notePeriod*1000)+120);
     musicPlaybackTimers.push(finishTimer);
   }
 }
