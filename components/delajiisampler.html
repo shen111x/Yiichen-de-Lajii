@@ -575,7 +575,7 @@ function playNote(freq, options={}){
   const reverbLeftness=(10-reverbValue)/9;
   const reverbTimeScale=1+(reverbLeftness*.5);
   const reverbVolumeScale=.8+(reverbProgress*.2);
-  const echoCount=options.noEcho ? 0 : Math.round(reverbValue);
+  const echoCount=options.noEcho ? 0 : Math.round(reverbProgress*10);
 
   const volume=masterVolume*reverbVolumeScale;
   const randomize=.15;
