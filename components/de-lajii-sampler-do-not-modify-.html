@@ -362,7 +362,12 @@ button{
 .black:nth-child(24){left:90.75%;}
 
 .active{
-  filter:brightness(.75);
+  filter:brightness(.8);
+}
+
+.black.active{
+  background:#555;
+  filter:none;
 }
 </style>
 </head>
@@ -1056,13 +1061,9 @@ function expandedBlackKeyFromPoint(x,y){
       center:rect.left+(rect.width/2)
     };
   });
-  const maxHalfWidth=keysRect.width/28;
-
   for(let i=0;i<blacks.length;i++){
-    const expandedLeft=i===0 ? keysRect.left : (blacks[i-1].center+blacks[i].center)/2;
-    const expandedRight=i===blacks.length-1 ? keysRect.right : (blacks[i].center+blacks[i+1].center)/2;
-    const left=Math.max(expandedLeft,blacks[i].center-maxHalfWidth);
-    const right=Math.min(expandedRight,blacks[i].center+maxHalfWidth);
+    const left=i===0 ? keysRect.left : (blacks[i-1].center+blacks[i].center)/2;
+    const right=i===blacks.length-1 ? keysRect.right : (blacks[i].center+blacks[i+1].center)/2;
 
     if(x>=left && x<right) return blacks[i].key;
   }
@@ -1083,7 +1084,7 @@ function trigger(x,y,useExpandedBlackKeys=false){
 
 window.addEventListener("pointerdown",e=>trigger(e.clientX,e.clientY,e.pointerType!=="mouse"));
 window.addEventListener("pointermove",e=>{
-  if(e.buttons || e.pointerType==="touch") trigger(e.clientX,e.clientY,e.pointerType!=="mouse");
+  if(e.buttons || e.pointerType==="touch") trigger(e.clientX,e.clientY,true);
 });
 window.addEventListener("pointerup",()=>{
   lastKey?.classList.remove("active");
