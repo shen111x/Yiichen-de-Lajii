@@ -433,7 +433,7 @@ button{
 
 <script>
 let audio, defaultSample=null, sample=null, lastKey=null;
-let sampleEchoOffset=0;
+let sampleEchoOffset=0, sampleRootNote=261.63;
 let mode="sample";
 let music=[], musicRecording=false, musicStart=0;
 let musicPlaying=false, musicPlaybackTimers=[];
@@ -537,6 +537,27 @@ function findLoudestUnitOffset(buffer){
   return bestIndex/sampleRate;
 }
 
+function detectRootNote(buffer){
+  const data=buffer.getChannelData(0);
+  const sampleRate=buffer.sampleRate;
+  const minLag=Math.floor(sampleRate/987.77);
+  const maxLag=Math.floor(sampleRate/261.63);
+  let bestLag=0, bestScore=0;
+
+  for(let lag=minLag;lag<=maxLag;lag++){
+    let score=0;
+    for(let i=0;i<data.length-lag;i+=4) score+=data[i]*data[i+lag];
+    if(score>bestScore){
+      bestScore=score;
+      bestLag=lag;
+    }
+  }
+
+  if(!bestLag) return baseNote;
+  const midi=Math.round(69+(12*Math.log2((sampleRate/bestLag)/440)));
+  return 440*Math.pow(2,((((midi-60)%12)+12)%12+60-69)/12);
+}
+
 function normalizeUserSample(buffer){
   const data=buffer.getChannelData(0);
   let peak=0, sum=0;
@@ -631,10 +652,12 @@ function playNote(freq, options={}){
 
     if(sample){
       const src=a.createBufferSource();
-      const rate=freq/baseNote;
+      const rate=freq/(sample!==defaultSample ? sampleRootNote : baseNote);
       const sourceOffset=isFirst ? 0 : sampleEchoOffset;
       const availableDuration=Math.max(0,sample.duration-sourceOffset);
-      const playDuration=isFirst ? sample.duration/rate : Math.min(availableDuration/rate,voicePeriod);
+      const rawDuration=isFirst ? sample.duration/rate : Math.min(availableDuration/rate,voicePeriod);
+      const cutStretchedSample=sample!==defaultSample && rate<1 && rawDuration>sample.duration;
+      const playDuration=cutStretchedSample ? sample.duration : rawDuration;
       const outputVolume=voiceVolume*(sample!==defaultSample ? userSampleGain : 1);
 
       src.buffer=sample;
@@ -833,10 +856,12 @@ async function recordSample(){
             sample=trimLeadingSilence(buffer);
             normalizeUserSample(sample);
             sampleEchoOffset=findLoudestUnitOffset(sample);
+            sampleRootNote=detectRootNote(sample);
             recordBtn.classList.add("ready");
           }else{
             sample=null;
             sampleEchoOffset=0;
+            sampleRootNote=baseNote;
           }
         }
       }finally{
@@ -929,7 +954,7 @@ function stopMusicPlayback(){
 
 function playback(){
   if(mode==="sample" && hasSampleTone()){
-    playNote(baseNote,{noEcho:true});
+    playNote(sample!==defaultSample ? sampleRootNote : baseNote,{noEcho:true});
   }
 
   if(mode==="music"){
@@ -964,6 +989,7 @@ function reset(){
   if(mode==="sample"){
     sample=defaultSample;
     sampleEchoOffset=0;
+    sampleRootNote=baseNote;
     recordBtn.textContent="●";
   }else{
     music=[];
