@@ -362,7 +362,12 @@ button{
 .black:nth-child(24){left:90.75%;}
 
 .active{
-  filter:brightness(.75);
+  filter:brightness(.8);
+}
+
+.black.active{
+  background:#555;
+  filter:none;
 }
 </style>
 </head>
@@ -1079,7 +1084,7 @@ function trigger(x,y,useExpandedBlackKeys=false){
 
 window.addEventListener("pointerdown",e=>trigger(e.clientX,e.clientY,e.pointerType!=="mouse"));
 window.addEventListener("pointermove",e=>{
-  if(e.buttons || e.pointerType==="touch") trigger(e.clientX,e.clientY,e.pointerType!=="mouse");
+  if(e.buttons || e.pointerType==="touch") trigger(e.clientX,e.clientY,true);
 });
 window.addEventListener("pointerup",()=>{
   lastKey?.classList.remove("active");

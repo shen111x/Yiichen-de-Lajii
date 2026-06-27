@@ -2,7 +2,7 @@
    页头代码部分
    ======================================================================================================================================== */
 
-if (location.protocol !== 'https:' && !/^(localhost|127\.0\.0\.1|::1)$/.test(location.hostname)) {
+if (location.hostname === 'yiichendelajii.com' && location.protocol !== 'https:') {
   location.replace('https://' + location.host + location.pathname + location.search + location.hash);
 }
 
