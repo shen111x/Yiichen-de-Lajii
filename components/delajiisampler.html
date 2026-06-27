@@ -490,6 +490,47 @@ function findLoudestUnitOffset(buffer){
   return bestIndex/sampleRate;
 }
 
+function normalizeUserSample(buffer){
+  const data=buffer.getChannelData(0);
+  let peak=0;
+
+  for(let i=0;i<data.length;i++){
+    peak=Math.max(peak,Math.abs(data[i]));
+  }
+
+  if(!peak) return;
+
+  const targetPeak=.9;
+  const maxBoost=8;
+  const gain=Math.min(maxBoost,targetPeak/peak);
+
+  if(gain<=1) return;
+
+  for(let i=0;i<data.length;i++){
+    data[i]*=gain;
+  }
+}
+
+function trimLeadingSilence(buffer){
+  const data=buffer.getChannelData(0);
+  const threshold=.015;
+  const padding=Math.floor(buffer.sampleRate*.015);
+  let start=0;
+
+  while(start<data.length && Math.abs(data[start])<threshold){
+    start++;
+  }
+
+  start=Math.max(0,start-padding);
+
+  if(start===0 || start>=data.length) return buffer;
+
+  const trimmed=ctx().createBuffer(1,data.length-start,buffer.sampleRate);
+  trimmed.getChannelData(0).set(data.subarray(start));
+
+  return trimmed;
+}
+
 function output(gain){
   const a=ctx();
   const dry=a.createGain();
@@ -502,12 +543,19 @@ function output(gain){
 
 function playNote(freq, options={}){
   const a=ctx();
-  const echoCount=options.noEcho ? 0 : Math.round(Number(reverb.value)*10);
+  const reverbProgress=Math.min(1,Math.max(0,Number(reverb.value)));
+  const reverbValue=1+(reverbProgress*9);
+  const reverbLeftness=(10-reverbValue)/9;
+  const reverbTimeScale=1+(reverbLeftness*.5);
+  const reverbVolumeScale=.8+(reverbProgress*.2);
+  const echoCount=options.noEcho ? 0 : Math.round(reverbValue);
 
-  const volume = masterVolume;
+  const volume=masterVolume*reverbVolumeScale;
   const randomize=.15;
   const echoProgress=Math.min(1,Math.max(0,(freq-261.63)/(987.77-261.63)));
   const echoDecay=.82-(echoProgress*.16);
+  const scaledNotePeriod=notePeriod*reverbTimeScale;
+  const scaledEchoGap=echoGap*reverbTimeScale;
 
   function varied(value){
     return value*(1+((Math.random()*2-1)*randomize));
@@ -591,10 +639,10 @@ function playNote(freq, options={}){
   let startTime=a.currentTime;
 
   for(let i=0;i<=echoCount;i++){
-    const voicePeriod=i===0 ? notePeriod : varied(notePeriod);
+    const voicePeriod=i===0 ? notePeriod : varied(scaledNotePeriod);
     const toneProgress=echoCount>1 ? Math.max(0,(i-1)/(echoCount-1)) : 0;
     const echoVolume=volume*(i===0 ? 1 : .55*Math.pow(echoDecay,i-1)*varied(1));
-    const nextTime=startTime+varied(notePeriod+echoGap);
+    const nextTime=startTime+varied(scaledNotePeriod+scaledEchoGap);
 
     playVoice(startTime,echoVolume,i===0,voicePeriod,toneProgress);
 
@@ -687,11 +735,6 @@ async function recordSample(){
     const chunks=[];
     let finished=false;
 
-    silence.gain.value=0;
-    source.connect(recorder);
-    recorder.connect(silence);
-    silence.connect(a.destination);
-
     recorder.onaudioprocess=e=>{
       chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
     };
@@ -719,7 +762,8 @@ async function recordSample(){
               offset+=chunk.length;
             });
 
-            sample=buffer;
+            sample=trimLeadingSilence(buffer);
+            normalizeUserSample(sample);
             sampleEchoOffset=findLoudestUnitOffset(sample);
             recordBtn.classList.add("ready");
           }else{
@@ -737,11 +781,28 @@ async function recordSample(){
       }
     };
 
+    setResetLabel("0");
+    resetBtn.classList.add("progress", "sample-progress");
+
+    await new Promise(resolve=>requestAnimationFrame(resolve));
+
+    if(session!==recordSession){
+      stream.getTracks().forEach(t=>t.stop());
+      recordBtn.classList.remove("recording");
+      clearResetProgress();
+      activeStream=null;
+      busy=false;
+      return;
+    }
+
+    silence.gain.value=0;
+    source.connect(recorder);
+    recorder.connect(silence);
+    silence.connect(a.destination);
+
     activeRecorder={state:"recording", stop:finish};
     activeStream=stream;
 
-    setResetLabel("0");
-    resetBtn.classList.add("progress", "sample-progress");
     recordTimer=setTimeout(finish,2000);
   }catch(err){
     recordBtn.classList.remove("recording");
