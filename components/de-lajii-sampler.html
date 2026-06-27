@@ -1047,7 +1047,7 @@ window.visualViewport?.addEventListener("resize",syncDprTypeScale);
   document.addEventListener(type,event=>event.preventDefault(),{capture:true});
 });
 
-function expandedBlackKeyFromPoint(x,y){
+function expandedBlackKeyFromPoint(x,y,useWidthLimit=false){
   const keysRect=keys.getBoundingClientRect();
 
   if(x<keysRect.left || x>keysRect.right) return null;
@@ -1061,9 +1061,13 @@ function expandedBlackKeyFromPoint(x,y){
       center:rect.left+(rect.width/2)
     };
   });
+  const maxHalfWidth=keysRect.width/28;
+
   for(let i=0;i<blacks.length;i++){
-    const left=i===0 ? keysRect.left : (blacks[i-1].center+blacks[i].center)/2;
-    const right=i===blacks.length-1 ? keysRect.right : (blacks[i].center+blacks[i+1].center)/2;
+    const expandedLeft=i===0 ? keysRect.left : (blacks[i-1].center+blacks[i].center)/2;
+    const expandedRight=i===blacks.length-1 ? keysRect.right : (blacks[i].center+blacks[i+1].center)/2;
+    const left=useWidthLimit ? Math.max(expandedLeft,blacks[i].center-maxHalfWidth) : expandedLeft;
+    const right=useWidthLimit ? Math.min(expandedRight,blacks[i].center+maxHalfWidth) : expandedRight;
 
     if(x>=left && x<right) return blacks[i].key;
   }
@@ -1071,8 +1075,8 @@ function expandedBlackKeyFromPoint(x,y){
   return null;
 }
 
-function trigger(x,y,useExpandedBlackKeys=false){
-  const key=(useExpandedBlackKeys ? expandedBlackKeyFromPoint(x,y) : null) || document.elementFromPoint(x,y);
+function trigger(x,y,useExpandedBlackKeys=false,useWidthLimit=false){
+  const key=(useExpandedBlackKeys ? expandedBlackKeyFromPoint(x,y,useWidthLimit) : null) || document.elementFromPoint(x,y);
   if(!key?.dataset.note || key===lastKey) return;
 
   lastKey?.classList.remove("active");
@@ -1082,13 +1086,26 @@ function trigger(x,y,useExpandedBlackKeys=false){
   playNote(+key.dataset.note);
 }
 
-window.addEventListener("pointerdown",e=>trigger(e.clientX,e.clientY,e.pointerType!=="mouse"));
+let pointerStartX=0, pointerStartY=0, pointerIsSlide=false;
+
+window.addEventListener("pointerdown",e=>{
+  pointerStartX=e.clientX;
+  pointerStartY=e.clientY;
+  pointerIsSlide=false;
+  trigger(e.clientX,e.clientY,e.pointerType!=="mouse",true);
+});
 window.addEventListener("pointermove",e=>{
-  if(e.buttons || e.pointerType==="touch") trigger(e.clientX,e.clientY,true);
+  if(e.pointerType==="touch"){
+    if(!pointerIsSlide) pointerIsSlide=Math.hypot(e.clientX-pointerStartX,e.clientY-pointerStartY)>8;
+    trigger(e.clientX,e.clientY,true,!pointerIsSlide);
+  }else if(e.buttons){
+    trigger(e.clientX,e.clientY,true);
+  }
 });
 window.addEventListener("pointerup",()=>{
   lastKey?.classList.remove("active");
   lastKey=null;
+  pointerIsSlide=false;
 });
 </script>
 
