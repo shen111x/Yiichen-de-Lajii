@@ -445,8 +445,31 @@ const modeToggle=document.getElementById("modeToggle");
 const reverb=document.getElementById("reverb");
 
 function ctx(){
-  audio ||= new AudioContext();
+  if(!audio || audio.state==="closed"){
+    setAudioSessionType("playback");
+    audio=new AudioContext();
+  }
   return audio;
+}
+
+function setAudioSessionType(type){
+  if(!navigator.audioSession) return;
+
+  try{
+    navigator.audioSession.type=type;
+  }catch(err){}
+}
+
+function stopStream(stream){
+  stream?.getTracks().forEach(track=>track.stop());
+}
+
+function resetAudioAfterMicrophone(context){
+  if(context!==audio) return;
+
+  audio=null;
+  setAudioSessionType("playback");
+  context.close?.().catch(()=>{});
 }
 
 async function loadDefaultSample(){
@@ -545,13 +568,14 @@ function output(gain){
 }
 
 function playNote(freq, options={}){
+  setAudioSessionType("playback");
   const a=ctx();
   const reverbProgress=Math.min(1,Math.max(0,Number(reverb.value)));
   const reverbValue=1+(reverbProgress*9);
   const reverbLeftness=(10-reverbValue)/9;
   const reverbTimeScale=1+(reverbLeftness*.5);
   const reverbVolumeScale=.8+(reverbProgress*.2);
-  const echoCount=options.noEcho ? 0 : Math.round(reverbValue);
+  const echoCount=options.noEcho ? 0 : Math.round(reverbProgress*10);
 
   const volume=masterVolume*reverbVolumeScale;
   const randomize=.15;
@@ -689,7 +713,8 @@ function clearRecordTimers(){
 
 function stopActiveRecorder(){
   if(activeRecorder?.state==="recording") activeRecorder.stop();
-  activeStream?.getTracks().forEach(t=>t.stop());
+  stopStream(activeStream);
+  if(audio) resetAudioAfterMicrophone(audio);
   activeRecorder=null;
   activeStream=null;
 }
@@ -717,14 +742,22 @@ async function recordSample(){
   recordBtn.classList.add("recording");
 
   try{
+    setAudioSessionType("play-and-record");
     const a=ctx();
     await a.resume?.();
-    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const stream=await navigator.mediaDevices.getUserMedia({
+      audio:{
+        echoCancellation:false,
+        noiseSuppression:false,
+        autoGainControl:false
+      }
+    });
     activeStream=stream;
     const canRecord=await preRecordCountdown(session);
 
     if(!canRecord){
-      stream.getTracks().forEach(t=>t.stop());
+      stopStream(stream);
+      resetAudioAfterMicrophone(a);
       recordBtn.classList.remove("recording");
       clearResetProgress();
       activeStream=null;
@@ -748,7 +781,7 @@ async function recordSample(){
       source.disconnect();
       recorder.disconnect();
       silence.disconnect();
-      stream.getTracks().forEach(t=>t.stop());
+      stopStream(stream);
       activeRecorder=null;
       activeStream=null;
 
@@ -781,6 +814,7 @@ async function recordSample(){
         clearResetProgress();
         busy=false;
         updatePlayableState();
+        resetAudioAfterMicrophone(a);
       }
     };
 
@@ -790,7 +824,8 @@ async function recordSample(){
     await new Promise(resolve=>requestAnimationFrame(resolve));
 
     if(session!==recordSession){
-      stream.getTracks().forEach(t=>t.stop());
+      stopStream(stream);
+      resetAudioAfterMicrophone(a);
       recordBtn.classList.remove("recording");
       clearResetProgress();
       activeStream=null;
@@ -810,9 +845,10 @@ async function recordSample(){
   }catch(err){
     recordBtn.classList.remove("recording");
     clearResetProgress();
-    activeStream?.getTracks().forEach(t=>t.stop());
+    stopStream(activeStream);
     activeStream=null;
     activeRecorder=null;
+    if(audio) resetAudioAfterMicrophone(audio);
     busy=false;
   }
 }
