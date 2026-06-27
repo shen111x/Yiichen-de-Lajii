@@ -802,6 +802,10 @@ async function recordSample(){
   recordBtn.classList.add("recording");
 
   try{
+    if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){
+      throw new Error("Microphone requires HTTPS");
+    }
+
     setAudioSessionType("play-and-record");
     const a=ctx();
     await a.resume?.();
@@ -895,11 +899,13 @@ async function recordSample(){
 
     recordTimer=setTimeout(finish,2000);
   }catch(err){
+    console.error("Sample record failed:", err);
     stopStream(activeStream);
     activeStream=null;
     activeRecorder=null;
     if(audio) resetAudioAfterMicrophone(audio);
     resetRecordingUi("recording");
+    setResetLabel(!window.isSecureContext ? "HTTPS" : err?.name==="NotAllowedError" ? "Mic Denied" : "Mic Error");
   }
 }
 
