@@ -446,9 +446,18 @@ const reverb=document.getElementById("reverb");
 
 function ctx(){
   if(!audio || audio.state==="closed"){
+    setAudioSessionType("playback");
     audio=new AudioContext();
   }
   return audio;
+}
+
+function setAudioSessionType(type){
+  if(!navigator.audioSession) return;
+
+  try{
+    navigator.audioSession.type=type;
+  }catch(err){}
 }
 
 function stopStream(stream){
@@ -459,6 +468,7 @@ function resetAudioAfterMicrophone(context){
   if(context!==audio) return;
 
   audio=null;
+  setAudioSessionType("playback");
   context.close?.().catch(()=>{});
 }
 
@@ -558,6 +568,7 @@ function output(gain){
 }
 
 function playNote(freq, options={}){
+  setAudioSessionType("playback");
   const a=ctx();
   const reverbProgress=Math.min(1,Math.max(0,Number(reverb.value)));
   const reverbValue=1+(reverbProgress*9);
@@ -731,6 +742,7 @@ async function recordSample(){
   recordBtn.classList.add("recording");
 
   try{
+    setAudioSessionType("play-and-record");
     const a=ctx();
     await a.resume?.();
     const stream=await navigator.mediaDevices.getUserMedia({
