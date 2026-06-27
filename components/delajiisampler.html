@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
 @font-face{
   font-family:"ImperialScript";
@@ -22,6 +22,7 @@
   --global-stroke-width:calc(var(--base--font--size) * var(--stroke-ratio));
   --stroke:var(--global-stroke-width);
   --bottom-stroke-compensation:0.22;
+  --dpr-type-scale:1;
   --button-width:13cqw;
   --reset-width:17.56cqw;
   --button-height:6.81cqw;
@@ -29,7 +30,7 @@
   --dashboard-padding-x:1.56cqw;
   --dashboard-padding-y:1.56cqw;
   --button-font-size:4cqw;
-  --play-font-size:4.4cqw;
+  --play-font-size:4.93cqw;
   --record-font-size:3.8cqw;
   --mode-font-size:2.93cqw;
   --toggle-width:4.55cqw;
@@ -59,15 +60,16 @@ html,body{
   overflow:hidden;
   box-sizing:border-box;
   font-family:Arial, sans-serif;
-  -webkit-text-size-adjust:100%;
-  text-size-adjust:100%;
+  -webkit-text-size-adjust:none;
+  text-size-adjust:none;
 }
 
-button, input, select, textarea
-  {
-  -webkit-text-size-adjust:100%;
-  text-size-adjust:100%;
-
+button,
+input,
+select,
+textarea{
+  -webkit-text-size-adjust:none;
+  text-size-adjust:none;
 }
 
 .piano-main{
@@ -120,7 +122,7 @@ button, input, select, textarea
 
 .logo{
   font-family:"ImperialScript", "Brush Script MT", "Brush Script Std", cursive;
-  font-size:var(--logo-font-size);
+  font-size:calc(var(--logo-font-size) * var(--dpr-type-scale));
   font-weight:400;
   letter-spacing:var(--logo-letter-spacing);
   word-spacing:var(--logo-word-spacing);
@@ -198,6 +200,10 @@ input[type="range"]::-moz-range-thumb{
 button{
   -webkit-appearance:none;
   appearance:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
   width:var(--button-width);
   height:var(--button-height);
   padding:0;
@@ -205,7 +211,8 @@ button{
   border:var(--stroke) solid #000;
   border-radius:0;
   color:#000;
-  font-size:var(--button-font-size);
+  font-size:calc(var(--button-font-size) * var(--dpr-type-scale));
+  line-height:1;
   cursor:pointer;
   position:relative;
   overflow:hidden;
@@ -213,7 +220,7 @@ button{
 
 #record{
   color:var(--record-red);
-  font-size:var(--record-font-size);
+  font-size:calc(var(--record-font-size) * var(--dpr-type-scale));
 }
 
 #record.recording{
@@ -229,7 +236,7 @@ button{
 
 #play{
   color:#bbb;
-  font-size:var(--play-font-size);
+  font-size:calc(var(--play-font-size) * var(--dpr-type-scale));
 }
 
 #play.ready{
@@ -267,6 +274,9 @@ button{
 #reset .button-label{
   position:relative;
   z-index:1;
+  display:block;
+  line-height:1;
+  transform:translateY(0.04em);
 }
 
 #reset.progress .button-label{
@@ -283,7 +293,7 @@ button{
   display:flex;
   align-items:center;
   gap:0.78cqw;
-  font-size:var(--mode-font-size);
+  font-size:calc(var(--mode-font-size) * var(--dpr-type-scale));
   line-height:1.2;
 }
 
@@ -372,7 +382,7 @@ button{
     <div class="panel-left">
 
       <div class="slider-row">
-        <input id="reverb" type="range" min="0" max="1" step="0.01" value="0.25">
+        <input id="reverb" type="range" min="0" max="1" step="0.01" value="0">
       </div>
 
       <div class="controls">
@@ -451,32 +461,19 @@ const resetLabel=document.getElementById("resetLabel");
 const modeToggle=document.getElementById("modeToggle");
 const reverb=document.getElementById("reverb");
 
+reverb.value=0;
+
+function syncDprTypeScale(){
+  const dpr=window.devicePixelRatio || 1;
+  const scale=dpr>=2.5 ? .852 : 1;
+
+  document.documentElement.style.setProperty("--dpr-type-scale", scale);
+  document.documentElement.dataset.dpr=String(Math.round(dpr*100)/100);
+}
+
 function ctx(){
-  if(!audio || audio.state==="closed"){
-    setAudioSessionType("playback");
-    audio=new AudioContext();
-  }
+  audio ||= new AudioContext();
   return audio;
-}
-
-function setAudioSessionType(type){
-  if(!navigator.audioSession) return;
-
-  try{
-    navigator.audioSession.type=type;
-  }catch(err){}
-}
-
-function stopStream(stream){
-  stream?.getTracks().forEach(track=>track.stop());
-}
-
-function resetAudioAfterMicrophone(context){
-  if(context!==audio) return;
-
-  audio=null;
-  setAudioSessionType("playback");
-  context.close?.().catch(()=>{});
 }
 
 async function loadDefaultSample(){
@@ -575,14 +572,13 @@ function output(gain){
 }
 
 function playNote(freq, options={}){
-  setAudioSessionType("playback");
   const a=ctx();
   const reverbProgress=Math.min(1,Math.max(0,Number(reverb.value)));
   const reverbValue=1+(reverbProgress*9);
   const reverbLeftness=(10-reverbValue)/9;
   const reverbTimeScale=1+(reverbLeftness*.5);
   const reverbVolumeScale=.8+(reverbProgress*.2);
-  const echoCount=options.noEcho ? 0 : Math.round(reverbProgress*10);
+  const echoCount=options.noEcho || reverbProgress<=0 ? 0 : Math.round(reverbProgress*10);
 
   const volume=masterVolume*reverbVolumeScale;
   const randomize=.15;
@@ -720,8 +716,7 @@ function clearRecordTimers(){
 
 function stopActiveRecorder(){
   if(activeRecorder?.state==="recording") activeRecorder.stop();
-  stopStream(activeStream);
-  if(audio) resetAudioAfterMicrophone(audio);
+  activeStream?.getTracks().forEach(t=>t.stop());
   activeRecorder=null;
   activeStream=null;
 }
@@ -749,22 +744,14 @@ async function recordSample(){
   recordBtn.classList.add("recording");
 
   try{
-    setAudioSessionType("play-and-record");
     const a=ctx();
     await a.resume?.();
-    const stream=await navigator.mediaDevices.getUserMedia({
-      audio:{
-        echoCancellation:false,
-        noiseSuppression:false,
-        autoGainControl:false
-      }
-    });
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
     activeStream=stream;
     const canRecord=await preRecordCountdown(session);
 
     if(!canRecord){
-      stopStream(stream);
-      resetAudioAfterMicrophone(a);
+      stream.getTracks().forEach(t=>t.stop());
       recordBtn.classList.remove("recording");
       clearResetProgress();
       activeStream=null;
@@ -788,7 +775,7 @@ async function recordSample(){
       source.disconnect();
       recorder.disconnect();
       silence.disconnect();
-      stopStream(stream);
+      stream.getTracks().forEach(t=>t.stop());
       activeRecorder=null;
       activeStream=null;
 
@@ -821,7 +808,6 @@ async function recordSample(){
         clearResetProgress();
         busy=false;
         updatePlayableState();
-        resetAudioAfterMicrophone(a);
       }
     };
 
@@ -831,8 +817,7 @@ async function recordSample(){
     await new Promise(resolve=>requestAnimationFrame(resolve));
 
     if(session!==recordSession){
-      stopStream(stream);
-      resetAudioAfterMicrophone(a);
+      stream.getTracks().forEach(t=>t.stop());
       recordBtn.classList.remove("recording");
       clearResetProgress();
       activeStream=null;
@@ -852,10 +837,9 @@ async function recordSample(){
   }catch(err){
     recordBtn.classList.remove("recording");
     clearResetProgress();
-    stopStream(activeStream);
+    activeStream?.getTracks().forEach(t=>t.stop());
     activeStream=null;
     activeRecorder=null;
-    if(audio) resetAudioAfterMicrophone(audio);
     busy=false;
   }
 }
@@ -982,8 +966,11 @@ modeToggle.onclick=()=>{
   updatePlayableState();
 };
 
+syncDprTypeScale();
 updatePlayableState();
 loadDefaultSample();
+window.addEventListener("resize",syncDprTypeScale);
+window.visualViewport?.addEventListener("resize",syncDprTypeScale);
 
 function expandedBlackKeyFromPoint(x,y){
   const keys=document.getElementById("keys");
