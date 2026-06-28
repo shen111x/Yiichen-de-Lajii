@@ -92,7 +92,7 @@
       left: calc(var(--gap-unit) * 1.5);
       z-index: 11;
 
-      width: calc(var(--header_topbar--height) * 7.7);
+      width: calc((var(--header_topbar--height) * 7.7) + 0.5px);
       box-sizing: border-box;
 
       /* // 样式与动画 */
@@ -118,7 +118,7 @@
       left: calc(var(--gap-unit) * 1.5);
       z-index: 10;
 
-      width: calc(var(--header_topbar--height) * 7.7);
+      width: calc((var(--header_topbar--height) * 7.7) + 0.5px);
       box-sizing: border-box;
 
       /* // 样式与动画 */
@@ -224,6 +224,7 @@
       width: 100%;
       aspect-ratio: 217 / 101;
       border: 0;
+      background: #ffffff;
     }
 
     .panel_cart_checkout {
@@ -318,7 +319,7 @@
             </div>
           </div>
 
-          <iframe class="panel_menu_piano" src="about:blank" title="Piano" allow="microphone *" scrolling="no"></iframe>
+          <iframe class="panel_menu_piano" src="/components/de-lajii-sampler.html" title="Piano" allow="microphone *" scrolling="no" loading="eager"></iframe>
         </div>
       </div>
     </div>

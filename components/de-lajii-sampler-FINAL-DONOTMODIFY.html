@@ -170,6 +170,10 @@ input[type="range"]{
   background:transparent;
 }
 
+input[type="range"]:focus{
+  outline:none;
+}
+
 input[type="range"]::-webkit-slider-runnable-track{
   height:var(--stroke);
   background:transparent;
@@ -226,6 +230,10 @@ button{
   overflow:hidden;
 }
 
+button:focus{
+  outline:none;
+}
+
 #record{
   color:var(--record-red);
   font-size:calc(var(--record-font-size) * var(--dpr-type-scale));
@@ -246,18 +254,21 @@ button{
 
 #reset{
   width:var(--reset-width);
+  background:#f8f8f8;
 }
 
 #reset::before{
   content:"";
   position:absolute;
   inset:0;
-  width:0%;
-  background:#000;
+  border-top:calc(var(--stroke) * .5) solid rgba(0,0,0,.12);
+  border-bottom:calc(var(--stroke) * .5) solid rgba(0,0,0,.12);
+  box-sizing:border-box;
+  pointer-events:none;
 }
 
 #reset.progress::before{
-  animation:resetFill var(--record-duration, 1s) linear forwards;
+  width:auto;
 }
 
 #reset.sample-progress{
@@ -272,18 +283,59 @@ button{
   position:relative;
   z-index:1;
   display:block;
+  width:100%;
+  height:100%;
   line-height:1;
-  transform:translateY(0.04em);
+  overflow:hidden;
 }
 
 #reset.progress .button-label{
-  color:#fff;
-  mix-blend-mode:difference;
+  color:#000;
 }
 
-@keyframes resetFill{
-  from{width:0%;}
-  to{width:100%;}
+#reset .screen-label{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transform:translateY(0.04em);
+}
+
+#reset .screen-label.incoming{
+  animation:screenRollIn .18s ease-out both;
+}
+
+#reset .screen-label.outgoing{
+  animation:screenRollOut .18s ease-in both;
+}
+
+#reset .screen-label.incoming-down{
+  animation:screenRollInDown .18s ease-out both;
+}
+
+#reset .screen-label.outgoing-down{
+  animation:screenRollOutDown .18s ease-in both;
+}
+
+@keyframes screenRollIn{
+  from{transform:translateY(105%);}
+  to{transform:translateY(0.04em);}
+}
+
+@keyframes screenRollOut{
+  from{transform:translateY(0.04em);}
+  to{transform:translateY(-105%);}
+}
+
+@keyframes screenRollInDown{
+  from{transform:translateY(-105%);}
+  to{transform:translateY(0.04em);}
+}
+
+@keyframes screenRollOutDown{
+  from{transform:translateY(0.04em);}
+  to{transform:translateY(105%);}
 }
 
 .mode{
@@ -299,28 +351,32 @@ button{
 
 .toggle{
   --toggle-gap:0.26cqw;
+  --toggle-travel:calc(var(--button-height) - var(--toggle-width));
   width:var(--toggle-width);
   height:var(--button-height);
   border:var(--stroke) solid #000;
   box-sizing:border-box;
   cursor:pointer;
   position:relative;
+  contain:layout paint style;
+  transform:translateZ(0);
 }
 
 .toggle::before{
   content:"";
   position:absolute;
   left:var(--toggle-gap);
-  bottom:var(--toggle-gap);
+  top:var(--toggle-gap);
   width:calc(100% - (var(--toggle-gap) * 2));
   aspect-ratio:1;
   background:#000;
-  transition:top .18s ease, bottom .18s ease;
+  transform:translateY(var(--toggle-travel));
+  transition:transform .18s ease;
+  will-change:transform;
 }
 
 .toggle.on::before{
-  top:var(--toggle-gap);
-  bottom:auto;
+  transform:translateY(0);
 }
 
 .dashrightbottom{
@@ -335,31 +391,40 @@ button{
 }
 
 .knob{
+  --knob-light-size:1.05cqw;
+  --knob-light-gap:calc((var(--button-height) - (var(--knob-light-size) * 4)) / 3);
+  --knob-extra-offset:0.95cqw;
   height:var(--button-height);
   display:flex;
   align-items:center;
   gap:0.78cqw;
   cursor:pointer;
+  contain:layout style;
+  transform:translateZ(0);
+  position:relative;
+  overflow:visible;
+  flex-shrink:0;
 }
 
 .knob-left{
   height:var(--button-height);
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
+  display:grid;
+  grid-template-rows:repeat(4, var(--knob-light-size));
+  align-content:space-between;
+  flex-shrink:0;
 }
 
 .knob-light{
-  width:1.05cqw;
-  height:1.05cqw;
-  border:0;
+  width:var(--knob-light-size);
+  height:var(--knob-light-size);
+  border:var(--stroke) solid transparent;
   box-sizing:border-box;
   background:#bbb;
 }
 
 .knob-light.active,
 .knob-light.filled{
-  border:var(--stroke) solid #000;
+  border-color:#000;
   background:#000;
 }
 
@@ -370,6 +435,7 @@ button{
   border-radius:50%;
   box-sizing:border-box;
   position:relative;
+  flex-shrink:0;
 }
 
 .knob-pointer{
@@ -381,6 +447,54 @@ button{
   background:#000;
   transform-origin:50% 100%;
   transform:translate(-50%, -100%) rotate(var(--knob-angle, -135deg));
+  transition:transform .18s ease;
+  will-change:transform;
+}
+
+.knob-pointer.reset-spin{
+  animation:knobResetSpin .5s ease-in-out both;
+  transition:none;
+}
+
+@keyframes knobResetSpin{
+  from{transform:translate(-50%, -100%) rotate(var(--knob-reset-start-angle));}
+  to{transform:translate(-50%, -100%) rotate(var(--knob-reset-end-angle));}
+}
+
+.knob-extra{
+  width:var(--knob-light-size);
+  height:var(--button-height);
+  display:grid;
+  grid-template-rows:repeat(4, var(--knob-light-size));
+  align-content:space-between;
+  margin-left:var(--knob-extra-offset);
+  box-sizing:border-box;
+  flex-shrink:0;
+}
+
+#knobSix{
+  grid-row:3;
+}
+
+#knobFive{
+  grid-row:4;
+}
+
+.knob-extra-button{
+  width:var(--knob-light-size);
+  height:var(--knob-light-size);
+  min-width:0;
+  border:var(--stroke) solid transparent;
+  background:#bbb;
+  padding:0;
+  box-sizing:border-box;
+  cursor:pointer;
+}
+
+.knob-extra-button.active,
+.knob-extra-button.filled{
+  border-color:#000;
+  background:#000;
 }
 
 .keys{
@@ -453,7 +567,7 @@ button{
       <div class="controls">
         <button id="record">●</button>
         <button id="play">▶</button>
-        <button id="reset"><span id="resetLabel" class="button-label">Reset</span></button>
+        <button id="reset"><span id="resetLabel" class="button-label" data-label="Reset"><span class="screen-label">Reset</span></span></button>
 
         <div id="knob" class="knob">
           <div class="knob-left">
@@ -464,6 +578,10 @@ button{
           </div>
           <div class="knob-right">
             <div id="knobPointer" class="knob-pointer"></div>
+          </div>
+          <div class="knob-extra">
+            <button id="knobSix" class="knob-extra-button" type="button"></button>
+            <button id="knobFive" class="knob-extra-button" type="button"></button>
           </div>
         </div>
       </div>
@@ -518,7 +636,7 @@ button{
 
 <script>
 let audio, defaultSample=null, sample=null, lastKey=null;
-let sampleEchoOffset=0, sampleRootNote=261.63;
+let sampleRootNote=261.63;
 let mode="sample";
 let music=[], musicRecording=false, musicStart=0;
 let musicPlaying=false, musicPlaybackTimers=[];
@@ -528,11 +646,16 @@ let defaultSampleLoading=null;
 let playRequestId=0;
 let audioGraph=null;
 let activeKnob=0;
-let styleValues=[0,0,.5,0];
+let renderedKnob=0;
+let knobRenderAngle=-60;
+let selectedLoopTrack=0;
+let styleValues=[0,0,.5,0,.5];
 let loopGap=.15;
 let loopCycleTimer=null;
 const curveCache=new Map();
-const loopTracks=Array.from({length:4},()=>({notes:[], duration:0, styles:[0,0,0,0]}));
+let identityCurve=null;
+const loopTracks=Array.from({length:4},()=>({notes:[], audio:null, duration:0, styles:[0,0,.5,0,.5]}));
+let screenLabelTimers=[];
 
 const baseNote=261.63;
 const defaultSampleUrl="../sound/piano/delajiikey.wav";
@@ -550,10 +673,6 @@ const noteRangeMin=261.63;
 const noteRangeInv=1/(987.77-noteRangeMin);
 const randomDepth=.15;
 const slideThresholdSq=64;
-const echoTransientSkip=.02;
-const echoEnergyShift=.05;
-const echoZeroCrossSearch=.012;
-const echoSpikeRatio=7;
 const recordBtn=document.getElementById("record");
 const playBtn=document.getElementById("play");
 const resetBtn=document.getElementById("reset");
@@ -563,11 +682,17 @@ const reverb=document.getElementById("reverb");
 const knob=document.getElementById("knob");
 const knobPointer=document.getElementById("knobPointer");
 const knobLights=[...document.querySelectorAll("[data-knob-light]")];
+const knobFive=document.getElementById("knobFive");
+const knobSix=document.getElementById("knobSix");
 const keys=document.getElementById("keys");
 const blackKeys=[...keys.querySelectorAll(".black")];
 let blackKeyHitAreas=null;
+let sliderAnimationFrame=null;
 
 reverb.value=0;
+
+const samplerKnobLabels=["ADHD","P.M","A/C","AC/DC","Pitch","Reset"];
+const loopKnobLabels=["Track1","Track2","Track3","Vocal4","Bounce","Reset"];
 
 function syncDprTypeScale(){
   const dpr=window.devicePixelRatio || 1;
@@ -585,22 +710,104 @@ function snapshotStyles(){
   return styleValues.slice();
 }
 
+function currentKnobLabel(){
+  return (mode==="music" ? loopKnobLabels : samplerKnobLabels)[activeKnob];
+}
+
 function knobAngle(index){
-  return [-45,-75,-105,-135][index] || -45;
+  return [-60,-82.5,-97.5,-125,-247.5,-262.5][index] || -60;
+}
+
+function angleNear(angle, reference){
+  let normalized=angle;
+
+  while(normalized-reference>180){
+    normalized-=360;
+  }
+
+  while(reference-normalized>180){
+    normalized+=360;
+  }
+
+  return normalized;
+}
+
+function currentPointerAngle(){
+  const transform=getComputedStyle(knobPointer).transform;
+
+  if(!transform || transform==="none") return knobRenderAngle;
+
+  const values=transform.match(/matrix\(([^)]+)\)/)?.[1].split(",").map(Number);
+  if(!values || values.length<4) return knobRenderAngle;
+
+  const angle=Math.atan2(values[1],values[0])*(180/Math.PI);
+  return angleNear(angle,knobRenderAngle);
+}
+
+function nextKnobRenderAngle(index){
+  if(index===renderedKnob) return knobRenderAngle;
+
+  let target=knobAngle(index);
+
+  while(target>knobRenderAngle){
+    target-=360;
+  }
+
+  knobRenderAngle=target;
+  renderedKnob=index;
+  return target;
 }
 
 function updateKnobUi(){
-  knobPointer.style.setProperty("--knob-angle", `${knobAngle(activeKnob)}deg`);
+  knobPointer.style.setProperty("--knob-angle", `${nextKnobRenderAngle(activeKnob)}deg`);
   knobLights.forEach((light,index)=>{
-    const hasLoop=mode==="music" && Boolean(loopTracks[index].notes.length);
+    const hasLoop=mode==="music" && trackHasContent(loopTracks[index]);
 
     light.classList.toggle("active", index===activeKnob);
     light.classList.toggle("filled", hasLoop);
   });
+  knobFive.classList.toggle("active", activeKnob===4);
+  knobFive.classList.remove("filled");
+  knobSix.classList.toggle("active", activeKnob===5);
 }
 
-function syncSliderFromState(){
-  reverb.value=mode==="music" ? loopGap : styleValues[activeKnob];
+function rememberLoopTrack(){
+  if(mode==="music" && activeKnob>=0 && activeKnob<4){
+    selectedLoopTrack=activeKnob;
+  }
+}
+
+function animateSliderTo(value){
+  cancelAnimationFrame(sliderAnimationFrame);
+
+  const from=Number(reverb.value) || 0;
+  const to=clamp01(value);
+  const start=performance.now();
+  const duration=180;
+
+  function step(now){
+    const progress=Math.min(1,(now-start)/duration);
+    const eased=1-Math.pow(1-progress,3);
+
+    reverb.value=from+((to-from)*eased);
+    if(progress<1){
+      sliderAnimationFrame=requestAnimationFrame(step);
+    }
+  }
+
+  sliderAnimationFrame=requestAnimationFrame(step);
+}
+
+function syncSliderFromState(animate=true){
+  const value=mode==="music" ? loopGap : styleValues[Math.min(activeKnob,4)];
+
+  if(animate){
+    animateSliderTo(value);
+  }else{
+    cancelAnimationFrame(sliderAnimationFrame);
+    reverb.value=value;
+  }
+
   updateKnobUi();
 }
 
@@ -623,8 +830,8 @@ function softClipSample(value){
 function shapeCurve(amount){
   const samples=128;
   const curve=new Float32Array(samples);
-  const drive=1+(amount*1);
-  const grit=amount*.5;
+  const drive=1+(amount*0);
+  const grit=amount*.08;
 
   for(let i=0;i<samples;i++){
     const x=(i/(samples-1))*2-1;
@@ -643,6 +850,19 @@ function getShapeCurve(amount){
   }
 
   return curveCache.get(key);
+}
+
+function getIdentityCurve(){
+  if(identityCurve) return identityCurve;
+
+  const samples=128;
+  identityCurve=new Float32Array(samples);
+
+  for(let i=0;i<samples;i++){
+    identityCurve[i]=(i/(samples-1))*2-1;
+  }
+
+  return identityCurve;
 }
 
 function ctx(){
@@ -685,7 +905,6 @@ async function loadDefaultSample(){
     defaultSample=await a.decodeAudioData(buffer);
     if(!sample){
       sample=defaultSample;
-      sampleEchoOffset=0;
       recordBtn.classList.add("ready");
       updatePlayableState();
     }
@@ -695,62 +914,6 @@ async function loadDefaultSample(){
   }
   })();
   return defaultSampleLoading;
-}
-
-function findNearbyZeroCrossing(data, index, radius){
-  const start=Math.max(0,index-radius);
-  const end=Math.min(data.length-1,index+radius);
-  let bestIndex=index;
-  let bestScore=Infinity;
-
-  for(let i=start;i<=end;i++){
-    const value=Math.abs(data[i]);
-    const crossed=i>0 && ((data[i-1]<=0 && data[i]>=0) || (data[i-1]>=0 && data[i]<=0));
-    const score=value+(Math.abs(i-index)/(radius || 1))*.002+(crossed ? 0 : .002);
-
-    if(score<bestScore){
-      bestScore=score;
-      bestIndex=i;
-    }
-  }
-
-  return bestIndex;
-}
-
-function findEchoUnitOffset(buffer){
-  const data=buffer.getChannelData(0);
-  const sampleRate=buffer.sampleRate;
-  const unitSize=Math.max(1,Math.floor(notePeriod*sampleRate));
-  const hop=Math.max(1,Math.floor(unitSize/4));
-  const minIndex=Math.min(data.length-1,Math.floor(echoTransientSkip*sampleRate));
-  const shift=Math.floor(echoEnergyShift*sampleRate);
-  const zeroRadius=Math.floor(echoZeroCrossSearch*sampleRate);
-  let bestIndex=0;
-  let bestEnergy=0;
-
-  for(let i=minIndex;i<=data.length-unitSize;i+=hop){
-    let energy=0;
-    let peak=0;
-
-    for(let j=0;j<unitSize;j++){
-      const value=Math.abs(data[i+j]);
-      energy+=value*value;
-      peak=Math.max(peak,value);
-    }
-
-    const rms=Math.sqrt(energy/unitSize);
-    if(rms && peak>rms*echoSpikeRatio) continue;
-
-    if(energy>bestEnergy){
-      bestEnergy=energy;
-      bestIndex=i;
-    }
-  }
-
-  if(!bestEnergy) return 0;
-
-  const shiftedIndex=Math.min(data.length-1,bestIndex+shift);
-  return findNearbyZeroCrossing(data,shiftedIndex,zeroRadius)/sampleRate;
 }
 
 function detectRootNote(buffer){
@@ -819,16 +982,15 @@ function trimLeadingSilence(buffer){
   return trimmed;
 }
 
-function masterOutput(){
-  const a=ctx();
-
-  if(audioGraph?.context===a) return audioGraph.input;
-
+function createMasterGraph(a,destination){
   const input=a.createGain();
+  const masterDistortion=a.createWaveShaper();
   const compressor=a.createDynamicsCompressor();
   const echoInput=a.createGain();
   const echoLimiter=a.createDynamicsCompressor();
 
+  masterDistortion.curve=getIdentityCurve();
+  masterDistortion.oversample="none";
   compressor.threshold.value=-10;
   compressor.knee.value=18;
   compressor.ratio.value=8;
@@ -842,11 +1004,20 @@ function masterOutput(){
 
   echoInput.connect(echoLimiter);
   echoLimiter.connect(input);
-  input.connect(compressor);
-  compressor.connect(a.destination);
-  audioGraph={context:a, input, echoInput};
+  input.connect(masterDistortion);
+  masterDistortion.connect(compressor);
+  compressor.connect(destination);
 
-  return input;
+  return {context:a, input, echoInput, masterDistortion};
+}
+
+function masterOutput(){
+  const a=ctx();
+
+  if(audioGraph?.context===a) return audioGraph.input;
+
+  audioGraph=createMasterGraph(a,a.destination);
+  return audioGraph.input;
 }
 
 function echoOutput(){
@@ -859,7 +1030,7 @@ function output(gain, destination){
 }
 
 function playNote(freq, options={}){
-  const shouldRecordMusic=mode==="music" && musicRecording && !options.loopPlayback;
+  const shouldRecordMusic=mode==="music" && musicRecording && selectedLoopTrack!==3 && !options.loopPlayback;
   const musicEventTime=performance.now()-musicStart;
   setAudioSessionType("playback");
   const a=ctx();
@@ -881,37 +1052,38 @@ function playNote(freq, options={}){
 }
 
 function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
-  const a=ctx();
+  const a=options.context || ctx();
+  const graph=options.graph || null;
+  const renderSample=options.sampleBuffer ?? sample;
   const styles=options.styleSnapshot || activeStyles();
   const reverbProgress=clampUnit(styles[0]);
   const softness=clampUnit(styles[1]);
   const color=clampSigned((clampUnit(styles[2])-.5)*2*1.3);
   const dirt=clampUnit(styles[3]);
+  const pitch=clampSigned((clampUnit(styles[4] ?? .5)-.5)*2);
   const dirtAmount=dirt*dirt;
+  const pitchRate=Math.pow(2,pitch);
+  const pitchedFreq=freq*pitchRate;
   const reverbTimeScale=1+((1-reverbProgress)*.5);
   const reverbVolumeScale=.8+(reverbProgress*.2);
   const echoCount=options.noEcho || reverbProgress<=0 ? 0 : Math.round(reverbProgress*(10-(dirtAmount*5)));
 
-  const echoProgress=clampUnit((freq-noteRangeMin)*noteRangeInv);
+  const echoProgress=clampUnit((pitchedFreq-noteRangeMin)*noteRangeInv);
   const keyComp=1+(echoProgress*3*softness);
   const keyVolumeComp=1+(softness*(keyVolumeCompMin+((keyVolumeCompMax-keyVolumeCompMin)*echoProgress)));
   const colorVolumeComp=color<0 ? 1-(color*colorVolumeBoost) : 1-(color*colorVolumeCut);
   const volume=masterVolume*reverbVolumeScale*(1-(dirtAmount*.5))*keyComp*keyVolumeComp*colorVolumeComp;
   const echoDecay=.82-(echoProgress*.16);
-  const scaledNotePeriod=notePeriod*reverbTimeScale;
-  const scaledEchoGap=echoGap*reverbTimeScale;
+  const echoStartGap=(notePeriod+echoGap)*(3-(reverbProgress*2));
   const distortionCurve=dirtAmount>.001 ? getShapeCurve(dirtAmount) : null;
-  const noteOutput=masterOutput();
+  const noteOutput=graph ? graph.input : masterOutput();
   const fadeTime=.015+(softness*.14*1.3);
   const tailScale=.65+(softness*1.2*1.3);
-  const isUserSample=sample && sample!==defaultSample;
+  const isUserSample=renderSample && renderSample!==defaultSample;
   const sampleGain=isUserSample ? userSampleGain : 1;
-  const rate=sample ? freq/(isUserSample ? sampleRootNote : baseNote) : 1;
-  const sampleDuration=sample?.duration || 0;
-  const firstDuration=sample ? sampleDuration/rate : 0;
-  const echoSourceOffset=sampleEchoOffset;
-  const echoAvailableDuration=Math.max(0,sampleDuration-echoSourceOffset);
-  const echoDurationLimit=echoAvailableDuration/rate;
+  const rate=renderSample ? pitchedFreq/(isUserSample ? sampleRootNote : baseNote) : 1;
+  const sampleDuration=renderSample?.duration || 0;
+  const firstDuration=renderSample ? sampleDuration/rate : 0;
   const shouldCutStretchedSample=isUserSample && rate<1 && firstDuration>sampleDuration;
   const colorWet=Math.min(1,Math.abs(color));
   const colorHighpassFrequency=color>0 ? 80+(colorWet*620) : 80;
@@ -965,17 +1137,17 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
 
   function playVoice(startTime, voiceVolume, isFirst, voicePeriod=notePeriod, toneProgress=0){
     const gain=a.createGain();
-    output(gain,isFirst ? noteOutput : echoOutput());
+    output(gain,isFirst ? noteOutput : graph ? graph.echoInput : echoOutput());
 
-    if(sample){
+    if(renderSample){
       const src=a.createBufferSource();
-      const sourceOffset=isFirst ? 0 : echoSourceOffset;
-      const rawDuration=isFirst ? firstDuration : Math.min(echoDurationLimit,voicePeriod+.02);
+      const sourceOffset=0;
+      const rawDuration=firstDuration;
       const baseDuration=isFirst && shouldCutStretchedSample ? sampleDuration : rawDuration;
       const playDuration=baseDuration*tailScale;
       const outputVolume=voiceVolume*sampleGain;
 
-      src.buffer=sample;
+      src.buffer=renderSample;
       src.playbackRate.value=rate;
 
       const highpass=a.createBiquadFilter();
@@ -1010,7 +1182,7 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
       const playDuration=voicePeriod*tailScale;
 
       osc.type="triangle";
-      osc.frequency.value=freq;
+      osc.frequency.value=pitchedFreq;
       connectVoice(osc,gain,toneProgress);
 
       shapeVoiceEnvelope(gain.gain,startTime,voiceVolume,playDuration,fadeTime);
@@ -1031,17 +1203,17 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
     scheduleSplitEcho(splitTime,nextTime,splitVolume,splitPeriod,toneProgress, chance*.1);
   }
 
-  let startTime=a.currentTime;
+  let startTime=options.startTime ?? a.currentTime;
   let echoVolumeScale=.55;
   const toneStep=echoCount>1 ? 1/(echoCount-1) : 0;
   const splitChanceScale=.8*(1-dirtAmount)*toneStep;
 
   for(let i=0;i<=echoCount;i++){
-    const voicePeriod=i===0 ? notePeriod : varied(scaledNotePeriod);
+    const voicePeriod=i===0 ? notePeriod : varied(echoStartGap);
     const toneProgress=i>0 ? (i-1)*toneStep : 0;
     const echoVolumeComp=i===0 ? 1 : echoVolumeCompStart+((echoVolumeCompEnd-echoVolumeCompStart)*toneProgress);
     const echoVolume=i===0 ? volume : volume*echoVolumeScale*echoVolumeComp*varied(1);
-    const nextTime=startTime+varied(scaledNotePeriod+scaledEchoGap);
+    const nextTime=startTime+varied(echoStartGap);
 
     playVoice(startTime,echoVolume,i===0,voicePeriod,toneProgress);
 
@@ -1054,7 +1226,194 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
   }
 
   if(shouldRecordMusic){
-    loopTracks[activeKnob].notes.push({t:musicEventTime, f:freq});
+    loopTracks[selectedLoopTrack].notes.push({t:musicEventTime, f:freq});
+  }
+}
+
+function scheduleLoopAudio(track, options={}){
+  if(!track.audio) return;
+
+  const a=options.context || ctx();
+  const graph=options.graph || null;
+  const styles=options.styleSnapshot || track.styles || activeStyles();
+  const reverbProgress=clampUnit(styles[0]);
+  const color=clampSigned((clampUnit(styles[2])-.5)*2*1.3);
+  const dirt=clampUnit(styles[3]);
+  const pitch=clampSigned((clampUnit(styles[4] ?? .5)-.5)*2);
+  const dirtAmount=dirt*dirt;
+  const pitchRate=Math.pow(2,pitch);
+  const colorWet=Math.min(1,Math.abs(color));
+  const colorHighpassFrequency=color>0 ? 80+(colorWet*620) : 80;
+  const userLowpassFrequency=color<0 ? 8200-(colorWet*7800) : 9000-(colorWet*5600);
+  const lowShelfGain=color<0 ? -(colorWet*24) : -(colorWet*26);
+  const highShelfGain=color>0 ? colorWet*24 : -(colorWet*30);
+  const distortionCurve=dirtAmount>.001 ? getShapeCurve(dirtAmount) : null;
+  const source=a.createBufferSource();
+  const gain=a.createGain();
+  const highpass=a.createBiquadFilter();
+  const lowShelf=a.createBiquadFilter();
+  const highShelf=a.createBiquadFilter();
+  const lowpass=a.createBiquadFilter();
+  const destination=graph ? graph.input : masterOutput();
+  const startTime=options.startTime ?? a.currentTime;
+  const volume=masterVolume*(.85+(reverbProgress*.15))*(1-(dirtAmount*.35));
+
+  source.buffer=track.audio;
+  source.playbackRate.value=pitchRate;
+  gain.gain.setValueAtTime(volume,startTime);
+
+  highpass.type="highpass";
+  highpass.frequency.value=colorHighpassFrequency;
+  lowShelf.type="lowshelf";
+  lowShelf.frequency.value=220;
+  lowShelf.gain.value=lowShelfGain;
+  highShelf.type="highshelf";
+  highShelf.frequency.value=2600;
+  highShelf.gain.value=highShelfGain;
+  lowpass.type="lowpass";
+  lowpass.frequency.value=userLowpassFrequency;
+
+  source.connect(highpass);
+  highpass.connect(lowShelf);
+  lowShelf.connect(highShelf);
+  highShelf.connect(lowpass);
+
+  if(distortionCurve){
+    const distortion=a.createWaveShaper();
+
+    distortion.curve=distortionCurve;
+    distortion.oversample="none";
+    lowpass.connect(distortion);
+    distortion.connect(gain);
+  }else{
+    lowpass.connect(gain);
+  }
+
+  gain.connect(destination);
+  source.start(startTime);
+}
+
+function writeString(view,offset,string){
+  for(let i=0;i<string.length;i++){
+    view.setUint8(offset+i,string.charCodeAt(i));
+  }
+}
+
+function audioBufferToWav(buffer){
+  const channelCount=buffer.numberOfChannels;
+  const sampleRate=buffer.sampleRate;
+  const frameCount=buffer.length;
+  const bytesPerSample=2;
+  const blockAlign=channelCount*bytesPerSample;
+  const dataSize=frameCount*blockAlign;
+  const arrayBuffer=new ArrayBuffer(44+dataSize);
+  const view=new DataView(arrayBuffer);
+  let offset=0;
+
+  writeString(view,offset,"RIFF"); offset+=4;
+  view.setUint32(offset,36+dataSize,true); offset+=4;
+  writeString(view,offset,"WAVE"); offset+=4;
+  writeString(view,offset,"fmt "); offset+=4;
+  view.setUint32(offset,16,true); offset+=4;
+  view.setUint16(offset,1,true); offset+=2;
+  view.setUint16(offset,channelCount,true); offset+=2;
+  view.setUint32(offset,sampleRate,true); offset+=4;
+  view.setUint32(offset,sampleRate*blockAlign,true); offset+=4;
+  view.setUint16(offset,blockAlign,true); offset+=2;
+  view.setUint16(offset,bytesPerSample*8,true); offset+=2;
+  writeString(view,offset,"data"); offset+=4;
+  view.setUint32(offset,dataSize,true); offset+=4;
+
+  const channels=Array.from({length:channelCount},(_,index)=>buffer.getChannelData(index));
+
+  for(let frame=0;frame<frameCount;frame++){
+    for(let channel=0;channel<channelCount;channel++){
+      const value=Math.max(-1,Math.min(1,channels[channel][frame]));
+      view.setInt16(offset,value<0 ? value*0x8000 : value*0x7fff,true);
+      offset+=bytesPerSample;
+    }
+  }
+
+  return arrayBuffer;
+}
+
+function downloadBuffer(buffer,filename){
+  const blob=new Blob([audioBufferToWav(buffer)],{type:"audio/wav"});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");
+
+  link.href=url;
+  link.download=filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+async function bounceLoop(){
+  if(busy) return;
+
+  if(!hasLoopTone()){
+    showTimedStatus("No Loop");
+    return;
+  }
+
+  try{
+    const tracks=loopTracks;
+    const hasNotes=tracks.some(track=>track.notes.length);
+    const baseLength=loopLength();
+
+    if(!baseLength || tracks.every(track=>!trackHasContent(track))){
+      showTimedStatus("Empty");
+      return;
+    }
+
+    if(hasNotes){
+      await loadDefaultSample();
+    }
+
+    const OfflineContext=window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if(!OfflineContext){
+      showTimedStatus("No Bounce");
+      return;
+    }
+
+    const sampleRate=audio?.sampleRate || 44100;
+    const renderSeconds=(baseLength/1000)+4;
+    const offline=new OfflineContext(2,Math.ceil(renderSeconds*sampleRate),sampleRate);
+    const graph=createMasterGraph(offline,offline.destination);
+    const renderSample=sample || defaultSample;
+
+    tracks.forEach(track=>{
+      if(track.audio){
+        scheduleLoopAudio(track,{
+          context:offline,
+          graph,
+          startTime:0,
+          styleSnapshot:track.styles
+        });
+      }
+
+      track.notes.forEach(note=>{
+        scheduleNote(note.f,{
+          context:offline,
+          graph,
+          sampleBuffer:renderSample,
+          startTime:note.t/1000,
+          styleSnapshot:track.styles,
+          loopPlayback:true
+        },false,0);
+      });
+    });
+
+    const buffer=await offline.startRendering();
+    const filename="de-lajii-master-bounce.wav";
+
+    downloadBuffer(buffer,filename);
+    showTimedStatus("Master WAV");
+  }catch(err){
+    console.error("Bounce failed:", err);
+    showTimedStatus("Bounce Err");
   }
 }
 
@@ -1062,16 +1421,101 @@ function wait(ms){
   return new Promise(resolve=>setTimeout(resolve, ms));
 }
 
-function setResetLabel(text){
-  resetLabel.textContent=text;
+function clearScreenLabelTimer(){
+  screenLabelTimers.forEach(timer=>clearTimeout(timer));
+  screenLabelTimers=[];
+}
+
+function setResetLabel(text, direction="up", force=false){
+  const label=String(text);
+  const current=resetLabel.dataset.label || resetLabel.textContent || "";
+
+  if(current===label && !force) return;
+
+  resetLabel.dataset.label=label;
+  resetLabel.innerHTML="";
+
+  if(current){
+    const oldLabel=document.createElement("span");
+    oldLabel.className=direction==="down" ? "screen-label outgoing-down" : "screen-label outgoing";
+    oldLabel.textContent=current;
+    resetLabel.appendChild(oldLabel);
+  }
+
+  const newLabel=document.createElement("span");
+  newLabel.className=direction==="down" ? "screen-label incoming-down" : "screen-label incoming";
+  newLabel.textContent=label;
+  resetLabel.appendChild(newLabel);
+}
+
+function showTemporaryKnobLabel(direction="up"){
+  clearScreenLabelTimer();
+  setResetLabel(currentKnobLabel(),direction);
+  resetLabel.dataset.temporary="knob";
+}
+
+function showTimedStatus(label){
+  clearScreenLabelTimer();
+  delete resetLabel.dataset.temporary;
+  setResetLabel(label,"up",true);
+  screenLabelTimers.push(setTimeout(()=>{
+    setResetLabel("Reset","down");
+    screenLabelTimers=[];
+  },1500));
+}
+
+function spinPointerToFirst(startIndex){
+  const startAngle=currentPointerAngle();
+  let targetAngle=knobAngle(0);
+
+  while(targetAngle>=startAngle){
+    targetAngle-=360;
+  }
+
+  if(startIndex===0){
+    targetAngle=startAngle-359.99;
+  }
+
+  knobPointer.classList.remove("reset-spin");
+  knobPointer.style.setProperty("--knob-reset-start-angle", `${startAngle}deg`);
+  knobPointer.style.setProperty("--knob-reset-end-angle", `${targetAngle}deg`);
+  void knobPointer.offsetWidth;
+  knobPointer.classList.add("reset-spin");
+  screenLabelTimers.push(setTimeout(()=>{
+    knobRenderAngle=targetAngle;
+    renderedKnob=0;
+    knobPointer.classList.remove("reset-spin");
+    updateKnobUi();
+  },520));
+}
+
+function showResetSequence(startIndex){
+  clearScreenLabelTimer();
+  delete resetLabel.dataset.temporary;
+  if(startIndex!==5){
+    setResetLabel("Reset","up",true);
+  }
+  spinPointerToFirst(startIndex);
+  screenLabelTimers.push(setTimeout(()=>{
+    setResetLabel(currentKnobLabel(),"up",true);
+    resetLabel.dataset.temporary="knob";
+  },540));
 }
 
 function hasSampleTone(){
   return Boolean(sample || !defaultSample);
 }
 
+function trackHasContent(track){
+  return Boolean(track.notes.length || track.audio);
+}
+
+function trackLength(track){
+  return trackHasContent(track) ? track.duration || (track.audio?.duration || 0)*1000 || 0 : 0;
+}
+
 function hasLoopTone(){
-  return loopTracks.some(track=>track.notes.length);
+  return loopTracks.some(trackHasContent);
 }
 
 function resetRecordingUi(...classes){
@@ -1102,9 +1546,13 @@ function stopActiveRecorder(){
   activeStream=null;
 }
 
-function clearResetProgress(){
+function clearResetProgress(updateLabel=true){
+  clearScreenLabelTimer();
+  delete resetLabel.dataset.temporary;
   resetBtn.classList.remove("progress", "sample-progress", "music-progress");
-  setResetLabel("Reset");
+  if(updateLabel){
+    setResetLabel("Reset","down");
+  }
 }
 
 function abortSampleRecord(context, stream){
@@ -1115,6 +1563,8 @@ function abortSampleRecord(context, stream){
 }
 
 async function preRecordCountdown(session){
+  clearScreenLabelTimer();
+  delete resetLabel.dataset.temporary;
   for(const label of ["3", "2", "1", "Start"]){
     if(session!==recordSession) return false;
     setResetLabel(label);
@@ -1189,12 +1639,10 @@ async function recordSample(){
 
             sample=trimLeadingSilence(buffer);
             normalizeUserSample(sample);
-            sampleEchoOffset=findEchoUnitOffset(sample);
             sampleRootNote=detectRootNote(sample);
             recordBtn.classList.add("ready");
           }else{
             sample=null;
-            sampleEchoOffset=0;
             sampleRootNote=baseNote;
           }
         }
@@ -1209,7 +1657,7 @@ async function recordSample(){
       }
     };
 
-    setResetLabel("0");
+    setResetLabel("2");
     resetBtn.classList.add("progress", "sample-progress");
 
     await new Promise(resolve=>requestAnimationFrame(resolve));
@@ -1227,6 +1675,11 @@ async function recordSample(){
     activeRecorder={state:"recording", stop:finish};
     activeStream=stream;
 
+    let remaining=2;
+    countTimer=setInterval(()=>{
+      remaining-=1;
+      setResetLabel(Math.max(remaining, 0));
+    },1000);
     recordTimer=setTimeout(finish,2000);
   }catch(err){
     console.error("Sample record failed:", err);
@@ -1239,14 +1692,140 @@ async function recordSample(){
   }
 }
 
-async function recordMusic(){
+async function recordVocalTrack(){
   if(busy) return;
   stopMusicPlayback();
   const session=++recordSession;
+  const track=loopTracks[3];
   busy=true;
-  const track=loopTracks[activeKnob];
 
   track.notes=[];
+  track.audio=null;
+  track.duration=0;
+  track.styles=snapshotStyles();
+  musicRecording=false;
+  updatePlayableState();
+  recordBtn.classList.remove("ready", "recording");
+  recordBtn.classList.add("music-recording");
+
+  try{
+    if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){
+      throw new Error("Microphone requires HTTPS");
+    }
+
+    setAudioSessionType("play-and-record");
+    const a=ctx();
+    await a.resume?.();
+    const stream=await navigator.mediaDevices.getUserMedia({
+      audio:{
+        echoCancellation:false,
+        noiseSuppression:false,
+        autoGainControl:false
+      }
+    });
+    activeStream=stream;
+
+    if(!await preRecordCountdown(session)){
+      abortSampleRecord(a,stream);
+      recordBtn.classList.remove("music-recording");
+      updatePlayableState();
+      return;
+    }
+
+    const source=a.createMediaStreamSource(stream);
+    const recorder=a.createScriptProcessor(4096,1,1);
+    const silence=a.createGain();
+    const chunks=[];
+    let finished=false;
+
+    recorder.onaudioprocess=e=>{
+      chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    };
+
+    const finish=()=>{
+      if(finished) return;
+      finished=true;
+      source.disconnect();
+      recorder.disconnect();
+      silence.disconnect();
+      stopStream(stream);
+      activeRecorder=null;
+      activeStream=null;
+
+      try{
+        if(session===recordSession){
+          const length=chunks.reduce((sum,chunk)=>sum+chunk.length,0);
+
+          if(length){
+            const buffer=a.createBuffer(1,length,a.sampleRate);
+            const data=buffer.getChannelData(0);
+            let offset=0;
+
+            chunks.forEach(chunk=>{
+              data.set(chunk,offset);
+              offset+=chunk.length;
+            });
+
+            track.audio=trimLeadingSilence(buffer);
+            normalizeUserSample(track.audio);
+            track.duration=track.audio.duration*1000;
+          }
+        }
+      }finally{
+        musicRecording=false;
+        busy=false;
+        clearRecordTimers();
+        clearResetProgress();
+        recordBtn.classList.remove("music-recording");
+        updatePlayableState();
+        showTimedStatus(track.audio ? "✓" : "X");
+        resetAudioAfterMicrophone(a);
+      }
+    };
+
+    musicRecording=true;
+    setResetLabel(30);
+    resetBtn.classList.add("progress", "music-progress");
+
+    silence.gain.value=0;
+    source.connect(recorder);
+    recorder.connect(silence);
+    silence.connect(a.destination);
+
+    activeRecorder={state:"recording", stop:finish};
+    activeStream=stream;
+
+    let remaining=30;
+    countTimer=setInterval(()=>{
+      remaining-=1;
+      setResetLabel(Math.max(remaining, 0));
+    },1000);
+    recordTimer=setTimeout(finish,30000);
+  }catch(err){
+    console.error("Vocal record failed:", err);
+    stopStream(activeStream);
+    activeStream=null;
+    activeRecorder=null;
+    if(audio) resetAudioAfterMicrophone(audio);
+    resetRecordingUi("music-recording");
+    setResetLabel(!window.isSecureContext ? "HTTPS" : err?.name==="NotAllowedError" ? "Mic Denied" : "Mic Error");
+  }
+}
+
+async function recordMusic(){
+  if(busy) return;
+  if(selectedLoopTrack===3){
+    recordVocalTrack();
+    return;
+  }
+
+  stopMusicPlayback();
+  const session=++recordSession;
+  busy=true;
+  const track=loopTracks[selectedLoopTrack];
+
+  track.notes=[];
+  track.audio=null;
   track.duration=0;
   track.styles=snapshotStyles();
   musicRecording=false;
@@ -1280,7 +1859,8 @@ async function recordMusic(){
 function stopMusicRecord(cancelSession=false){
   if(cancelSession) recordSession+=1;
   if(!musicRecording && !busy) return;
-  const track=loopTracks[activeKnob];
+  const track=loopTracks[selectedLoopTrack];
+  const recorded=Boolean(track.notes.length);
 
   if(track.notes.length){
     const lastNoteTime=Math.max(...track.notes.map(n=>n.t));
@@ -1295,6 +1875,7 @@ function stopMusicRecord(cancelSession=false){
   clearResetProgress();
   recordBtn.classList.remove("music-recording");
   updatePlayableState();
+  showTimedStatus(recorded ? "✓" : "X");
 }
 
 function stopMusicPlayback(){
@@ -1312,7 +1893,7 @@ function stopMusicRecordAndPlayback(cancelSession=false){
 }
 
 function loopLength(){
-  const longest=Math.max(0,...loopTracks.map(track=>track.duration || 0));
+  const longest=Math.max(0,...loopTracks.map(trackLength));
   return longest+(longest*loopGap);
 }
 
@@ -1326,7 +1907,11 @@ function scheduleLoopCycle(){
   }
 
   loopTracks.forEach(track=>{
-    if(!track.notes.length) return;
+    if(!trackHasContent(track)) return;
+
+    if(track.audio){
+      scheduleLoopAudio(track,{styleSnapshot:track.styles});
+    }
 
     track.notes.forEach(note=>{
       const timer=setTimeout(()=>{
@@ -1369,6 +1954,8 @@ function playback(){
 }
 
 function reset(){
+  const resetStartKnob=activeKnob;
+
   recordSession+=1;
   stopMusicPlayback();
   stopActiveRecorder();
@@ -1377,21 +1964,22 @@ function reset(){
 
   if(mode==="sample"){
     sample=defaultSample;
-    sampleEchoOffset=0;
     sampleRootNote=baseNote;
-    activeKnob=0;
-    styleValues=[0,0,.5,0];
-    syncSliderFromState();
+    styleValues=[0,0,.5,0,.5];
     recordBtn.textContent="●";
   }else{
-    loopTracks[activeKnob].notes=[];
-    loopTracks[activeKnob].duration=0;
+    loopTracks[selectedLoopTrack].notes=[];
+    loopTracks[selectedLoopTrack].audio=null;
+    loopTracks[selectedLoopTrack].duration=0;
     musicRecording=false;
   }
 
-  clearResetProgress();
+  activeKnob=0;
+  syncSliderFromState();
+  clearResetProgress(false);
   recordBtn.classList.remove("recording", "ready", "music-recording");
   updatePlayableState();
+  showResetSequence(resetStartKnob);
 }
 
 recordBtn.onclick=()=>{
@@ -1401,6 +1989,11 @@ recordBtn.onclick=()=>{
   }
 
   if(busy){
+    if(activeRecorder?.state==="recording"){
+      activeRecorder.stop();
+      return;
+    }
+
     stopMusicRecordAndPlayback(true);
     return;
   }
@@ -1408,34 +2001,88 @@ recordBtn.onclick=()=>{
   recordMusic();
 };
 playBtn.onclick=playback;
-resetBtn.onclick=reset;
+resetBtn.onclick=()=>{
+  if(mode==="music" && activeKnob===4) return;
+  reset();
+};
 
 reverb.oninput=()=>{
+  cancelAnimationFrame(sliderAnimationFrame);
   const value=clamp01(reverb.value);
 
   if(mode==="music"){
     loopGap=value;
   }else{
-    styleValues[activeKnob]=value;
+    styleValues[Math.min(activeKnob,4)]=value;
   }
 };
 
 knob.onclick=()=>{
   if(busy) return;
-  activeKnob=(activeKnob+1)%4;
+  activeKnob=(activeKnob+1)%6;
+  rememberLoopTrack();
+
+  if(mode==="music" && activeKnob===4){
+    updateKnobUi();
+    setResetLabel("Bounce","up",true);
+    resetLabel.dataset.temporary="knob";
+    return;
+  }
+
+  if(activeKnob===5){
+    updateKnobUi();
+    showTemporaryKnobLabel("up");
+    return;
+  }
+
   syncSliderFromState();
+  showTemporaryKnobLabel("up");
+};
+
+knobFive.onclick=event=>{
+  event.stopPropagation();
+  if(busy) return;
+
+  if(mode==="music"){
+    activeKnob=4;
+    updateKnobUi();
+    setResetLabel("Bounce","up",true);
+    resetLabel.dataset.temporary="knob";
+    bounceLoop();
+    return;
+  }
+
+  activeKnob=4;
+  syncSliderFromState();
+  showTemporaryKnobLabel("up");
+};
+
+knobSix.onclick=event=>{
+  event.stopPropagation();
+  if(busy) return;
+  activeKnob=5;
+  updateKnobUi();
+  setResetLabel("Reset","up");
+  reset();
 };
 
 modeToggle.onclick=()=>{
   stopMusicPlayback();
   mode = mode==="sample" ? "music" : "sample";
+  activeKnob=0;
+  if(mode==="music"){
+    selectedLoopTrack=0;
+  }
   modeToggle.classList.toggle("on", mode==="music");
+  clearScreenLabelTimer();
+  delete resetLabel.dataset.temporary;
   syncSliderFromState();
+  showTemporaryKnobLabel("down");
   updatePlayableState();
 };
 
 syncDprTypeScale();
-syncSliderFromState();
+syncSliderFromState(false);
 updatePlayableState();
 loadDefaultSample();
 function invalidateKeyGeometry(){
