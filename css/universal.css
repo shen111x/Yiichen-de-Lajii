@@ -9,7 +9,7 @@
 :root {
   --mobile_view_threshold: 767px; /* 小屏阈值：小于此值视为移动端，此handle用于更新对应的script，css的@media需要单独修改！ */
   --gap-unit: 4px;
-  --stroke--width: 0.14rem;
+  --stroke--width: 2px;
   --header_topbar--height: 35px;
   --base--font--size: clamp(1rem, 5vh, 1.1rem);  /* 这个是中间商，目的是把一个变量包到变量，实际的1rem的anchor在universal的body的fontsize=1rem*/
   --button--font--size: var(--base--font--size);

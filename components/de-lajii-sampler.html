@@ -18,8 +18,7 @@
   --piano-aspect-height:101;
   --dashboard-ratio:39fr;
   --keyboard-ratio:65fr;
-  --stroke:calc(var(--base--font--size) * var(--stroke-ratio));
-  --bottom-stroke-compensation:0.22;
+  --stroke:2px; /* calc(var(--base--font--size) * var(--stroke-ratio)); */
   --dpr-type-scale:1;
   --button-width:13cqw;
   --reset-width:17.56cqw;
@@ -358,8 +357,6 @@ button:focus{
   box-sizing:border-box;
   cursor:pointer;
   position:relative;
-  contain:layout paint style;
-  transform:translateZ(0);
 }
 
 .toggle::before{
@@ -372,7 +369,6 @@ button:focus{
   background:#000;
   transform:translateY(var(--toggle-travel));
   transition:transform .18s ease;
-  will-change:transform;
 }
 
 .toggle.on::before{
@@ -399,8 +395,6 @@ button:focus{
   align-items:center;
   gap:0.78cqw;
   cursor:pointer;
-  contain:layout style;
-  transform:translateZ(0);
   position:relative;
   overflow:visible;
   flex-shrink:0;
@@ -448,7 +442,6 @@ button:focus{
   transform-origin:50% 100%;
   transform:translate(-50%, -100%) rotate(var(--knob-angle, -135deg));
   transition:transform .18s ease;
-  will-change:transform;
 }
 
 .knob-pointer.reset-spin{
@@ -1020,6 +1013,12 @@ function masterOutput(){
   return audioGraph.input;
 }
 
+function updateMasterDirt(amount, graph=null){
+  const target=graph || (masterOutput(), audioGraph);
+
+  target.masterDistortion.curve=amount>.001 ? getShapeCurve(amount) : getIdentityCurve();
+}
+
 function echoOutput(){
   masterOutput();
   return audioGraph.echoInput;
@@ -1066,7 +1065,7 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
   const pitchedFreq=freq*pitchRate;
   const reverbTimeScale=1+((1-reverbProgress)*.5);
   const reverbVolumeScale=.8+(reverbProgress*.2);
-  const echoCount=options.noEcho || reverbProgress<=0 ? 0 : Math.round(reverbProgress*(10-(dirtAmount*5)));
+  const echoCount=options.noEcho || reverbProgress<=0 ? 0 : Math.round(reverbProgress*10);
 
   const echoProgress=clampUnit((pitchedFreq-noteRangeMin)*noteRangeInv);
   const keyComp=1+(echoProgress*3*softness);
@@ -1075,8 +1074,8 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
   const volume=masterVolume*reverbVolumeScale*(1-(dirtAmount*.5))*keyComp*keyVolumeComp*colorVolumeComp;
   const echoDecay=.82-(echoProgress*.16);
   const echoStartGap=(notePeriod+echoGap)*(3-(reverbProgress*2));
-  const distortionCurve=dirtAmount>.001 ? getShapeCurve(dirtAmount) : null;
   const noteOutput=graph ? graph.input : masterOutput();
+  updateMasterDirt(dirtAmount,graph);
   const fadeTime=.015+(softness*.14*1.3);
   const tailScale=.65+(softness*1.2*1.3);
   const isUserSample=renderSample && renderSample!==defaultSample;
@@ -1107,20 +1106,6 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
     }
 
     source.connect(gain);
-  }
-
-  function connectDirt(source, gain, toneProgress){
-    if(!distortionCurve){
-      connectVoice(source,gain,toneProgress);
-      return;
-    }
-
-    const distortion=a.createWaveShaper();
-
-    distortion.curve=distortionCurve;
-    distortion.oversample="none";
-    source.connect(distortion);
-    connectVoice(distortion,gain,toneProgress);
   }
 
   function shapeVoiceEnvelope(param, startTime, volume, duration, fadeInTime){
@@ -1170,7 +1155,7 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
       highpass.connect(lowShelf);
       lowShelf.connect(highShelf);
       highShelf.connect(lowpass);
-      connectDirt(lowpass,gain,toneProgress);
+      connectVoice(lowpass,gain,toneProgress);
 
       shapeVoiceEnvelope(gain.gain,startTime,outputVolume,playDuration,fadeTime);
 
@@ -1247,7 +1232,6 @@ function scheduleLoopAudio(track, options={}){
   const userLowpassFrequency=color<0 ? 8200-(colorWet*7800) : 9000-(colorWet*5600);
   const lowShelfGain=color<0 ? -(colorWet*24) : -(colorWet*26);
   const highShelfGain=color>0 ? colorWet*24 : -(colorWet*30);
-  const distortionCurve=dirtAmount>.001 ? getShapeCurve(dirtAmount) : null;
   const source=a.createBufferSource();
   const gain=a.createGain();
   const highpass=a.createBiquadFilter();
@@ -1257,6 +1241,8 @@ function scheduleLoopAudio(track, options={}){
   const destination=graph ? graph.input : masterOutput();
   const startTime=options.startTime ?? a.currentTime;
   const volume=masterVolume*(.85+(reverbProgress*.15))*(1-(dirtAmount*.35));
+
+  updateMasterDirt(dirtAmount,graph);
 
   source.buffer=track.audio;
   source.playbackRate.value=pitchRate;
@@ -1277,17 +1263,7 @@ function scheduleLoopAudio(track, options={}){
   highpass.connect(lowShelf);
   lowShelf.connect(highShelf);
   highShelf.connect(lowpass);
-
-  if(distortionCurve){
-    const distortion=a.createWaveShaper();
-
-    distortion.curve=distortionCurve;
-    distortion.oversample="none";
-    lowpass.connect(distortion);
-    distortion.connect(gain);
-  }else{
-    lowpass.connect(gain);
-  }
+  lowpass.connect(gain);
 
   gain.connect(destination);
   source.start(startTime);
