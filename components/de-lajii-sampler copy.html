@@ -246,21 +246,18 @@ button{
 
 #reset{
   width:var(--reset-width);
-  background:#f8f8f8;
 }
 
 #reset::before{
   content:"";
   position:absolute;
   inset:0;
-  border-top:calc(var(--stroke) * .5) solid rgba(0,0,0,.12);
-  border-bottom:calc(var(--stroke) * .5) solid rgba(0,0,0,.12);
-  box-sizing:border-box;
-  pointer-events:none;
+  width:0%;
+  background:#000;
 }
 
 #reset.progress::before{
-  width:auto;
+  animation:resetFill var(--record-duration, 1s) linear forwards;
 }
 
 #reset.sample-progress{
@@ -275,59 +272,18 @@ button{
   position:relative;
   z-index:1;
   display:block;
-  width:100%;
-  height:100%;
   line-height:1;
-  overflow:hidden;
-}
-
-#reset.progress .button-label{
-  color:#000;
-}
-
-#reset .screen-label{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
   transform:translateY(0.04em);
 }
 
-#reset .screen-label.incoming{
-  animation:screenRollIn .18s ease-out both;
+#reset.progress .button-label{
+  color:#fff;
+  mix-blend-mode:difference;
 }
 
-#reset .screen-label.outgoing{
-  animation:screenRollOut .18s ease-in both;
-}
-
-#reset .screen-label.incoming-down{
-  animation:screenRollInDown .18s ease-out both;
-}
-
-#reset .screen-label.outgoing-down{
-  animation:screenRollOutDown .18s ease-in both;
-}
-
-@keyframes screenRollIn{
-  from{transform:translateY(105%);}
-  to{transform:translateY(0.04em);}
-}
-
-@keyframes screenRollOut{
-  from{transform:translateY(0.04em);}
-  to{transform:translateY(-105%);}
-}
-
-@keyframes screenRollInDown{
-  from{transform:translateY(-105%);}
-  to{transform:translateY(0.04em);}
-}
-
-@keyframes screenRollOutDown{
-  from{transform:translateY(0.04em);}
-  to{transform:translateY(105%);}
+@keyframes resetFill{
+  from{width:0%;}
+  to{width:100%;}
 }
 
 .mode{
@@ -497,7 +453,7 @@ button{
       <div class="controls">
         <button id="record">●</button>
         <button id="play">▶</button>
-        <button id="reset"><span id="resetLabel" class="button-label" data-label="Reset"><span class="screen-label">Reset</span></span></button>
+        <button id="reset"><span id="resetLabel" class="button-label">Reset</span></button>
 
         <div id="knob" class="knob">
           <div class="knob-left">
@@ -562,7 +518,7 @@ button{
 
 <script>
 let audio, defaultSample=null, sample=null, lastKey=null;
-let sampleRootNote=261.63;
+let sampleEchoOffset=0, sampleRootNote=261.63;
 let mode="sample";
 let music=[], musicRecording=false, musicStart=0;
 let musicPlaying=false, musicPlaybackTimers=[];
@@ -577,7 +533,6 @@ let loopGap=.15;
 let loopCycleTimer=null;
 const curveCache=new Map();
 const loopTracks=Array.from({length:4},()=>({notes:[], duration:0, styles:[0,0,0,0]}));
-let screenLabelTimer=null;
 
 const baseNote=261.63;
 const defaultSampleUrl="../sound/piano/delajiikey.wav";
@@ -595,6 +550,10 @@ const noteRangeMin=261.63;
 const noteRangeInv=1/(987.77-noteRangeMin);
 const randomDepth=.15;
 const slideThresholdSq=64;
+const echoTransientSkip=.02;
+const echoEnergyShift=.05;
+const echoZeroCrossSearch=.012;
+const echoSpikeRatio=7;
 const recordBtn=document.getElementById("record");
 const playBtn=document.getElementById("play");
 const resetBtn=document.getElementById("reset");
@@ -607,12 +566,8 @@ const knobLights=[...document.querySelectorAll("[data-knob-light]")];
 const keys=document.getElementById("keys");
 const blackKeys=[...keys.querySelectorAll(".black")];
 let blackKeyHitAreas=null;
-let sliderAnimationFrame=null;
 
 reverb.value=0;
-
-const samplerKnobLabels=["ADHD","P.M","A/C","AC/DC"];
-const loopKnobLabels=["Track1","Track2","Track3","Track4"];
 
 function syncDprTypeScale(){
   const dpr=window.devicePixelRatio || 1;
@@ -630,10 +585,6 @@ function snapshotStyles(){
   return styleValues.slice();
 }
 
-function currentKnobLabel(){
-  return (mode==="music" ? loopKnobLabels : samplerKnobLabels)[activeKnob];
-}
-
 function knobAngle(index){
   return [-45,-75,-105,-135][index] || -45;
 }
@@ -648,37 +599,8 @@ function updateKnobUi(){
   });
 }
 
-function animateSliderTo(value){
-  cancelAnimationFrame(sliderAnimationFrame);
-
-  const from=Number(reverb.value) || 0;
-  const to=clamp01(value);
-  const start=performance.now();
-  const duration=180;
-
-  function step(now){
-    const progress=Math.min(1,(now-start)/duration);
-    const eased=1-Math.pow(1-progress,3);
-
-    reverb.value=from+((to-from)*eased);
-    if(progress<1){
-      sliderAnimationFrame=requestAnimationFrame(step);
-    }
-  }
-
-  sliderAnimationFrame=requestAnimationFrame(step);
-}
-
-function syncSliderFromState(animate=true){
-  const value=mode==="music" ? loopGap : styleValues[activeKnob];
-
-  if(animate){
-    animateSliderTo(value);
-  }else{
-    cancelAnimationFrame(sliderAnimationFrame);
-    reverb.value=value;
-  }
-
+function syncSliderFromState(){
+  reverb.value=mode==="music" ? loopGap : styleValues[activeKnob];
   updateKnobUi();
 }
 
@@ -763,6 +685,7 @@ async function loadDefaultSample(){
     defaultSample=await a.decodeAudioData(buffer);
     if(!sample){
       sample=defaultSample;
+      sampleEchoOffset=0;
       recordBtn.classList.add("ready");
       updatePlayableState();
     }
@@ -772,6 +695,62 @@ async function loadDefaultSample(){
   }
   })();
   return defaultSampleLoading;
+}
+
+function findNearbyZeroCrossing(data, index, radius){
+  const start=Math.max(0,index-radius);
+  const end=Math.min(data.length-1,index+radius);
+  let bestIndex=index;
+  let bestScore=Infinity;
+
+  for(let i=start;i<=end;i++){
+    const value=Math.abs(data[i]);
+    const crossed=i>0 && ((data[i-1]<=0 && data[i]>=0) || (data[i-1]>=0 && data[i]<=0));
+    const score=value+(Math.abs(i-index)/(radius || 1))*.002+(crossed ? 0 : .002);
+
+    if(score<bestScore){
+      bestScore=score;
+      bestIndex=i;
+    }
+  }
+
+  return bestIndex;
+}
+
+function findEchoUnitOffset(buffer){
+  const data=buffer.getChannelData(0);
+  const sampleRate=buffer.sampleRate;
+  const unitSize=Math.max(1,Math.floor(notePeriod*sampleRate));
+  const hop=Math.max(1,Math.floor(unitSize/4));
+  const minIndex=Math.min(data.length-1,Math.floor(echoTransientSkip*sampleRate));
+  const shift=Math.floor(echoEnergyShift*sampleRate);
+  const zeroRadius=Math.floor(echoZeroCrossSearch*sampleRate);
+  let bestIndex=0;
+  let bestEnergy=0;
+
+  for(let i=minIndex;i<=data.length-unitSize;i+=hop){
+    let energy=0;
+    let peak=0;
+
+    for(let j=0;j<unitSize;j++){
+      const value=Math.abs(data[i+j]);
+      energy+=value*value;
+      peak=Math.max(peak,value);
+    }
+
+    const rms=Math.sqrt(energy/unitSize);
+    if(rms && peak>rms*echoSpikeRatio) continue;
+
+    if(energy>bestEnergy){
+      bestEnergy=energy;
+      bestIndex=i;
+    }
+  }
+
+  if(!bestEnergy) return 0;
+
+  const shiftedIndex=Math.min(data.length-1,bestIndex+shift);
+  return findNearbyZeroCrossing(data,shiftedIndex,zeroRadius)/sampleRate;
 }
 
 function detectRootNote(buffer){
@@ -919,7 +898,8 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
   const colorVolumeComp=color<0 ? 1-(color*colorVolumeBoost) : 1-(color*colorVolumeCut);
   const volume=masterVolume*reverbVolumeScale*(1-(dirtAmount*.5))*keyComp*keyVolumeComp*colorVolumeComp;
   const echoDecay=.82-(echoProgress*.16);
-  const echoStartGap=(notePeriod+echoGap)*(3-(reverbProgress*2));
+  const scaledNotePeriod=notePeriod*reverbTimeScale;
+  const scaledEchoGap=echoGap*reverbTimeScale;
   const distortionCurve=dirtAmount>.001 ? getShapeCurve(dirtAmount) : null;
   const noteOutput=masterOutput();
   const fadeTime=.015+(softness*.14*1.3);
@@ -929,6 +909,9 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
   const rate=sample ? freq/(isUserSample ? sampleRootNote : baseNote) : 1;
   const sampleDuration=sample?.duration || 0;
   const firstDuration=sample ? sampleDuration/rate : 0;
+  const echoSourceOffset=sampleEchoOffset;
+  const echoAvailableDuration=Math.max(0,sampleDuration-echoSourceOffset);
+  const echoDurationLimit=echoAvailableDuration/rate;
   const shouldCutStretchedSample=isUserSample && rate<1 && firstDuration>sampleDuration;
   const colorWet=Math.min(1,Math.abs(color));
   const colorHighpassFrequency=color>0 ? 80+(colorWet*620) : 80;
@@ -986,8 +969,8 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
 
     if(sample){
       const src=a.createBufferSource();
-      const sourceOffset=0;
-      const rawDuration=firstDuration;
+      const sourceOffset=isFirst ? 0 : echoSourceOffset;
+      const rawDuration=isFirst ? firstDuration : Math.min(echoDurationLimit,voicePeriod+.02);
       const baseDuration=isFirst && shouldCutStretchedSample ? sampleDuration : rawDuration;
       const playDuration=baseDuration*tailScale;
       const outputVolume=voiceVolume*sampleGain;
@@ -1054,11 +1037,11 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
   const splitChanceScale=.8*(1-dirtAmount)*toneStep;
 
   for(let i=0;i<=echoCount;i++){
-    const voicePeriod=i===0 ? notePeriod : varied(echoStartGap);
+    const voicePeriod=i===0 ? notePeriod : varied(scaledNotePeriod);
     const toneProgress=i>0 ? (i-1)*toneStep : 0;
     const echoVolumeComp=i===0 ? 1 : echoVolumeCompStart+((echoVolumeCompEnd-echoVolumeCompStart)*toneProgress);
     const echoVolume=i===0 ? volume : volume*echoVolumeScale*echoVolumeComp*varied(1);
-    const nextTime=startTime+varied(echoStartGap);
+    const nextTime=startTime+varied(scaledNotePeriod+scaledEchoGap);
 
     playVoice(startTime,echoVolume,i===0,voicePeriod,toneProgress);
 
@@ -1079,40 +1062,8 @@ function wait(ms){
   return new Promise(resolve=>setTimeout(resolve, ms));
 }
 
-function clearScreenLabelTimer(){
-  clearTimeout(screenLabelTimer);
-  screenLabelTimer=null;
-}
-
-function setResetLabel(text, direction="up"){
-  const label=String(text);
-  const current=resetLabel.dataset.label || resetLabel.textContent || "";
-
-  if(current===label) return;
-
-  resetLabel.dataset.label=label;
-  resetLabel.innerHTML="";
-
-  if(current){
-    const oldLabel=document.createElement("span");
-    oldLabel.className=direction==="down" ? "screen-label outgoing-down" : "screen-label outgoing";
-    oldLabel.textContent=current;
-    resetLabel.appendChild(oldLabel);
-  }
-
-  const newLabel=document.createElement("span");
-  newLabel.className=direction==="down" ? "screen-label incoming-down" : "screen-label incoming";
-  newLabel.textContent=label;
-  resetLabel.appendChild(newLabel);
-}
-
-function showTemporaryKnobLabel(direction="up"){
-  clearScreenLabelTimer();
-  setResetLabel(currentKnobLabel(),direction);
-  screenLabelTimer=setTimeout(()=>{
-    setResetLabel("Reset","down");
-    screenLabelTimer=null;
-  },1500);
+function setResetLabel(text){
+  resetLabel.textContent=text;
 }
 
 function hasSampleTone(){
@@ -1152,9 +1103,8 @@ function stopActiveRecorder(){
 }
 
 function clearResetProgress(){
-  clearScreenLabelTimer();
   resetBtn.classList.remove("progress", "sample-progress", "music-progress");
-  setResetLabel("Reset","down");
+  setResetLabel("Reset");
 }
 
 function abortSampleRecord(context, stream){
@@ -1165,7 +1115,6 @@ function abortSampleRecord(context, stream){
 }
 
 async function preRecordCountdown(session){
-  clearScreenLabelTimer();
   for(const label of ["3", "2", "1", "Start"]){
     if(session!==recordSession) return false;
     setResetLabel(label);
@@ -1240,10 +1189,12 @@ async function recordSample(){
 
             sample=trimLeadingSilence(buffer);
             normalizeUserSample(sample);
+            sampleEchoOffset=findEchoUnitOffset(sample);
             sampleRootNote=detectRootNote(sample);
             recordBtn.classList.add("ready");
           }else{
             sample=null;
+            sampleEchoOffset=0;
             sampleRootNote=baseNote;
           }
         }
@@ -1258,7 +1209,7 @@ async function recordSample(){
       }
     };
 
-    setResetLabel("2");
+    setResetLabel("0");
     resetBtn.classList.add("progress", "sample-progress");
 
     await new Promise(resolve=>requestAnimationFrame(resolve));
@@ -1276,11 +1227,6 @@ async function recordSample(){
     activeRecorder={state:"recording", stop:finish};
     activeStream=stream;
 
-    let remaining=2;
-    countTimer=setInterval(()=>{
-      remaining-=1;
-      setResetLabel(Math.max(remaining, 0));
-    },1000);
     recordTimer=setTimeout(finish,2000);
   }catch(err){
     console.error("Sample record failed:", err);
@@ -1431,6 +1377,7 @@ function reset(){
 
   if(mode==="sample"){
     sample=defaultSample;
+    sampleEchoOffset=0;
     sampleRootNote=baseNote;
     activeKnob=0;
     styleValues=[0,0,.5,0];
@@ -1464,7 +1411,6 @@ playBtn.onclick=playback;
 resetBtn.onclick=reset;
 
 reverb.oninput=()=>{
-  cancelAnimationFrame(sliderAnimationFrame);
   const value=clamp01(reverb.value);
 
   if(mode==="music"){
@@ -1476,24 +1422,20 @@ reverb.oninput=()=>{
 
 knob.onclick=()=>{
   if(busy) return;
-  const previousKnob=activeKnob;
   activeKnob=(activeKnob+1)%4;
   syncSliderFromState();
-  showTemporaryKnobLabel(previousKnob===3 && activeKnob===0 ? "down" : "up");
 };
 
 modeToggle.onclick=()=>{
   stopMusicPlayback();
   mode = mode==="sample" ? "music" : "sample";
   modeToggle.classList.toggle("on", mode==="music");
-  clearScreenLabelTimer();
-  setResetLabel("Reset","down");
   syncSliderFromState();
   updatePlayableState();
 };
 
 syncDprTypeScale();
-syncSliderFromState(false);
+syncSliderFromState();
 updatePlayableState();
 loadDefaultSample();
 function invalidateKeyGeometry(){
