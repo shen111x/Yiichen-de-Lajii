@@ -18,8 +18,7 @@
   --piano-aspect-height:101;
   --dashboard-ratio:39fr;
   --keyboard-ratio:65fr;
-  --stroke:calc(var(--base--font--size) * var(--stroke-ratio));
-  --bottom-stroke-compensation:0.22;
+  --stroke:2px; /* calc(var(--base--font--size) * var(--stroke-ratio)); */
   --dpr-type-scale:1;
   --button-width:13cqw;
   --reset-width:17.56cqw;
@@ -55,15 +54,16 @@ input,
 select,
 textarea,
 .piano-main{
-  -webkit-touch-callout:none;
+ /*  -webkit-touch-callout:none;
   -webkit-user-select:none;
-  user-select:none;
+  user-select:none; */
 }
 
 html,body{
   margin:0;
   width:100%;
-  height:auto;
+  min-width:0;
+  height:100%;
   overflow:hidden;
   box-sizing:border-box;
   font-family:Arial, sans-serif;
@@ -83,6 +83,7 @@ textarea{
   display:grid;
   position:relative;
   width:100%;
+  min-width:0;
   max-width:100%;
   height:auto;
   aspect-ratio:var(--piano-aspect-width) / var(--piano-aspect-height);
@@ -90,6 +91,8 @@ textarea{
   box-sizing:border-box;
   grid-template-rows:var(--dashboard-ratio) var(--keyboard-ratio);
   background:#fff;
+  contain:layout paint style;
+  transform:translateZ(0);
 }
 
 .piano-main::after{

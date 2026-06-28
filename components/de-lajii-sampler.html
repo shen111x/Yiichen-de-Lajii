@@ -54,15 +54,16 @@ input,
 select,
 textarea,
 .piano-main{
-  -webkit-touch-callout:none;
+ /*  -webkit-touch-callout:none;
   -webkit-user-select:none;
-  user-select:none;
+  user-select:none; */
 }
 
 html,body{
   margin:0;
   width:100%;
-  height:auto;
+  min-width:0;
+  height:100%;
   overflow:hidden;
   box-sizing:border-box;
   font-family:Arial, sans-serif;
@@ -82,6 +83,7 @@ textarea{
   display:grid;
   position:relative;
   width:100%;
+  min-width:0;
   max-width:100%;
   height:auto;
   aspect-ratio:var(--piano-aspect-width) / var(--piano-aspect-height);
@@ -89,6 +91,8 @@ textarea{
   box-sizing:border-box;
   grid-template-rows:var(--dashboard-ratio) var(--keyboard-ratio);
   background:#fff;
+  contain:layout paint style;
+  transform:translateZ(0);
 }
 
 .piano-main::after{

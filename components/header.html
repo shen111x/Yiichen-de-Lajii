@@ -154,6 +154,7 @@
       overflow: hidden;
       background: #ffffff;
       border: var(--stroke--width) solid #000;
+      contain: layout paint;
     }
 
     .header_panel_menu_content,
@@ -220,11 +221,16 @@
 
     .panel_menu_piano {
       flex: none;
+      align-self: stretch;
       display: block;
       width: 100%;
+      max-width: 100%;
+      height: auto;
       aspect-ratio: 217 / 101;
       border: 0;
       background: #ffffff;
+      overflow: hidden;
+      contain: layout paint;
     }
 
     .panel_cart_checkout {
@@ -263,6 +269,7 @@
 
     @media (max-width: 767px) {
       .header_panel_wrapper {
+        height: 100%;
         max-height: 600px;
       }
 
