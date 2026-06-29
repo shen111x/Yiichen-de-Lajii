@@ -1770,10 +1770,10 @@ async function recordVocalTrack(){
         stopMusicPlayback();
         busy=false;
         clearRecordTimers();
-        clearResetProgress();
+        clearResetProgress(false);
         recordBtn.classList.remove("music-recording");
         updatePlayableState();
-        showTimedStatus(track.audio ? "✓" : "X");
+        showTemporaryKnobLabel("down");
         resetAudioAfterMicrophone(a);
       }
     };
@@ -1872,10 +1872,10 @@ function stopMusicRecord(cancelSession=false){
   stopMusicPlayback();
   busy=false;
   clearRecordTimers();
-  clearResetProgress();
+  clearResetProgress(false);
   recordBtn.classList.remove("music-recording");
   updatePlayableState();
-  showTimedStatus(recorded ? "✓" : "X");
+  showTemporaryKnobLabel("down");
 }
 
 function stopMusicPlayback(){
