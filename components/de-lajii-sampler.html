@@ -36,7 +36,7 @@
   --slider-thumb-width:var(--button-width);
   --logo-letter-spacing:-0.01em;
   --logo-word-spacing:-0.06em;
-  --logo-font-size:7.75cqw;
+  --logo-font-size:6cqw;
   --logo-y-offset:-0.2em;
   --record-red:#8b0000;
   --play-green:#0f5f2f;
@@ -54,9 +54,9 @@ input,
 select,
 textarea,
 .piano-main{
- /*  -webkit-touch-callout:none;
+ -webkit-touch-callout:none;
   -webkit-user-select:none;
-  user-select:none; */
+  user-select:none;
 }
 
 html,body{
@@ -255,6 +255,10 @@ button:focus{
   color:#000;
 }
 
+#play.playing .screen-label{
+  font-size:.72em;
+}
+
 #reset{
   width:var(--reset-width);
   background:#f8f8f8;
@@ -282,7 +286,7 @@ button:focus{
   --record-duration:30s;
 }
 
-#reset .button-label{
+.button-label{
   position:relative;
   z-index:1;
   display:block;
@@ -296,7 +300,7 @@ button:focus{
   color:#000;
 }
 
-#reset .screen-label{
+.button-label .screen-label{
   position:absolute;
   inset:0;
   display:flex;
@@ -305,19 +309,19 @@ button:focus{
   transform:translateY(0.04em);
 }
 
-#reset .screen-label.incoming{
+.button-label .screen-label.incoming{
   animation:screenRollIn .18s ease-out both;
 }
 
-#reset .screen-label.outgoing{
+.button-label .screen-label.outgoing{
   animation:screenRollOut .18s ease-in both;
 }
 
-#reset .screen-label.incoming-down{
+.button-label .screen-label.incoming-down{
   animation:screenRollInDown .18s ease-out both;
 }
 
-#reset .screen-label.outgoing-down{
+.button-label .screen-label.outgoing-down{
   animation:screenRollOutDown .18s ease-in both;
 }
 
@@ -398,7 +402,6 @@ button:focus{
   display:flex;
   align-items:center;
   gap:0.78cqw;
-  cursor:pointer;
   position:relative;
   overflow:visible;
   flex-shrink:0;
@@ -434,6 +437,7 @@ button:focus{
   box-sizing:border-box;
   position:relative;
   flex-shrink:0;
+  cursor:pointer;
 }
 
 .knob-pointer{
@@ -477,7 +481,7 @@ button:focus{
   grid-row:4;
 }
 
-.knob-extra-button{
+.knob-extra-light{
   width:var(--knob-light-size);
   height:var(--knob-light-size);
   min-width:0;
@@ -485,11 +489,10 @@ button:focus{
   background:#bbb;
   padding:0;
   box-sizing:border-box;
-  cursor:pointer;
 }
 
-.knob-extra-button.active,
-.knob-extra-button.filled{
+.knob-extra-light.active,
+.knob-extra-light.filled{
   border-color:#000;
   background:#000;
 }
@@ -563,7 +566,7 @@ button:focus{
 
       <div class="controls">
         <button id="record">●</button>
-        <button id="play">▶</button>
+        <button id="play"><span id="playLabel" class="button-label" data-label="▶"><span class="screen-label">▶</span></span></button>
         <button id="reset"><span id="resetLabel" class="button-label" data-label="Reset"><span class="screen-label">Reset</span></span></button>
 
         <div id="knob" class="knob">
@@ -573,12 +576,12 @@ button:focus{
             <div class="knob-light" data-knob-light="2"></div>
             <div class="knob-light" data-knob-light="3"></div>
           </div>
-          <div class="knob-right">
+          <div id="knobDial" class="knob-right">
             <div id="knobPointer" class="knob-pointer"></div>
           </div>
           <div class="knob-extra">
-            <button id="knobSix" class="knob-extra-button" type="button"></button>
-            <button id="knobFive" class="knob-extra-button" type="button"></button>
+            <div id="knobSix" class="knob-extra-light"></div>
+            <div id="knobFive" class="knob-extra-light"></div>
           </div>
         </div>
       </div>
@@ -672,11 +675,12 @@ const randomDepth=.15;
 const slideThresholdSq=64;
 const recordBtn=document.getElementById("record");
 const playBtn=document.getElementById("play");
+const playLabel=document.getElementById("playLabel");
 const resetBtn=document.getElementById("reset");
 const resetLabel=document.getElementById("resetLabel");
 const modeToggle=document.getElementById("modeToggle");
 const reverb=document.getElementById("reverb");
-const knob=document.getElementById("knob");
+const knobDial=document.getElementById("knobDial");
 const knobPointer=document.getElementById("knobPointer");
 const knobLights=[...document.querySelectorAll("[data-knob-light]")];
 const knobFive=document.getElementById("knobFive");
@@ -1035,7 +1039,7 @@ function output(gain, destination){
 function playNote(freq, options={}){
   const shouldRecordMusic=mode==="music" && musicRecording && selectedLoopTrack!==3 && !options.loopPlayback;
   const musicEventTime=performance.now()-musicStart;
-  setAudioSessionType("playback");
+  setAudioSessionType(mode==="music" && musicRecording && selectedLoopTrack===3 && options.loopPlayback ? "play-and-record" : "playback");
   const a=ctx();
   const resumePromise=a.state==="running" ? null : a.resume?.();
   const samplePromise=!sample && defaultSampleLoading ? defaultSampleLoading : null;
@@ -1334,7 +1338,7 @@ async function bounceLoop(){
   if(busy) return;
 
   if(!hasLoopTone()){
-    showTimedStatus("No Loop");
+    showTimedStatus("Empty");
     return;
   }
 
@@ -1406,26 +1410,34 @@ function clearScreenLabelTimer(){
   screenLabelTimers=[];
 }
 
-function setResetLabel(text, direction="up", force=false){
+function setButtonLabel(target,text,direction="up",force=false){
   const label=String(text);
-  const current=resetLabel.dataset.label || resetLabel.textContent || "";
+  const current=target.dataset.label || target.textContent || "";
 
   if(current===label && !force) return;
 
-  resetLabel.dataset.label=label;
-  resetLabel.innerHTML="";
+  target.dataset.label=label;
+  target.innerHTML="";
 
   if(current){
     const oldLabel=document.createElement("span");
     oldLabel.className=direction==="down" ? "screen-label outgoing-down" : "screen-label outgoing";
     oldLabel.textContent=current;
-    resetLabel.appendChild(oldLabel);
+    target.appendChild(oldLabel);
   }
 
   const newLabel=document.createElement("span");
   newLabel.className=direction==="down" ? "screen-label incoming-down" : "screen-label incoming";
   newLabel.textContent=label;
-  resetLabel.appendChild(newLabel);
+  target.appendChild(newLabel);
+}
+
+function setResetLabel(text, direction="up", force=false){
+  setButtonLabel(resetLabel,text,direction,force);
+}
+
+function setPlayLabel(text, direction="up", force=false){
+  setButtonLabel(playLabel,text,direction,force);
 }
 
 function showTemporaryKnobLabel(direction="up"){
@@ -1505,9 +1517,11 @@ function resetRecordingUi(...classes){
 }
 
 function updatePlayableState(){
+  const showStop=mode==="music" && (musicPlaying || musicRecording);
+
   playBtn.classList.toggle("ready", mode==="sample" ? hasSampleTone() : hasLoopTone());
-  playBtn.classList.toggle("playing", mode==="music" && musicPlaying);
-  playBtn.textContent=mode==="music" && musicPlaying ? "■" : "▶";
+  playBtn.classList.toggle("playing", showStop);
+  setPlayLabel(showStop ? "■" : "▶");
   updateKnobUi();
 }
 
@@ -1753,6 +1767,7 @@ async function recordVocalTrack(){
         }
       }finally{
         musicRecording=false;
+        stopMusicPlayback();
         busy=false;
         clearRecordTimers();
         clearResetProgress();
@@ -1764,6 +1779,10 @@ async function recordVocalTrack(){
     };
 
     musicRecording=true;
+    musicStart=performance.now();
+    musicPlaying=true;
+    updatePlayableState();
+    scheduleLoopCycle();
     setResetLabel(30);
     resetBtn.classList.add("progress", "music-progress");
 
@@ -1850,6 +1869,7 @@ function stopMusicRecord(cancelSession=false){
   }
 
   musicRecording=false;
+  stopMusicPlayback();
   busy=false;
   clearRecordTimers();
   clearResetProgress();
@@ -1905,17 +1925,32 @@ function scheduleLoopCycle(){
   loopCycleTimer=setTimeout(()=>{
     musicPlaybackTimers.forEach(timer=>clearTimeout(timer));
     musicPlaybackTimers=[];
+    loopCycleTimer=null;
+    if(musicRecording){
+      musicPlaying=false;
+      updatePlayableState();
+      return;
+    }
+
     scheduleLoopCycle();
   },length);
 }
 
 function playback(){
+  if(busy && mode==="sample") return;
+  if(busy && mode==="music" && !musicRecording) return;
+
   if(mode==="sample" && hasSampleTone()){
     playNote(sample!==defaultSample ? sampleRootNote : baseNote,{noEcho:true});
   }
 
   if(mode==="music"){
     if(musicRecording){
+      if(activeRecorder?.state==="recording"){
+        activeRecorder.stop();
+        return;
+      }
+
       stopMusicRecordAndPlayback(true);
       return;
     }
@@ -1948,9 +1983,12 @@ function reset(){
     styleValues=[0,0,.5,0,.5];
     recordBtn.textContent="●";
   }else{
-    loopTracks[selectedLoopTrack].notes=[];
-    loopTracks[selectedLoopTrack].audio=null;
-    loopTracks[selectedLoopTrack].duration=0;
+    loopTracks.forEach(track=>{
+      track.notes=[];
+      track.audio=null;
+      track.duration=0;
+    });
+    selectedLoopTrack=0;
     musicRecording=false;
   }
 
@@ -1982,7 +2020,13 @@ recordBtn.onclick=()=>{
 };
 playBtn.onclick=playback;
 resetBtn.onclick=()=>{
-  if(mode==="music" && activeKnob===4) return;
+  if(busy) return;
+
+  if(mode==="music" && activeKnob===4){
+    bounceLoop();
+    return;
+  }
+
   reset();
 };
 
@@ -1997,7 +2041,7 @@ reverb.oninput=()=>{
   }
 };
 
-knob.onclick=()=>{
+knobDial.onclick=()=>{
   if(busy) return;
   activeKnob=(activeKnob+1)%6;
   rememberLoopTrack();
@@ -2019,34 +2063,8 @@ knob.onclick=()=>{
   showTemporaryKnobLabel("up");
 };
 
-knobFive.onclick=event=>{
-  event.stopPropagation();
-  if(busy) return;
-
-  if(mode==="music"){
-    activeKnob=4;
-    updateKnobUi();
-    setResetLabel("Bounce","up",true);
-    resetLabel.dataset.temporary="knob";
-    bounceLoop();
-    return;
-  }
-
-  activeKnob=4;
-  syncSliderFromState();
-  showTemporaryKnobLabel("up");
-};
-
-knobSix.onclick=event=>{
-  event.stopPropagation();
-  if(busy) return;
-  activeKnob=5;
-  updateKnobUi();
-  setResetLabel("Reset","up");
-  reset();
-};
-
 modeToggle.onclick=()=>{
+  if(busy) return;
   stopMusicPlayback();
   mode = mode==="sample" ? "music" : "sample";
   activeKnob=0;
