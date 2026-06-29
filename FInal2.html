@@ -567,7 +567,7 @@ button:focus{
       <div class="controls">
         <button id="record">●</button>
         <button id="play"><span id="playLabel" class="button-label" data-label="▶"><span class="screen-label">▶</span></span></button>
-        <button id="reset"><span id="resetLabel" class="button-label" data-label="ADHD"><span class="screen-label">ADHD</span></span></button>
+        <button id="reset"><span id="resetLabel" class="button-label" data-label="Reset"><span class="screen-label">Reset</span></span></button>
 
         <div id="knob" class="knob">
           <div class="knob-left">
@@ -649,7 +649,7 @@ let activeKnob=0;
 let renderedKnob=0;
 let knobRenderAngle=-60;
 let selectedLoopTrack=0;
-let styleValues=[0,0,.5,0,.5,.5];
+let styleValues=[0,0,.5,0,.5];
 let loopGap=.15;
 let loopCycleTimer=null;
 const curveCache=new Map();
@@ -800,7 +800,7 @@ function animateSliderTo(value){
 }
 
 function syncSliderFromState(animate=true){
-  const value=mode==="music" ? loopGap : styleValues[activeKnob];
+  const value=mode==="music" ? loopGap : styleValues[Math.min(activeKnob,4)];
 
   if(animate){
     animateSliderTo(value);
@@ -999,7 +999,6 @@ function createMasterGraph(a,destination){
   const echoInput=a.createGain();
   const echoLimiter=a.createDynamicsCompressor();
 
-  input.gain.value=.7+(styleValues[5]*.6);
   masterDistortion.curve=getIdentityCurve();
   masterDistortion.oversample="none";
   compressor.threshold.value=-10;
@@ -1990,8 +1989,7 @@ function reset(){
   if(mode==="sample"){
     sample=defaultSample;
     sampleRootNote=baseNote;
-    styleValues=[0,0,.5,0,.5,.5];
-    if(audioGraph) audioGraph.input.gain.value=1;
+    styleValues=[0,0,.5,0,.5];
     recordBtn.textContent="●";
   }else{
     loopTracks.forEach(track=>{
@@ -2048,10 +2046,7 @@ reverb.oninput=()=>{
   if(mode==="music"){
     loopGap=value;
   }else{
-    styleValues[activeKnob]=value;
-    if(activeKnob===5 && audioGraph){
-      audioGraph.input.gain.value=.7+(value*.6);
-    }
+    styleValues[Math.min(activeKnob,4)]=value;
   }
 };
 
@@ -2068,11 +2063,7 @@ knobDial.onclick=()=>{
   }
 
   if(activeKnob===5){
-    if(mode==="sample"){
-      syncSliderFromState();
-    }else{
-      updateKnobUi();
-    }
+    updateKnobUi();
     showTemporaryKnobLabel("up");
     return;
   }
