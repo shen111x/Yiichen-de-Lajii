@@ -831,8 +831,8 @@ function softClipSample(value){
 function shapeCurve(amount){
   const samples=128;
   const curve=new Float32Array(samples);
-  const drive=1+(amount*0);
-  const grit=amount*.08;
+  const drive=1+(amount*0.5);
+  const grit=amount*.3;
 
   for(let i=0;i<samples;i++){
     const x=(i/(samples-1))*2-1;
@@ -974,7 +974,7 @@ function trimLeadingSilence(buffer){
 
   const sampleRms=Math.sqrt(noiseSum/Math.max(1,noiseSamples));
   const noiseFloor=sampleRms;
-  const threshold=Math.min(.08,Math.max(.006,noiseFloor*3));
+  const threshold=Math.min(.08,Math.max(.006,noiseFloor*40));
   const padding=Math.floor(buffer.sampleRate*.015);
   let start=0;
 
