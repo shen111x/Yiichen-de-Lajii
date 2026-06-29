@@ -824,6 +824,10 @@ function clampSigned(value){
   return value<=-1 ? -1 : value>=1 ? 1 : value;
 }
 
+function setSafeFilterFrequency(filter,value,context){
+  filter.frequency.value=Math.min(context.sampleRate*.45,Math.max(20,value));
+}
+
 function softClipSample(value){
   return Math.tanh(value);
 }
@@ -1159,9 +1163,9 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
       const highShelf=a.createBiquadFilter();
 
       highpass.type="highpass";
-      highpass.frequency.value=colorHighpassFrequency;
+      setSafeFilterFrequency(highpass,colorHighpassFrequency,a);
       lowpass.type="lowpass";
-      lowpass.frequency.value=userLowpassFrequency;
+      setSafeFilterFrequency(lowpass,userLowpassFrequency,a);
       lowShelf.type="lowshelf";
       lowShelf.frequency.value=220;
       lowShelf.gain.value=lowShelfGain;
@@ -1267,7 +1271,7 @@ function scheduleLoopAudio(track, options={}){
   gain.gain.setValueAtTime(volume,startTime);
 
   highpass.type="highpass";
-  highpass.frequency.value=colorHighpassFrequency;
+  setSafeFilterFrequency(highpass,colorHighpassFrequency,a);
   lowShelf.type="lowshelf";
   lowShelf.frequency.value=220;
   lowShelf.gain.value=lowShelfGain;
@@ -1275,7 +1279,7 @@ function scheduleLoopAudio(track, options={}){
   highShelf.frequency.value=2600;
   highShelf.gain.value=highShelfGain;
   lowpass.type="lowpass";
-  lowpass.frequency.value=userLowpassFrequency;
+  setSafeFilterFrequency(lowpass,userLowpassFrequency,a);
 
   source.connect(highpass);
   highpass.connect(lowShelf);
