@@ -692,7 +692,7 @@ let sliderAnimationFrame=null;
 
 reverb.value=0;
 
-const samplerKnobLabels=["ADHD","P.M","A/C","AC/DC","Pitch","Reset"];
+const samplerKnobLabels=["ADHD","P.M","A/C","AC/DC","Octave","Reset"];
 const loopKnobLabels=["Track1","Track2","Track3","Vocal4","Bounce","Reset"];
 
 function syncDprTypeScale(){
@@ -1079,7 +1079,8 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
   const styles=options.styleSnapshot || activeStyles();
   const reverbProgress=clampUnit(styles[0]);
   const softness=clampUnit(styles[1]);
-  const color=clampSigned((clampUnit(styles[2])-.5)*2*1.3);
+  const colorPosition=clampSigned((clampUnit(styles[2])-.5)*2);
+  const color=clampSigned(colorPosition*1.3);
   const dirt=clampUnit(styles[3]);
   const pitch=clampSigned((clampUnit(styles[4] ?? .5)-.5)*2);
   const dirtAmount=dirt*dirt;
@@ -1093,7 +1094,8 @@ function scheduleNote(freq, options, shouldRecordMusic, musicEventTime){
   const keyComp=1+(echoProgress*3*softness);
   const keyVolumeComp=1+(softness*(keyVolumeCompMin+((keyVolumeCompMax-keyVolumeCompMin)*echoProgress)));
   const colorVolumeComp=color<0 ? 1-(color*colorVolumeBoost) : 1-(color*colorVolumeCut);
-  const volume=masterVolume*reverbVolumeScale*(1-(dirtAmount*.5))*keyComp*keyVolumeComp*colorVolumeComp;
+  const colorKeyVolumeComp=colorPosition<0 ? 1+(-colorPosition*.3*echoProgress) : 1+(colorPosition*.3*(1-echoProgress));
+  const volume=masterVolume*reverbVolumeScale*(1-(dirtAmount*.5))*keyComp*keyVolumeComp*colorVolumeComp*colorKeyVolumeComp;
   const echoDecay=.82-(echoProgress*.16);
   const echoStartGap=(notePeriod+echoGap)*(3-(reverbProgress*2));
   const noteOutput=graph ? graph.input : masterOutput();
@@ -2047,7 +2049,12 @@ resetBtn.onclick=()=>{
 
 reverb.oninput=()=>{
   cancelAnimationFrame(sliderAnimationFrame);
-  const value=clamp01(reverb.value);
+  let value=clamp01(reverb.value);
+
+  if(mode==="sample" && activeKnob===4){
+    value=Math.round(value*2)/2;
+    reverb.value=value;
+  }
 
   if(mode==="music"){
     loopGap=value;
