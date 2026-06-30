@@ -263,6 +263,72 @@
       cursor: pointer;
     }
 
+    .panel_cart_header {
+      display: none;
+      align-items: center;
+      justify-content: flex-end;
+      width: 100%;
+      height: calc(var(--header_topbar--height) + var(--gap-unit) * 1.5);
+      box-sizing: border-box;
+      padding: 0 calc(var(--gap-unit) * 1.5);
+    }
+
+    #header_main.menu-open.cart-open .panel_cart_header {
+      display: flex;
+    }
+
+    #header_main.menu-open.cart-open .header_panel_cart_content {
+      margin-top: 0;
+    }
+
+    .panel_cart_close,
+    .panel_cart_item_delete {
+      appearance: none;
+      -webkit-appearance: none;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      color: #000;
+      font: inherit;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .panel_cart_list {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--gap-unit) * 1.5);
+    }
+
+    .panel_cart_item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto auto;
+      align-items: start;
+      gap: calc(var(--gap-unit) * 1.2);
+      font-size: calc(var(--base--font--size) * 0.8);
+      line-height: 1.25;
+    }
+
+    .panel_cart_item_info {
+      min-width: 0;
+    }
+
+    .panel_cart_item_title,
+    .panel_cart_item_subtitle,
+    .panel_cart_item_size {
+      overflow-wrap: anywhere;
+    }
+
+    .panel_cart_item_qty,
+    .panel_cart_item_price,
+    .panel_cart_item_delete {
+      white-space: nowrap;
+    }
+
     /* ====================================================================
        移动端样式（当视口宽度小于 --mobile_view_threshold 时生效）
        ==================================================================== */
@@ -271,6 +337,15 @@
       .header_panel_wrapper {
         height: 100%;
         max-height: 600px;
+      }
+
+      .panel_cart_header,
+      #header_main.menu-open.cart-open .panel_cart_header {
+        display: none;
+      }
+
+      #header_main.menu-open.cart-open .header_panel_cart_content {
+        margin-top: calc(var(--header_topbar--height) + var(--gap-unit) * 1.5);
       }
 
       #header_main.menu-open #header_panel_cart {
@@ -334,7 +409,68 @@
     <!-- 购物车面板（默认隐藏） -->
     <div id="header_panel_cart" aria-hidden="true">
       <div class="header_panel_wrapper">
+        <div class="panel_cart_header">
+          <button class="panel_cart_close" type="button">X</button>
+        </div>
+
         <div class="header_panel_cart_content">
+          <div class="panel_cart_list">
+            <div class="panel_cart_item">
+              <div class="panel_cart_item_info">
+                <div class="panel_cart_item_title">Typography Tote Bag</div>
+                <div class="panel_cart_item_subtitle">Limited Edition</div>
+                <div class="panel_cart_item_size">Size: 3</div>
+              </div>
+              <div class="panel_cart_item_qty">x1</div>
+              <div class="panel_cart_item_price">345.5</div>
+              <button class="panel_cart_item_delete" type="button">Delete</button>
+            </div>
+
+            <div class="panel_cart_item">
+              <div class="panel_cart_item_info">
+                <div class="panel_cart_item_title">Typography Tote Bag</div>
+                <div class="panel_cart_item_subtitle">Limited Edition</div>
+                <div class="panel_cart_item_size">Size: 3</div>
+              </div>
+              <div class="panel_cart_item_qty">x1</div>
+              <div class="panel_cart_item_price">345.5</div>
+              <button class="panel_cart_item_delete" type="button">Delete</button>
+            </div>
+
+            <div class="panel_cart_item">
+              <div class="panel_cart_item_info">
+                <div class="panel_cart_item_title">Typography Tote Bag</div>
+                <div class="panel_cart_item_subtitle">Limited Edition</div>
+                <div class="panel_cart_item_size">Size: 3</div>
+              </div>
+              <div class="panel_cart_item_qty">x1</div>
+              <div class="panel_cart_item_price">345.5</div>
+              <button class="panel_cart_item_delete" type="button">Delete</button>
+            </div>
+
+            <div class="panel_cart_item">
+              <div class="panel_cart_item_info">
+                <div class="panel_cart_item_title">Typography Tote Bag</div>
+                <div class="panel_cart_item_subtitle">Limited Edition</div>
+                <div class="panel_cart_item_size">Size: 3</div>
+              </div>
+              <div class="panel_cart_item_qty">x1</div>
+              <div class="panel_cart_item_price">345.5</div>
+              <button class="panel_cart_item_delete" type="button">Delete</button>
+            </div>
+
+            <div class="panel_cart_item">
+              <div class="panel_cart_item_info">
+                <div class="panel_cart_item_title">Typography Tote Bag</div>
+                <div class="panel_cart_item_subtitle">Limited Edition</div>
+                <div class="panel_cart_item_size">Size: 3</div>
+              </div>
+              <div class="panel_cart_item_qty">x1</div>
+              <div class="panel_cart_item_price">345.5</div>
+              <button class="panel_cart_item_delete" type="button">Delete</button>
+            </div>
+          </div>
+
           <div class="panel_cart_checkout">
             <div class="panel_cart_checkout_total">Cart Total: 451.00 usd</div>
             <button class="panel_cart_checkout_button" type="button">Check Out</button>
