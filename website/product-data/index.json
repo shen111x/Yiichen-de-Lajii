@@ -1,0 +1,93 @@
+[
+
+  {
+
+    "category_id": "01",
+
+    "label": "Wearable",
+
+    "category_path": "c-01",
+
+    "category_page": "pages/category/index.html?c=01",
+
+    "active": true,
+
+
+
+    "sub_text":"\"placeholder lorem ipsum \""
+
+  },
+
+  {
+
+    "category_id": "02",
+
+    "label": "Bags",
+
+    "category_path": "c-02",
+
+    "category_page": "pages/category/index.html?c=02",
+
+    "active": true,
+
+
+
+    "sub_text":"\"placeholder lorem ipsum \""
+
+  },
+
+  {
+
+    "category_id": "03",
+
+    "label": "Self-Defense Weapon",
+
+    "category_path": "c-03",
+
+    "category_page": "pages/category/index.html?c=03",
+
+    "active": true,
+
+
+
+    "sub_text":"\"placeholder lorem ipsum \""
+
+  },
+
+  {
+
+    "category_id": "04",
+
+    "label": "Home Decor",
+
+    "category_path": "c-04",
+
+    "category_page": "pages/category/index.html?c=04",
+
+    "active": true,
+
+
+
+    "sub_text":"\"placeholder lorem ipsum \""
+
+  },
+
+  {
+
+    "category_id": "05",
+
+    "label": "\"Art\"",
+
+    "category_path": "c-05",
+
+    "category_page": "pages/category/index.html?c=05",
+
+    "active": true,
+
+
+
+    "sub_text":"\"placeholder lorem ipsum \""
+
+  }
+
+]

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="description" content="Experimental Designer Brand based in LA">
+  <meta property="og:title" content="Yiichen de Lajii">
+  <meta property="og:description" content="Celebration of Contemporary Anxiety">
+  <meta property="og:image" content="share.jpg">
+
+  <title>Yiichen de Lajii</title>
+
+  <link rel="stylesheet" href="css/universal.css">
+
+  <style>
+    .home-body-main {
+      width: 100vw;
+      min-height: 100vh;
+      box-sizing: border-box;
+      padding: calc(var(--header-topbar-height) + var(--gap-unit) * 6) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+
+      background: #ffffff;
+    }
+
+    .home-body-hero {
+      width: 100%;
+      height: auto;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      gap: calc(var(--gap-unit) * 3);
+    }
+
+    .home-body-hero-video-wrapper {
+      width: 100%;
+      height: 70vh;
+      
+      overflow: hidden;
+    }
+
+    .home-body-hero-video-wrapper video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: center center;
+    }
+
+    .home-body-hero-text-wrapper {
+      text-align: center;
+      max-width: 525px;
+      padding: 0.25em 0 0.35em;
+    }
+
+    .home-body-hero-text-wrapper h1 {
+      margin: 0;
+    }
+
+    .home-body-hero-text-wrapper p {
+      margin: 0.6em 0 0;
+    }
+
+    .home-body-hero-surf-button {
+      width: 150px;
+      height: var(--header-topbar-height);
+      box-sizing: border-box;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      color: #000;
+      text-decoration: none;
+      border: var(--stroke--width) solid #000;
+    }
+
+    .home-body-copyright-container {
+      margin-top: calc(var(--header-topbar-height) * 3);
+    }
+  </style>
+</head>
+
+<body data-page="home">
+  <header id="header-container"></header>
+
+  <div class="home-body-main">
+    <div class="home-body-hero">
+      <div class="home-body-hero-video-wrapper">
+        <video
+          src="image/test/a.mp4"
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="auto"
+        >
+          <source src="image/test/a.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+
+      <div class="home-body-hero-text-wrapper">
+        <h1>The Satellite Man
+          <br>Summer 2026
+        </h1>
+        <p>“ If you hug me, I am of no value. ”
+
+            Shop our latest collection for those experiencing signal loss.</p>
+      </div>
+
+      <a class="home-body-hero-surf-button" href="pages/category/index.html?c=02">Surf Now</a>
+
+    </div>
+
+    <div class="home-body-content">
+      <img src="image/home/">
+
+    </div>
+
+    <div id="copyright-container" class="home-body-copyright-container"></div>
+  </div>
+
+
+  <script src="js/universal.js"></script>
+</body>
+</html>

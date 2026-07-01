@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+
+  <title>Yiichen de Lajii</title>
+
+  <link rel="stylesheet" href="../../css/universal.css">
+
+
+  <style>
+    .category-body-main {
+      width: 100vw;
+      min-height: 200vh;
+      box-sizing: border-box;
+      padding: calc(var(--header-topbar-height) + var(--gap-unit) * 6) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+
+      background: #ffffff;
+      
+    }
+
+    .category-body-hero {
+      width: 100%;
+      height: 50vh;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      gap: calc(var(--gap-unit) * 3);
+    }
+
+    .category-body-hero-text-wrapper {
+      text-align: center;
+      max-width: 525px;
+      padding: 0.25em 0 0.35em;
+    }
+
+    .category-body-hero-text-wrapper h1 {
+      margin: 0;
+    }
+
+    .category-body-hero-text-wrapper p {
+      margin: 0.6em 0 0;
+    }
+
+    .category-body-hero-image {
+      width: 100%;
+      height:auto;
+      object-fit: cover;
+      display:none;
+    }
+
+    .category-body-product-wrapper{
+      width:100%;
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--gap-unit) * 3);
+      align-items: center;
+    }
+    
+    .category-body-product-item {
+      width:500px;
+      height:100px;
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--gap-unit) * 2);
+
+    }
+     .category-body-product-item img{
+      width:100%;
+    }
+
+    .category-body-product-info h2,
+    .category-body-product-info p {
+      text-align: center;
+    }
+
+  </style>
+</head>
+
+<body data-page="wearable">
+  <header id="header-container"></header>
+  <div class="category-body-main">
+    <div class="category-body-hero">
+      <img id="category-hero-image" class="category-body-hero-image" src="" alt="">
+
+      <div class="category-body-hero-text-wrapper">
+        <h1 id="category-hero-title">Wearable</h1>
+        <p id="category-hero-body-copy">Wearable is a category of products that can be worn on the body, such as smartwatches, fitness trackers, and augmented reality glasses.</p>
+      </div>
+    </div>
+
+    <div class="category-body-product-wrapper">
+      <div class="category-body-product-item">
+        <div class="category-body-product-image-wrapper" >
+          <img src="../../product-data/c-01/01/img/1.jpg" alt="Product 1">
+        </div>
+        <div class="category-body-product-info">
+          <h2>Smartwatch</h2>
+          <p>A wearable device that can track your fitness.</p>
+          <p>234.56 usd</p>
+
+          
+        </div>
+        <button> add to cart </button>
+
+      </div>
+
+    </div>
+
+  <script src="../../js/universal.js"></script>
+  <script src="category.js"></script>
+</body>
+</html>
