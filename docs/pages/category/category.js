@@ -1,20 +1,21 @@
 (function() {
   var categoryIndexPath = '../../product-data/index.json';
-  var productPagePath = '../product/monogram-flag-tee-roc.html';
+  var productPagePath = '../product/index.html';
   var productProbeLimit = 99;
   var maxEmptyProbeStreak = 2;
 
   var state = {
     category: null,
     products: [],
-    sort: 'default'
+    sort: 'price-asc'
   };
 
   var title = document.getElementById('category-title');
   var sortSelect = document.getElementById('category-sort');
   var productContainer = document.getElementById('category-products');
+  var productUnit = document.getElementById('category-product-unit');
 
-  if (!title || !sortSelect || !productContainer) return;
+  if (!title || !sortSelect || !productContainer || !productUnit) return;
 
   sortSelect.addEventListener('change', function() {
     state.sort = sortSelect.value;
@@ -176,7 +177,7 @@
           subtitle: product.subtitle || product.sub_title || product.description || '',
           price: parsePrice(product.price, product.currency),
           currency: product.currency || '',
-          launchDate: product.launch_date || product.launchDate || product.release_date || product.releaseDate || product.date || '',
+          oddness: parseOddness(product, index),
           imageCandidates: getImageCandidates(productBasePath, product),
           href: getProductHref(category, folderId, product)
         };
@@ -245,13 +246,13 @@
       products.sort(function(a, b) {
         return b.price.value - a.price.value || a.defaultIndex - b.defaultIndex;
       });
-    } else if (state.sort === 'date-desc') {
+    } else if (state.sort === 'oddness-asc') {
       products.sort(function(a, b) {
-        return getTimeValue(b.launchDate) - getTimeValue(a.launchDate) || a.defaultIndex - b.defaultIndex;
+        return a.oddness - b.oddness || a.defaultIndex - b.defaultIndex;
       });
-    } else if (state.sort === 'date-asc') {
+    } else if (state.sort === 'oddness-desc') {
       products.sort(function(a, b) {
-        return getTimeValue(a.launchDate) - getTimeValue(b.launchDate) || a.defaultIndex - b.defaultIndex;
+        return b.oddness - a.oddness || a.defaultIndex - b.defaultIndex;
       });
     }
 
@@ -259,45 +260,33 @@
   }
 
   function createProductItem(product) {
-    var item = document.createElement('a');
-    var imageWrapper = document.createElement('div');
-    var image = document.createElement('img');
-    var info = document.createElement('div');
-    var name = document.createElement('p');
-    var subtitle = document.createElement('p');
-    var price = document.createElement('p');
-    var add = document.createElement('span');
+    var item = productUnit.cloneNode(true);
+    var image = item.querySelector('.category-product-image');
+    var name = item.querySelector('.category-product-name');
+    var subtitle = item.querySelector('.category-product-subtitle');
+    var price = item.querySelector('.category-product-price');
+    var add = item.querySelector('.category-product-add');
 
-    item.className = 'category-product-item';
+    item.removeAttribute('id');
+    item.removeAttribute('hidden');
     item.href = product.href;
     item.dataset.categoryPath = product.categoryPath;
     item.dataset.productFolder = product.folderId;
     item.dataset.productId = product.id;
 
-    imageWrapper.className = 'category-product-image-wrapper';
-    image.className = 'category-product-image';
-    image.alt = product.name;
-    setImageWithFallbacks(image, product.imageCandidates);
+    if (image) {
+      image.classList.remove('is-missing');
+      image.alt = product.name;
+      setImageWithFallbacks(image, product.imageCandidates);
+    }
 
-    info.className = 'category-product-info';
-    name.className = 'category-product-name';
-    subtitle.className = 'category-product-subtitle';
-    price.className = 'category-product-price';
-    add.className = 'category-product-add';
-
-    name.textContent = product.name;
-    subtitle.textContent = product.subtitle;
-    price.textContent = product.price.label;
-    add.textContent = 'Add';
-
-    imageWrapper.appendChild(image);
-    info.appendChild(name);
-    if (product.subtitle) info.appendChild(subtitle);
-    info.appendChild(price);
-    info.appendChild(add);
-
-    item.appendChild(imageWrapper);
-    item.appendChild(info);
+    if (name) name.textContent = product.name;
+    if (subtitle) {
+      subtitle.textContent = product.subtitle;
+      subtitle.hidden = !product.subtitle;
+    }
+    if (price) price.textContent = product.price.label;
+    if (add && !add.textContent.trim()) add.textContent = 'Add';
 
     return item;
   }
@@ -346,9 +335,16 @@
     };
   }
 
-  function getTimeValue(value) {
-    var time = Date.parse(value);
-    return Number.isFinite(time) ? time : 0;
+  function parseOddness(product, fallback) {
+    var value = product.oddness ??
+      product.oddness_score ??
+      product.oddnessScore ??
+      product.weirdness ??
+      product.weirdness_score ??
+      product.weirdnessScore;
+    var number = parseFloat(String(value ?? '').replace(/[^0-9.-]/g, ''));
+
+    return Number.isFinite(number) ? number : fallback;
   }
 
   function loadJson(path) {
