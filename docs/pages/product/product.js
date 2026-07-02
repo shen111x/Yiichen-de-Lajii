@@ -23,10 +23,12 @@
       .then(function(productState) {
         renderProduct(productState);
         initProductDropdowns();
+        finishPageLoading();
       })
       .catch(function(error) {
         console.error('加载 product page 数据失败：', error);
         initProductDropdowns();
+        finishPageLoading();
       });
   }
 
@@ -275,6 +277,10 @@
 
   function isTouchView() {
     return window.matchMedia && window.matchMedia('(hover: none)').matches;
+  }
+
+  function finishPageLoading() {
+    document.documentElement.classList.remove('is-data-loading');
   }
 
   function renderDropdowns(dropdowns) {

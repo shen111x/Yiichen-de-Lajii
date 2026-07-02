@@ -6,9 +6,15 @@
 
   <title>Yiichen de Lajii</title>
 
+  <script>document.documentElement.classList.add('is-data-loading');</script>
   <link rel="stylesheet" href="../../css/universal.css">
 
   <style>
+    .is-data-loading .product-body-topbar,
+    .is-data-loading .product-body-main {
+      visibility: hidden;
+    }
+
     .product-body-main {
       position: relative;
       width: 100vw;

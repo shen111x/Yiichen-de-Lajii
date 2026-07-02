@@ -234,6 +234,7 @@
     products.forEach(function(product) {
       productContainer.appendChild(createProductItem(product));
     });
+    finishPageLoading();
   }
 
   function getSortedProducts() {
@@ -493,6 +494,11 @@
     empty.className = 'category-empty';
     empty.textContent = message;
     productContainer.appendChild(empty);
+    finishPageLoading();
+  }
+
+  function finishPageLoading() {
+    document.documentElement.classList.remove('is-data-loading');
   }
 
   function parsePrice(value, currency) {
