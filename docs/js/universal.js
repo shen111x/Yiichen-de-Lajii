@@ -9,6 +9,7 @@ if (location.hostname === 'yiichendelajii.com' && location.protocol !== 'https:'
 var siteRoot = getSiteRoot();
 var productDataIndexPath = 'product-data/index.json';
 var productDataCategoriesPromise = null;
+var cartFunctionScriptLoading = null;
 
 /* ================================
    header 组件加载
@@ -59,6 +60,7 @@ fetch(siteRoot + 'components/copyright.html')
 function initHeader() {
   setHeaderPaths();
   initHeaderPanels();
+  loadCartFunctionScript();
   loadProductDataCategories()
     .then(function(categories) {
       renderHeaderProductMenu(categories);
@@ -445,3 +447,27 @@ function loadUtilityScript(path) {
 }
 
 loadUtilityScript('js/utility/disable-fast-double-tap-zoom.js');
+
+function loadCartFunctionScript() {
+  if (window.CartFunction?.init) {
+    window.CartFunction.init();
+    return Promise.resolve(window.CartFunction);
+  }
+
+  if (cartFunctionScriptLoading) return cartFunctionScriptLoading;
+
+  cartFunctionScriptLoading = new Promise(function(resolve, reject) {
+    var script = document.createElement('script');
+
+    script.src = siteRoot + 'js/cart-function.js';
+    script.defer = true;
+    script.onload = function() {
+      if (window.CartFunction?.init) window.CartFunction.init();
+      resolve(window.CartFunction || null);
+    };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+
+  return cartFunctionScriptLoading;
+}

@@ -7,7 +7,7 @@
   var state = {
     category: null,
     products: [],
-    sort: 'price-asc'
+    sort: 'default'
   };
 
   var title = document.getElementById('category-title');
@@ -238,7 +238,11 @@
   function getSortedProducts() {
     var products = state.products.slice();
 
-    if (state.sort === 'price-asc') {
+    if (state.sort === 'default') {
+      products.sort(function(a, b) {
+        return a.defaultIndex - b.defaultIndex;
+      });
+    } else if (state.sort === 'price-asc') {
       products.sort(function(a, b) {
         return a.price.value - b.price.value || a.defaultIndex - b.defaultIndex;
       });

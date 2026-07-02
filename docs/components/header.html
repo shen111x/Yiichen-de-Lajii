@@ -309,11 +309,12 @@
       display: flex;
       flex-direction: column;
       gap: calc(var(--gap-unit) * 1.5);
+      padding-top: clamp(0.9em, 3.5vh, 1.5em);
     }
 
     .panel-cart-item {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto auto;
+      grid-template-columns: minmax(0, 1fr) 50%;
       align-items: start;
       gap: calc(var(--gap-unit) * 1.2);
       font-size: calc(var(--base-font-size) * 0.8);
@@ -325,15 +326,54 @@
     }
 
     .panel-cart-item-title,
-    .panel-cart-item-subtitle,
     .panel-cart-item-size {
       overflow-wrap: anywhere;
+      line-height: 1.5em;
+    }
+
+    .panel-cart-item-title {
+      color: #000;
+      text-decoration: none;
+    }
+
+    .panel-cart-item-title:hover {
+      text-decoration: underline;
+      text-decoration-thickness: var(--stroke--width);
+      text-underline-offset: 0.2em;
+    }
+
+    .panel-cart-item-right {
+      display: grid;
+      grid-template-rows: auto auto;
+      gap: calc(var(--gap-unit) * 1.2);
+      min-width: 0;
+      justify-items: stretch;
+    }
+
+    .panel-cart-item-right-top {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: calc(var(--gap-unit) * 1.2);
+    }
+
+    .panel-cart-item-right-bottom {
+      display: flex;
+      justify-content: flex-end;
     }
 
     .panel-cart-item-qty,
-    .panel-cart-item-price,
+    .panel-cart-item-price {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .panel-cart-item-price {
+      text-align: right;
+    }
+
     .panel-cart-item-delete {
       white-space: nowrap;
+    
     }
 
     /* ====================================================================
@@ -418,64 +458,25 @@
 
         <div class="header-panel-cart-content">
           <div class="panel-cart-list">
-            <div class="panel-cart-item">
+            <div id="panel-cart-item-unit" class="panel-cart-item" hidden>
               <div class="panel-cart-item-info">
-                <div class="panel-cart-item-title">Typography Tote Bag</div>
-                <div class="panel-cart-item-subtitle">Limited Edition</div>
-                <div class="panel-cart-item-size">Size: 3</div>
+                <a class="panel-cart-item-title" href="#">Name</a>
+                <div class="panel-cart-item-size" hidden>Size: One Size</div>
               </div>
-              <div class="panel-cart-item-qty">x1</div>
-              <div class="panel-cart-item-price">345.5</div>
-              <button class="panel-cart-item-delete" type="button">Delete</button>
-            </div>
-
-            <div class="panel-cart-item">
-              <div class="panel-cart-item-info">
-                <div class="panel-cart-item-title">Typography Tote Bag</div>
-                <div class="panel-cart-item-subtitle">Limited Edition</div>
-                <div class="panel-cart-item-size">Size: 3</div>
+              <div class="panel-cart-item-right">
+                <div class="panel-cart-item-right-top">
+                  <div class="panel-cart-item-qty">Qty</div>
+                  <div class="panel-cart-item-price">Rate</div>
+                </div>
+                <div class="panel-cart-item-right-bottom">
+                  <button class="panel-cart-item-delete" type="button" hidden>Delete</button>
+                </div>
               </div>
-              <div class="panel-cart-item-qty">x1</div>
-              <div class="panel-cart-item-price">345.5</div>
-              <button class="panel-cart-item-delete" type="button">Delete</button>
-            </div>
-
-            <div class="panel-cart-item">
-              <div class="panel-cart-item-info">
-                <div class="panel-cart-item-title">Typography Tote Bag</div>
-                <div class="panel-cart-item-subtitle">Limited Edition</div>
-                <div class="panel-cart-item-size">Size: 3</div>
-              </div>
-              <div class="panel-cart-item-qty">x1</div>
-              <div class="panel-cart-item-price">345.5</div>
-              <button class="panel-cart-item-delete" type="button">Delete</button>
-            </div>
-
-            <div class="panel-cart-item">
-              <div class="panel-cart-item-info">
-                <div class="panel-cart-item-title">Typography Tote Bag</div>
-                <div class="panel-cart-item-subtitle">Limited Edition</div>
-                <div class="panel-cart-item-size">Size: 3</div>
-              </div>
-              <div class="panel-cart-item-qty">x1</div>
-              <div class="panel-cart-item-price">345.5</div>
-              <button class="panel-cart-item-delete" type="button">Delete</button>
-            </div>
-
-            <div class="panel-cart-item">
-              <div class="panel-cart-item-info">
-                <div class="panel-cart-item-title">Typography Tote Bag</div>
-                <div class="panel-cart-item-subtitle">Limited Edition</div>
-                <div class="panel-cart-item-size">Size: 3</div>
-              </div>
-              <div class="panel-cart-item-qty">x1</div>
-              <div class="panel-cart-item-price">345.5</div>
-              <button class="panel-cart-item-delete" type="button">Delete</button>
             </div>
           </div>
 
           <div class="panel-cart-checkout">
-            <div class="panel-cart-checkout-total">Cart Total: 451.00 usd</div>
+            <div class="panel-cart-checkout-total">Cart Total: 0.00 usd</div>
             <button class="panel-cart-checkout-button" type="button">Check Out</button>
           </div>
         </div>
