@@ -449,7 +449,7 @@ function loadUtilityScript(path) {
 loadUtilityScript('js/utility/disable-fast-double-tap-zoom.js');
 
 function loadCartFunctionScript() {
-  if (window.CartFunction?.init) {
+  if (window.CartFunction && window.CartFunction.init) {
     window.CartFunction.init();
     return Promise.resolve(window.CartFunction);
   }
@@ -462,7 +462,7 @@ function loadCartFunctionScript() {
     script.src = siteRoot + 'js/cart-function.js';
     script.defer = true;
     script.onload = function() {
-      if (window.CartFunction?.init) window.CartFunction.init();
+      if (window.CartFunction && window.CartFunction.init) window.CartFunction.init();
       resolve(window.CartFunction || null);
     };
     script.onerror = reject;

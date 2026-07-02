@@ -20,25 +20,28 @@
     }
 
     if (deleteButton) {
-      removeItem(deleteButton.closest('.panel-cart-item')?.dataset.cartKey || '');
+      var cartItem = deleteButton.closest('.panel-cart-item');
+      removeItem(cartItem && cartItem.dataset ? cartItem.dataset.cartKey : '');
     }
   }
 
   function readProductFromTrigger(trigger) {
     var wrapper = trigger.closest('[data-product-id], .category-product-item, .product-body-main, body');
+    var nameNode = wrapper ? wrapper.querySelector('.category-product-name, #product-name') : null;
+    var priceNode = wrapper ? wrapper.querySelector('.category-product-price, #product-price') : null;
     var name = trigger.dataset.cartName ||
-      wrapper?.querySelector('.category-product-name, #product-name')?.textContent ||
+      (nameNode ? nameNode.textContent : '') ||
       'Product';
     var price = trigger.dataset.cartPrice ||
-      wrapper?.querySelector('.category-product-price, #product-price')?.textContent ||
+      (priceNode ? priceNode.textContent : '') ||
       '0';
     var size = trigger.dataset.cartSize || '';
     var href = trigger.dataset.cartHref ||
-      wrapper?.href ||
+      (wrapper && wrapper.href ? wrapper.href : '') ||
       window.location.href;
     var key = [
-      wrapper?.dataset.productId || trigger.dataset.productId || name,
-      wrapper?.dataset.productFolder || trigger.dataset.productFolder || '',
+      wrapper && wrapper.dataset ? wrapper.dataset.productId || trigger.dataset.productId || name : trigger.dataset.productId || name,
+      wrapper && wrapper.dataset ? wrapper.dataset.productFolder || trigger.dataset.productFolder || '' : trigger.dataset.productFolder || '',
       size
     ].join('|');
 
@@ -63,10 +66,55 @@
 
   function removeItem(key) {
     if (!key) return;
+    var node = findCartItemNode(key);
+
+    if (node && !node.classList.contains('is-removing')) {
+      animateRemoveItem(node, function() {
+        removeItemFromStorage(key);
+        renderCart();
+      });
+      return;
+    }
+
+    removeItemFromStorage(key);
+    renderCart();
+  }
+
+  function removeItemFromStorage(key) {
     writeCart(readCart().filter(function(item) {
       return item.key !== key;
     }));
-    renderCart();
+  }
+
+  function findCartItemNode(key) {
+    var items = Array.prototype.slice.call(document.querySelectorAll('.panel-cart-item[data-cart-key]'));
+
+    return items.find(function(item) {
+      return item.dataset.cartKey === key;
+    }) || null;
+  }
+
+  function animateRemoveItem(node, done) {
+    var deleteButton = node.querySelector('.panel-cart-item-delete');
+
+    if (deleteButton) deleteButton.disabled = true;
+    node.style.height = node.offsetHeight + 'px';
+    node.style.marginBottom = getComputedStyle(node).marginBottom;
+    node.classList.add('is-removing');
+
+    window.setTimeout(function() {
+      node.style.height = node.offsetHeight + 'px';
+      requestAnimationFrame(function() {
+        node.style.height = '0px';
+        node.style.marginBottom = '0px';
+      });
+    }, 160);
+
+    node.addEventListener('transitionend', function handleTransitionEnd(event) {
+      if (event.target !== node || event.propertyName !== 'height') return;
+      node.removeEventListener('transitionend', handleTransitionEnd);
+      done();
+    });
   }
 
   function renderCart() {

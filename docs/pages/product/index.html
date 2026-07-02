@@ -12,9 +12,10 @@
     .product-body-main {
       position: relative;
       width: 100vw;
-      min-height: 100vh;
+      height: max-content;
       box-sizing: border-box;
-      padding: calc(var(--header-topbar-height) * 2 + var(--gap-unit) * 9) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+      padding: 0 calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+      margin-top:calc(var(--header-topbar-height) * 2 + var(--gap-unit) * 9);
 
       background: #ffffff;
     }
@@ -79,6 +80,7 @@
     }
 
     .product-body-topbar-right {
+      position: relative;
       flex: 1;
       max-width: 150px;
       margin-right:clamp(0px, calc(4vw + 1vw - 16px), calc(var(--gap-unit) * 3));
@@ -90,19 +92,130 @@
     }
 
     .product-body-topbar-right-add-to-cart {
+      position: relative;
+      align-self: flex-start;
       width: 61%;
       height: 100%;
       box-sizing: border-box;
+      padding: 0;
 
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: calc(var(--gap-unit) * 2.6);
 
       border: var(--stroke--width) solid #000;
       cursor: pointer;
-      font-size: var(--button-font-size);
+      font-size: var(--product-info-font-size);
+      font-family: inherit;
+      line-height: 1;
+      -webkit-text-stroke: 0.01em #000;
+      transition: width .28s ease, height .28s ease;
 
       filter:brightness(0.97);
+    }
+
+    .product-body-topbar-right-add-to-cart > * {
+      transition: opacity .12s ease;
+    }
+
+    .product-body-add-label {
+      border-bottom: var(--stroke--width) solid transparent;
+      line-height: 1;
+    }
+
+    .product-body-add-label.is-text-fading {
+      opacity: 0;
+    }
+
+    .product-body-add-label.is-x {
+      position: relative;
+      width: 1em;
+      height: 1em;
+      border-bottom: 0;
+      margin-top: 2em;
+      margin-bottom: 1em;
+    }
+
+    .product-body-add-label.is-x::before,
+    .product-body-add-label.is-x::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0.82em;
+      border-bottom: 2.2px solid #000;
+      transform-origin: center;
+    }
+
+    .product-body-add-label.is-x::before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .product-body-add-label.is-x::after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    .product-body-topbar-right-add-to-cart:hover .product-body-add-label,
+    .product-body-topbar-right-add-to-cart.is-active .product-body-add-label {
+      border-bottom-color: #000;
+    }
+
+    .product-body-size-item:hover,
+    .product-body-size-item.is-active {
+      border-bottom-color: #000;
+    }
+
+    .product-body-topbar-right-add-to-cart.is-open {
+      width: 61%;
+      height: calc(var(--header-topbar-height) * 4.4 + 4em);
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 0 0 calc(var(--gap-unit) * 2);
+    }
+
+    .product-body-topbar-right-add-to-cart.is-open:not(.is-open-ready) > *,
+    .product-body-topbar-right-add-to-cart.is-closing > * {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .product-body-topbar-right-add-to-cart.is-open.is-open-ready > * {
+      visibility: visible;
+    }
+
+    .product-body-topbar-right-add-to-cart.is-open .product-body-add-label {
+      width: 100%;
+      height: var(--header-topbar-height);
+      box-sizing: border-box;
+      border-bottom-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .product-body-topbar-right-add-to-cart.is-open .product-body-add-label.is-x {
+      width: 1em;
+      height: 1em;
+      display: block;
+      flex: none;
+    }
+
+    .product-body-size-item {
+      margin: 0;
+      padding: 0 0 calc(var(--stroke--width) * 0.65);
+      border: 0;
+      border-bottom: var(--stroke--width) solid transparent;
+      background: none;
+      color: #000;
+      font: inherit;
+      line-height: 1;
+      -webkit-text-stroke: 0.01em #000;
+      cursor: pointer;
+    }
+
+    .product-body-size-item[hidden] {
+      display: none;
     }
 
     .product-body-goback {
@@ -249,7 +362,7 @@
     </div>
 
     <div class="product-body-topbar-right">
-      <div class="product-body-topbar-right-add-to-cart">Add</div>
+      <div id="product-add-button" class="product-body-topbar-right-add-to-cart">Add</div>
     </div>
   </div>
 

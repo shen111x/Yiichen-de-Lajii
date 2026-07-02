@@ -7,10 +7,13 @@
   var priceNode = document.getElementById('product-price');
   var imageNode = document.getElementById('product-image');
   var dropdownSection = document.getElementById('product-dropdown-section');
+  var addButton = document.getElementById('product-add-button');
+  var currentProductState = null;
 
   if (!nameNode || !priceNode || !imageNode || !dropdownSection) return;
 
   initProductPage();
+  initAddToCartDropdown();
 
   function initProductPage() {
     resolveProductLocation()
@@ -92,6 +95,7 @@
     var product = productState.product;
     var price = parsePrice(product.price, product.currency);
 
+    currentProductState = productState;
     nameNode.textContent = product.name || '';
     priceNode.textContent = price.label;
     document.title = (product.name ? product.name + ' - ' : '') + 'Yiichen de Lajii';
@@ -99,6 +103,178 @@
     imageNode.alt = product.name || 'product-img';
     setImageWithFallbacks(imageNode, getImageCandidates(productState.productBasePath, product));
     renderDropdowns(product.dropdowns || []);
+    renderSizeOptions(getProductSizes(product));
+  }
+
+  function initAddToCartDropdown() {
+    if (!addButton) return;
+
+    addButton.addEventListener('click', function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (addButton.classList.contains('is-open')) {
+        closeSizeDropdown();
+      } else {
+        addButton.classList.add('is-active');
+        window.setTimeout(openSizeDropdown, isTouchView() ? 120 : 0);
+      }
+    });
+
+    document.addEventListener('click', function(event) {
+      if (
+        addButton.classList.contains('is-open') &&
+        !addButton.contains(event.target)
+      ) {
+        closeSizeDropdown();
+      }
+    });
+  }
+
+  function renderSizeOptions(sizes) {
+    if (!addButton) return;
+
+    addButton.innerHTML = '';
+    addButton.appendChild(createAddLabel('Add'));
+
+    sizes.forEach(function(size) {
+      var item = document.createElement('button');
+
+      item.className = 'product-body-size-item';
+      item.type = 'button';
+      item.textContent = size;
+      item.hidden = true;
+      item.addEventListener('click', function() {
+        item.classList.add('is-active');
+        window.setTimeout(function() {
+          addProductToCart(size);
+          item.classList.remove('is-active');
+          closeSizeDropdown(showAddedState);
+        }, isTouchView() ? 120 : 0);
+      });
+      addButton.appendChild(item);
+    });
+
+    addButton.hidden = !sizes.length;
+  }
+
+  function openSizeDropdown() {
+    if (!addButton) return;
+
+    setAddLabel('', true);
+    addButton.classList.remove('is-closing', 'is-open-ready');
+    addButton.classList.add('is-active', 'is-open');
+    Array.prototype.slice.call(addButton.querySelectorAll('.product-body-size-item')).forEach(function(item) {
+      item.hidden = false;
+    });
+    addButton.addEventListener('transitionend', function handleOpenEnd(event) {
+      if (event.target !== addButton || event.propertyName !== 'height') return;
+      addButton.removeEventListener('transitionend', handleOpenEnd);
+      if (addButton.classList.contains('is-open')) addButton.classList.add('is-open-ready');
+    });
+  }
+
+  function closeSizeDropdown(done) {
+    if (!addButton) return;
+
+    addButton.classList.remove('is-open-ready');
+    addButton.classList.add('is-closing');
+    addButton.offsetHeight;
+    addButton.classList.remove('is-active', 'is-open');
+    addButton.addEventListener('transitionend', function handleCloseEnd(event) {
+      if (event.target !== addButton || event.propertyName !== 'height') return;
+      addButton.removeEventListener('transitionend', handleCloseEnd);
+      addButton.classList.remove('is-closing');
+      Array.prototype.slice.call(addButton.querySelectorAll('.product-body-size-item')).forEach(function(item) {
+        item.hidden = true;
+      });
+      setAddLabel('Add', false);
+      if (done) done();
+    });
+  }
+
+  function addProductToCart(size) {
+    if (!currentProductState) return;
+
+    var product = currentProductState.product;
+    var price = parsePrice(product.price, product.currency);
+    var item = {
+      key: [
+        product.product_id || product.id || product.name || currentProductState.productFolder,
+        currentProductState.productFolder,
+        size
+      ].join('|'),
+      name: (product.name || 'Product').trim(),
+      price: price.label.trim(),
+      size: size,
+      href: window.location.href,
+      quantity: 1
+    };
+
+    if (window.CartFunction && window.CartFunction.addItem) {
+      window.CartFunction.addItem(item);
+    } else if (typeof loadCartFunctionScript === 'function') {
+      loadCartFunctionScript().then(function(cart) {
+        if (cart && cart.addItem) cart.addItem(item);
+      });
+    }
+  }
+
+  function showAddedState() {
+    if (!addButton) return;
+
+    setAddLabel('Added', false);
+    window.setTimeout(function() {
+      fadeAddLabel(function() {
+        setAddLabel('Add', false);
+      });
+    }, 1500);
+  }
+
+  function fadeAddLabel(update) {
+    var label = addButton && addButton.querySelector('.product-body-add-label');
+
+    if (!label) return;
+    label.classList.add('is-text-fading');
+    window.setTimeout(function() {
+      update();
+      label.classList.remove('is-text-fading');
+    }, 120);
+  }
+
+  function createAddLabel(text) {
+    var label = document.createElement('span');
+
+    label.className = 'product-body-add-label';
+    label.textContent = text;
+
+    return label;
+  }
+
+  function setAddLabel(text, isX) {
+    var label = addButton && addButton.querySelector('.product-body-add-label');
+
+    if (!label) return;
+    label.textContent = text;
+    label.classList.toggle('is-x', !!isX);
+  }
+
+  function getProductSizes(product) {
+    var size = product.size || product.sizes || [];
+
+    if (Array.isArray(size)) {
+      return size.map(cleanSize).filter(Boolean);
+    }
+
+    return String(size).split(/[,/|\n]+/).map(cleanSize).filter(Boolean);
+  }
+
+  function cleanSize(size) {
+    return String(size || '').trim();
+  }
+
+  function isTouchView() {
+    return window.matchMedia && window.matchMedia('(hover: none)').matches;
   }
 
   function renderDropdowns(dropdowns) {

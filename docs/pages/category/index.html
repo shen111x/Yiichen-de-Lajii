@@ -128,6 +128,7 @@
     }
 
     .category-product-info {
+      position: relative;
       min-height: calc(var(--header-topbar-height) * 2.7);
       display: flex;
       flex-direction: column;
@@ -161,11 +162,122 @@
       height: calc(var(--header-topbar-height) * 1);
       box-sizing: border-box;
       margin-top: calc(var(--gap-unit) * 2);
-      border: var(--stroke--width) solid #ffffff;
+      border: var(--stroke--width) solid transparent;
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: calc(var(--gap-unit) * 5);
       font-size: var(--product-info-font-size);
+      color: #000;
+      cursor: pointer;
+      transition: width .28s ease, height .28s ease, color .28s ease, border-color .28s ease;
+    }
+
+    .category-product-add > * {
+      transition: opacity .12s ease;
+    }
+
+    .category-product-add-label {
+      border-bottom: var(--stroke--width) solid transparent;
+      line-height: 1;
+    }
+
+    .category-product-add-label.is-text-fading {
+      opacity: 0;
+    }
+
+    .category-product-add-label.is-x {
+      position: relative;
+      width: 1em;
+      height: 1em;
+      border-bottom: 0;
+    }
+
+    .category-product-add-label.is-x::before,
+    .category-product-add-label.is-x::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0.72em;
+      border-bottom: 2.2px solid #000;
+      transform-origin: center;
+    }
+
+    .category-product-add-label.is-x::before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .category-product-add-label.is-x::after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    .category-product-add:hover .category-product-add-label,
+    .category-product-add.is-active .category-product-add-label,
+    .category-product-add.is-added .category-product-add-label,
+    .category-product-size-item:hover,
+    .category-product-size-item.is-active {
+      border-bottom-color: #000;
+    }
+
+    .category-product-add.is-open,
+    .category-product-add.is-closing {
+      position: absolute;
+      top: var(--category-add-top, 0px);
+      left: var(--category-add-left, 50%);
+      z-index: 3;
+      margin-top: 0;
+      background: #fff;
+      transform: translateX(-50%);
+    }
+
+    .category-product-add.is-open {
+      width:50%;
+      height: calc(var(--header-topbar-height) * 3);
+      border-color: #000;
+      flex-wrap: wrap;
+      align-content: center;
+      row-gap: calc(var(--gap-unit) * 3);
+      padding: calc(var(--gap-unit) * 2) calc(var(--gap-unit) * 4) calc(var(--gap-unit) * 3);
+    }
+
+    .category-product-add.is-open:not(.is-open-ready) > *,
+    .category-product-add.is-closing > * {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .category-product-add.is-open.is-open-ready > * {
+      visibility: visible;
+    }
+
+    .category-product-add.is-open .category-product-add-label {
+      width: 100%;
+      border-bottom-color: transparent;
+      font-size: var(--button-font-size);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .category-product-add.is-added {
+      color: #000;
+    }
+
+    .category-product-size-item {
+      margin: 0;
+      padding: 0 0 calc(var(--stroke--width) * 0.65);
+      border: 0;
+      border-bottom: var(--stroke--width) solid transparent;
+      background: none;
+      color: #000;
+      font: inherit;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .category-product-size-item[hidden] {
+      display: none;
     }
 
     .category-empty {
@@ -234,7 +346,7 @@
             <p class="category-product-name">Product Name</p>
             <p class="category-product-subtitle">Product Subtitle</p>
             <p class="category-product-price">173.43 usd</p>
-            <span class="category-product-add">&nbsp Add +</span>
+            <span class="category-product-add">Add +</span>
           </div>
         </a>
       </section>
