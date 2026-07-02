@@ -9,107 +9,223 @@
 
   <link rel="stylesheet" href="../../css/universal.css">
 
-
   <style>
     .category-body-main {
       width: 100vw;
-      min-height: 200vh;
+      min-height: 100vh;
       box-sizing: border-box;
-      padding: calc(var(--header-topbar-height) + var(--gap-unit) * 6) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
-
-      background: #ffffff;
-      
+      padding: calc(var(--header-topbar-height) + var(--gap-unit) * 3) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+      background: transparent;
     }
 
-    .category-body-hero {
+    .category-page {
       width: 100%;
-      height: 50vh;
+      min-height: 100vh;
+    }
 
+    .category-hero {
+      width: 100%;
+      height: 70vh;
+      min-height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+    }
+
+    .category-hero-center {
       display: flex;
       flex-direction: column;
       align-items: center;
-
-      gap: calc(var(--gap-unit) * 3);
-    }
-
-    .category-body-hero-text-wrapper {
+      justify-content: center;
+      gap: calc(var(--gap-unit) * 1.5);
       text-align: center;
-      max-width: 525px;
-      padding: 0.25em 0 0.35em;
     }
 
-    .category-body-hero-text-wrapper h1 {
+    .category-title {
       margin: 0;
     }
 
-    .category-body-hero-text-wrapper p {
-      margin: 0.6em 0 0;
+    .category-sort {
+      appearance: none;
+      -webkit-appearance: none;
+      margin: 0;
+      padding: 0 calc(var(--gap-unit) * 5) 0 calc(var(--gap-unit) * 2);
+      min-width: 150px;
+      height: calc(var(--header-topbar-height) * 0.72);
+      box-sizing: border-box;
+      border: var(--stroke--width) solid #000;
+      border-radius: 0;
+      background: transparent;
+      color: #000;
+      font: inherit;
+      font-size: var(--product-info-font-size);
+      line-height: 1;
+      text-align: center;
+      text-align-last: center;
+      cursor: pointer;
     }
 
-    .category-body-hero-image {
-      width: 100%;
-      height:auto;
-      object-fit: cover;
-      display:none;
-    }
-
-    .category-body-product-wrapper{
-      width:100%;
+    .category-sort-wrapper {
+      position: relative;
       display: flex;
-      flex-direction: column;
-      gap: calc(var(--gap-unit) * 3);
       align-items: center;
+      justify-content: center;
     }
-    
-    .category-body-product-item {
-      width:500px;
-      height:100px;
+
+    .category-sort-wrapper::after {
+      content: "";
+      position: absolute;
+      right: calc(var(--gap-unit) * 2);
+      top: 50%;
+      width: 0.45em;
+      height: 0.45em;
+      border-right: var(--stroke--width) solid #000;
+      border-bottom: var(--stroke--width) solid #000;
+      transform: translateY(-65%) rotate(45deg);
+      pointer-events: none;
+    }
+
+    .category-products {
+      width: min(100%, 920px);
+      box-sizing: border-box;
+      margin: 0 auto;
+      padding: calc(var(--gap-unit) * 3) 0 calc(var(--gap-unit) * 20);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: calc(var(--gap-unit) * 4);
+      row-gap: calc(var(--gap-unit) * 20);
+    }
+
+    .category-product-item {
+      min-width: 0;
+      color: inherit;
+      text-decoration: none;
       display: flex;
       flex-direction: column;
       gap: calc(var(--gap-unit) * 2);
-
-    }
-     .category-body-product-item img{
-      width:100%;
     }
 
-    .category-body-product-info h2,
-    .category-body-product-info p {
+    .category-product-image-wrapper {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .category-product-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .category-product-image.is-missing {
+      display: none;
+    }
+
+    .category-product-info {
+      min-height: calc(var(--header-topbar-height) * 2.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
       text-align: center;
+      font-size: var(--product-info-font-size);
     }
 
+    .category-product-info p {
+      margin: 0;
+    }
+
+    .category-product-name {
+      -webkit-text-stroke: 0.02em #000;
+    }
+
+    .category-product-subtitle {
+      opacity: 0.32;
+    }
+
+    .category-product-price {
+      margin-top: calc(var(--gap-unit) * 2) !important;
+    }
+
+    .category-product-add {
+      width: min(132px, 40%);
+      height: calc(var(--header-topbar-height) * 0.72);
+      box-sizing: border-box;
+      margin-top: calc(var(--gap-unit) * 2);
+      border: var(--stroke--width) solid #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--product-info-font-size);
+    }
+
+    .category-empty {
+      grid-column: 1 / -1;
+      min-height: 30vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: var(--product-info-font-size);
+    }
+
+    .category-body-copyright-container {
+      margin-top: calc(var(--gap-unit) * 8);
+    }
+
+    @media (max-width: 767px) {
+      .category-body-main {
+        padding-left: calc(var(--gap-unit) * 2);
+        padding-right: calc(var(--gap-unit) * 2);
+      }
+
+      .category-hero {
+        min-height: 360px;
+      }
+
+      .category-products {
+        column-gap: calc(var(--gap-unit) * 2);
+        row-gap: calc(var(--gap-unit) * 12);
+      }
+
+      .category-sort {
+        min-width: 132px;
+      }
+    }
   </style>
 </head>
 
-<body data-page="wearable">
+<body data-page="category">
   <header id="header-container"></header>
-  <div class="category-body-main">
-    <div class="category-body-hero">
-      <img id="category-hero-image" class="category-body-hero-image" src="" alt="">
 
-      <div class="category-body-hero-text-wrapper">
-        <h1 id="category-hero-title">Wearable</h1>
-        <p id="category-hero-body-copy">Wearable is a category of products that can be worn on the body, such as smartwatches, fitness trackers, and augmented reality glasses.</p>
-      </div>
+  <main class="category-body-main">
+    <div class="category-page">
+      <section class="category-hero" aria-labelledby="category-title">
+        <div class="category-hero-center">
+          <h1 id="category-title" class="category-title">Wearable</h1>
+          <div class="category-sort-wrapper">
+            <select id="category-sort" class="category-sort" aria-label="Sort products">
+              <option value="default">Default</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="date-desc">Launch Date: New to Old</option>
+              <option value="date-asc">Launch Date: Old to New</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section id="category-products" class="category-products" aria-label="Products"></section>
     </div>
 
-    <div class="category-body-product-wrapper">
-      <div class="category-body-product-item">
-        <div class="category-body-product-image-wrapper" >
-          <img src="../../product-data/c-01/01/img/1.jpg" alt="Product 1">
-        </div>
-        <div class="category-body-product-info">
-          <h2>Smartwatch</h2>
-          <p>A wearable device that can track your fitness.</p>
-          <p>234.56 usd</p>
-
-          
-        </div>
-        <button> add to cart </button>
-
-      </div>
-
-    </div>
+    <div id="copyright-container" class="category-body-copyright-container"></div>
+  </main>
 
   <script src="../../js/universal.js"></script>
   <script src="category.js"></script>

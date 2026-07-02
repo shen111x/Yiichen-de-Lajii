@@ -45,11 +45,18 @@
       padding: 0;
     }
 
-    #logo {
+    #logo-link {
       /* Logo 位于所有面板上方 */
       position: relative;
       z-index: 20;
 
+      display: block;
+      width: auto;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    #logo {
       display: block;
       width: auto;
       height: 100%;
@@ -362,7 +369,9 @@
   <div id="header-main">
     <div id="header-topbar">
       <div id="header-left" class="header-left">
-        <img id="logo" alt="header-logo">
+        <a id="logo-link" aria-label="Go to homepage">
+          <img id="logo" alt="header-logo">
+        </a>
       </div>
 
       <div class="header-right">

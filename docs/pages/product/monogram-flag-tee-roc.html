@@ -223,6 +223,7 @@
     .product-body-dropdown-content p {
       margin: 0;
       font-size: var(--product-info-font-size);
+      white-space: pre-line;
       
     }
 
@@ -238,11 +239,11 @@
   <div class="product-body-topbar">
     <div class="product-body-topbar-left">
       <div class="product-body-topbar-left-name-wrapper">
-        <p>Typography Flag Tee R.O.C.</p>
+        <p id="product-name">Typography Flag Tee R.O.C.</p>
       </div>
 
       <div class="product-body-topbar-left-price-wrapper">
-        <p>127.43 usd</p>
+        <p id="product-price">127.43 usd</p>
       </div>
     </div>
 
@@ -257,10 +258,10 @@
     </div>
 
     <div class="product-body-img-wrapper">
-      <img src="../../product-data/c-01/01/img/1.jpg" alt="product-img">
+      <img id="product-image" src="../../product-data/c-01/01/img/1.jpg" alt="product-img">
     </div>
 
-    <div class="product-body-dropdown-section">
+    <div id="product-dropdown-section" class="product-body-dropdown-section">
       <details class="product-body-dropdown">
         <summary class="product-body-dropdown-summary"><span>Detail</span><span class="product-body-dropdown-icon"></span></summary>
         <div class="product-body-dropdown-content">
@@ -311,68 +312,6 @@
   </div>
 
   <script src="../../js/universal.js"></script>
-  <script>
-    var productDropdowns = Array.prototype.slice.call(
-      document.querySelectorAll('.product-body-dropdown')
-    ).map(function(dropdown) {
-      return {
-        dropdown: dropdown,
-        summary: dropdown.querySelector('.product-body-dropdown-summary'),
-        content: dropdown.querySelector('.product-body-dropdown-content'),
-        inner: dropdown.querySelector('.product-body-dropdown-content-inner')
-      };
-    }).filter(function(item) {
-      return item.summary && item.content && item.inner;
-    });
-
-    function openProductDropdown(item) {
-      item.dropdown.setAttribute('open', '');
-      item.content.style.height = '0px';
-
-      requestAnimationFrame(function() {
-        item.content.style.height = item.inner.scrollHeight + 'px';
-      });
-    }
-
-    function closeProductDropdown(item) {
-      item.content.style.height = item.inner.scrollHeight + 'px';
-
-      requestAnimationFrame(function() {
-        item.content.style.height = '0px';
-      });
-    }
-
-    productDropdowns.forEach(function(item, index) {
-      item.dropdown.removeAttribute('open');
-      item.content.style.height = '0px';
-
-      item.summary.addEventListener('click', function(event) {
-        event.preventDefault();
-
-        if (item.dropdown.hasAttribute('open')) {
-          closeProductDropdown(item);
-          return;
-        }
-
-        productDropdowns.forEach(function(otherItem) {
-          if (otherItem !== item && otherItem.dropdown.hasAttribute('open')) {
-            closeProductDropdown(otherItem);
-          }
-        });
-
-        openProductDropdown(item);
-      });
-
-      item.content.addEventListener('transitionend', function(event) {
-        if (event.propertyName !== 'height') return;
-
-        if (item.content.style.height === '0px') {
-          item.dropdown.removeAttribute('open');
-        } else {
-          item.content.style.height = 'auto';
-        }
-      });
-    });
-  </script>
+  <script src="product.js"></script>
 </body>
 </html>

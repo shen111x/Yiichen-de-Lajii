@@ -87,11 +87,16 @@ function getSiteRoot() {
 
 function setHeaderPaths() {
   var logo = document.getElementById('logo');
+  var logoLink = document.getElementById('logo-link');
   var staticMenuItems = document.querySelectorAll('#header-panel-menu [data-menu-path]');
   var componentFrames = document.querySelectorAll('[data-component-path]');
 
   if (logo) {
     logo.src = siteRoot + 'image/brand/logoa-black.png';
+  }
+
+  if (logoLink) {
+    logoLink.href = siteRoot + 'index.html';
   }
 
   staticMenuItems.forEach(function(item) {
