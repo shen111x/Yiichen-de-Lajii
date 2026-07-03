@@ -72,11 +72,10 @@ button {
   cursor: pointer;
 }
 
-.brand-title {
-  font-size: clamp(28px, 2vw, 42px);
-  line-height: 0.9;
-  font-weight: 900;
-  letter-spacing: 0;
+.brand-logo {
+  width: min(260px, 32vw);
+  height: auto;
+  display: block;
 }
 
 .brand-subtitle {
