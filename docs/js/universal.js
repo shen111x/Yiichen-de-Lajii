@@ -94,7 +94,7 @@ function setHeaderPaths() {
   var componentFrames = document.querySelectorAll('[data-component-path]');
 
   if (logo) {
-    logo.src = siteRoot + 'image/brand/logoa-black.png';
+    logo.src = siteRoot + 'images/brand/logoa-black.png';
   }
 
   if (logoLink) {

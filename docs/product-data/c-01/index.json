@@ -1,11 +1,50 @@
 [
-
-
-
-  "01",
-
-  "02",
-
-  "03"
-
+  {
+    "id": "monogram-flag-tee-roc",
+    "product_id": "monogram-flag-tee-roc",
+    "product_folder": "01",
+    "name": "Monogram Flag Tee R.O.C.",
+    "subtitle": "7.1oz Heavyweight Cotton",
+    "price": "173.43",
+    "currency": "USD",
+    "size": "M, L, XL, XXL",
+    "thumbnail": "01/images/1.jpg",
+    "thumbnail2": "01/images/2.jpg"
+  },
+  {
+    "id": "monogram-flag-tee-usa",
+    "product_id": "monogram-flag-tee-usa",
+    "product_folder": "02",
+    "name": "Monogram Flag Tee U.S.A.",
+    "subtitle": "7.1oz Heavyweight Cotton",
+    "price": "173.43",
+    "currency": "USD",
+    "size": "M, L, XL, XXL",
+    "thumbnail": "02/images/1.jpg",
+    "thumbnail2": "02/images/2.jpg"
+  },
+  {
+    "id": "centered-logo-tee-black",
+    "product_id": "centered-logo-tee-black",
+    "product_folder": "03",
+    "name": "Centered Logo Tee",
+    "subtitle": "Heavyweight Cotton Jersey",
+    "price": "119.43",
+    "currency": "USD",
+    "size": "M, L, XL, XXL",
+    "thumbnail": "03/images/1.jpg",
+    "thumbnail2": "03/images/2.jpg"
+  },
+  {
+    "id": "centered-logo-tee-black",
+    "product_id": "centered-logo-tee-black",
+    "product_folder": "04",
+    "name": "Centered Logo Tee",
+    "subtitle": "Heavyweight Cotton Jersey",
+    "price": "117.43",
+    "currency": "USD",
+    "size": "M, L, XL, XXL",
+    "thumbnail": "04/images/1.jpg",
+    "thumbnail2": "04/images/2.jpg"
+  }
 ]

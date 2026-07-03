@@ -1,24 +1,14 @@
 {
   "product_id": "centered-logo-tee-black",
-
   "name": "Centered Logo Tee",
-
   "subtitle": "Heavyweight Cotton Jersey",
-
   "price": "117.43",
-
   "currency": "USD",
-
   "status": "available",
-
   "collection": "Main",
-
   "color": "Black",
-
   "size": "M, L, XL, XXL",
-
   "description": "A heavyweight oversized T-shirt designed for everyday wear.",
-
   "dropdowns": [
     {
       "title": "Details",
@@ -41,14 +31,8 @@
       "text": "This garment is part of the ongoing Yiichen de Lajii archive. Future production updates and release information will be documented here."
     }
   ],
-
   "thumbnail": "thumbnail.jpeg",
-
   "images": [
-    "img/1.jpg",
-    "img/2.jpg",
-    "img/3.jpg",
-    "img/4.jpg",
-    "img/5.jpg"
+    "images/1.jpg"
   ]
 }

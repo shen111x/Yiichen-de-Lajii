@@ -1,8 +1,6 @@
 (function() {
   var categoryIndexPath = '../../product-data/index.json';
   var productPagePath = '../product/index.html';
-  var productProbeLimit = 99;
-  var maxEmptyProbeStreak = 2;
 
   var state = {
     category: null,
@@ -76,135 +74,47 @@
 
     if (!categoryPath) return Promise.resolve([]);
 
-    return loadProductFolderIds(categoryPath)
-      .then(function(folderIds) {
-        return Promise.all(folderIds.map(function(folderId, index) {
-          return loadProduct(category, folderId, index);
-        }));
-      })
-      .then(function(products) {
-        return products.filter(Boolean);
-      });
-  }
-
-  function loadProductFolderIds(categoryPath) {
     return loadJson('../../product-data/' + categoryPath + '/index.json')
       .catch(function() {
         return [];
       })
       .then(function(manifest) {
-        var ids = normalizeManifestProductIds(manifest);
-        return probeProductFolderIds(categoryPath, ids);
+        if (!Array.isArray(manifest)) return [];
+
+        return manifest.map(function(product, index) {
+          return normalizeCategoryProduct(category, categoryPath, product, index);
+        }).filter(Boolean);
       });
   }
 
-  function normalizeManifestProductIds(manifest) {
-    if (!Array.isArray(manifest)) return [];
+  function normalizeCategoryProduct(category, categoryPath, product, index) {
+    if (!product || typeof product !== 'object') return null;
 
-    return unique(manifest.map(function(item) {
-      if (typeof item === 'string' || typeof item === 'number') return normalizeProductFolderId(item);
-      if (item && (item.product_folder || item.folder || item.id)) {
-        return normalizeProductFolderId(item.product_folder || item.folder || item.id);
-      }
+    var folderId = normalizeProductFolderId(product.product_folder || product.folder || product.folder_id || product.item || product.id || index + 1);
+    var thumbnail = product.thumbnail || '';
+    var thumbnail2 = product.thumbnail2 || '';
 
-      return '';
-    }).filter(Boolean));
+    return {
+      category: category,
+      categoryPath: categoryPath,
+      folderId: folderId,
+      defaultIndex: index,
+      id: product.product_id || product.id || folderId,
+      name: product.name || '',
+      subtitle: product.subtitle || product.sub_title || product.description || '',
+      price: parsePrice(product.price, product.currency),
+      currency: product.currency || '',
+      sizes: getProductSizes(product),
+      oddness: parseOddness(product, index),
+      imageCandidates: getCategoryImageCandidates(categoryPath, thumbnail, thumbnail2),
+      href: getProductHref(category, folderId, product)
+    };
   }
 
-  function probeProductFolderIds(categoryPath, initialIds) {
-    var ids = initialIds.slice();
-    var start = getNextProbeNumber(ids);
-    var emptyStreak = 0;
-    var probe = Promise.resolve();
-
-    for (var number = start; number <= productProbeLimit; number += 1) {
-      (function(folderId) {
-        probe = probe.then(function() {
-          if (emptyStreak >= maxEmptyProbeStreak) return;
-
-          if (ids.indexOf(folderId) !== -1) return;
-
-          return fetch('../../product-data/' + categoryPath + '/' + folderId + '/index.json', { cache: 'no-store' })
-            .then(function(response) {
-              if (!response.ok) {
-                emptyStreak += 1;
-                return;
-              }
-
-              emptyStreak = 0;
-              ids.push(folderId);
-            })
-            .catch(function() {
-              emptyStreak += 1;
-            });
-        });
-      })(normalizeProductFolderId(number));
-    }
-
-    return probe.then(function() {
-      return ids.sort(compareFolderIds);
+  function getCategoryImageCandidates(categoryPath, thumbnail, thumbnail2) {
+    return [thumbnail, thumbnail2].filter(Boolean).map(function(imagePath) {
+      return '../../product-data/' + categoryPath + '/' + imagePath.replace(/^\/+/, '');
     });
-  }
-
-  function getNextProbeNumber(ids) {
-    if (!ids.length) return 1;
-
-    var max = ids.reduce(function(result, id) {
-      var number = parseInt(id, 10);
-      return Number.isFinite(number) ? Math.max(result, number) : result;
-    }, 0);
-
-    return Math.max(1, max + 1);
-  }
-
-  function loadProduct(category, folderId, index) {
-    var categoryPath = category.category_path || category.path || '';
-    var productBasePath = '../../product-data/' + categoryPath + '/' + folderId + '/';
-
-    return loadJson(productBasePath + 'index.json')
-      .then(function(rawProduct) {
-        var product = Array.isArray(rawProduct) ? rawProduct[0] : rawProduct;
-
-        if (!product) return null;
-
-        return {
-          category: category,
-          categoryPath: categoryPath,
-          folderId: folderId,
-          defaultIndex: index,
-          id: product.product_id || product.id || folderId,
-          name: product.name || '',
-          subtitle: product.subtitle || product.sub_title || product.description || '',
-          price: parsePrice(product.price, product.currency),
-          currency: product.currency || '',
-          sizes: getProductSizes(product),
-          oddness: parseOddness(product, index),
-          imageCandidates: getImageCandidates(productBasePath, product),
-          href: getProductHref(category, folderId, product)
-        };
-      })
-      .catch(function(error) {
-        console.warn('跳过 product-data/' + categoryPath + '/' + folderId + '：', error);
-        return null;
-      });
-  }
-
-  function getImageCandidates(productBasePath, product) {
-    var candidates = [];
-
-    if (Array.isArray(product.images)) {
-      product.images.forEach(function(imagePath) {
-        if (imagePath) candidates.push(productBasePath + imagePath.replace(/^\/+/, ''));
-      });
-    }
-
-    for (var index = 1; index <= 8; index += 1) {
-      ['webp', 'jpg', 'jpeg', 'png'].forEach(function(extension) {
-        candidates.push(productBasePath + 'img/' + index + '.' + extension);
-      });
-    }
-
-    return unique(candidates);
   }
 
   function getProductHref(category, folderId, product) {
@@ -579,20 +489,4 @@
     return text;
   }
 
-  function compareFolderIds(first, second) {
-    var firstNumber = parseInt(first, 10);
-    var secondNumber = parseInt(second, 10);
-
-    if (Number.isFinite(firstNumber) && Number.isFinite(secondNumber)) {
-      return firstNumber - secondNumber;
-    }
-
-    return first.localeCompare(second);
-  }
-
-  function unique(values) {
-    return values.filter(function(value, index, array) {
-      return value && array.indexOf(value) === index;
-    });
-  }
 })();

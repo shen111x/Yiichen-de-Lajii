@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yiichen de Lajii Admin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-header">
+      <div class="admin-header-top">
+        <button class="brand-lockup" type="button" data-view="home" aria-label="Go to dashboard home">
+          <span class="brand-title">Yiichen de Lajii</span>
+          <span class="brand-subtitle">Admin Dash by Yiichen Shen</span>
+        </button>
+
+        <div class="admin-actions">
+          <button class="admin-button save-button" type="button">Save</button>
+        </div>
+      </div>
+
+      <nav class="admin-functions" aria-label="Admin functions">
+        <button class="admin-button" type="button" data-view="product-management">Product Management</button>
+        <button class="admin-button" id="generate-product-json" type="button" data-view="generate-product-json">Generate Product Jsons</button>
+        <button class="admin-button" type="button" data-view="tba-1">TBA</button>
+        <button class="admin-button" type="button" data-view="tba-2">TBA</button>
+      </nav>
+    </header>
+
+    <section class="admin-display" id="admin-display" aria-live="polite"></section>
+  </main>
+
+  <script src="js/generate-product-json.js?v=20260703-5"></script>
+</body>
+</html>

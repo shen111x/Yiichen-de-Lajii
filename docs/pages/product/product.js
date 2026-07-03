@@ -391,7 +391,7 @@
 
     for (var index = 1; index <= 8; index += 1) {
       ['webp', 'jpg', 'jpeg', 'png'].forEach(function(extension) {
-        candidates.push(productBasePath + 'img/' + index + '.' + extension);
+        candidates.push(productBasePath + 'images/' + index + '.' + extension);
       });
     }
 

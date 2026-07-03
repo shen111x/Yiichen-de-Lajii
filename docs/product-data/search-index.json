@@ -1,0 +1,88 @@
+[
+  {
+    "id": "monogram-flag-tee-roc",
+    "product_id": "monogram-flag-tee-roc",
+    "category": "c-01",
+    "product_folder": "01",
+    "name": "Monogram Flag Tee R.O.C.",
+    "price": "173.43",
+    "currency": "USD",
+    "size": "M, L, XL, XXL",
+    "keywords": [
+      "monogram",
+      "flag",
+      "tee",
+      "r",
+      "o",
+      "c"
+    ],
+    "thumbnail": "c-01/01/images/1.jpg"
+  },
+  {
+    "id": "monogram-flag-tee-usa",
+    "product_id": "monogram-flag-tee-usa",
+    "category": "c-01",
+    "product_folder": "02",
+    "name": "Monogram Flag Tee U.S.A.",
+    "price": "173.43",
+    "currency": "USD",
+    "size": "M, L, XL, XXL",
+    "keywords": [
+      "monogram",
+      "flag",
+      "tee",
+      "u",
+      "s",
+      "a"
+    ],
+    "thumbnail": "c-01/02/images/1.jpg"
+  },
+  {
+    "id": "centered-logo-tee-black",
+    "product_id": "centered-logo-tee-black",
+    "category": "c-01",
+    "product_folder": "03",
+    "name": "Centered Logo Tee",
+    "price": "119.43",
+    "currency": "USD",
+    "size": "M, L, XL, XXL",
+    "keywords": [
+      "centered",
+      "logo",
+      "tee"
+    ],
+    "thumbnail": "c-01/03/images/1.jpg"
+  },
+  {
+    "id": "centered-logo-tee-black",
+    "product_id": "centered-logo-tee-black",
+    "category": "c-01",
+    "product_folder": "04",
+    "name": "Centered Logo Tee",
+    "price": "117.43",
+    "currency": "USD",
+    "size": "M, L, XL, XXL",
+    "keywords": [
+      "centered",
+      "logo",
+      "tee"
+    ],
+    "thumbnail": "c-01/04/images/1.jpg"
+  },
+  {
+    "id": "typography-tote-bag",
+    "product_id": "typography-tote-bag",
+    "category": "c-02",
+    "product_folder": "01",
+    "name": "Typography Tote Bag",
+    "price": "148.92",
+    "currency": "USD",
+    "size": "One Size",
+    "keywords": [
+      "typography",
+      "tote",
+      "bag"
+    ],
+    "thumbnail": "c-02/01/images/2.jpg"
+  }
+]

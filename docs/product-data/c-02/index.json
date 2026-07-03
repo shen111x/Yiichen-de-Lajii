@@ -1,9 +1,14 @@
 [
-
-  "01",
-
-  "02",
-
-  "03"
-
+  {
+    "id": "typography-tote-bag",
+    "product_id": "typography-tote-bag",
+    "product_folder": "01",
+    "name": "Typography Tote Bag",
+    "subtitle": "matte Canvas",
+    "price": "148.92",
+    "currency": "USD",
+    "size": "One Size",
+    "thumbnail": "01/images/2.jpg",
+    "thumbnail2": "01/images/2.jpg"
+  }
 ]
