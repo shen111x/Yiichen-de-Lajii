@@ -73,16 +73,17 @@ button {
 }
 
 .brand-logo {
-  width: min(260px, 32vw);
+  width:200px;
   height: auto;
   display: block;
 }
 
 .brand-subtitle {
   margin-top: 6px;
-  font-size: clamp(15px, 1.1vw, 20px);
+  font-size: 14px;
   line-height: 1;
-  font-weight: 700;
+  margin-left:0.3em;
+
 }
 
 .admin-actions {

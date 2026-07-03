@@ -102,13 +102,32 @@
       row-gap: calc(var(--gap-unit) * 20);
     }
 
-    .category-product-item {
+    .category-product-item,
+    .category-product-link {
       min-width: 0;
       color: inherit;
       text-decoration: none;
       display: flex;
       flex-direction: column;
       gap: calc(var(--gap-unit) * 2);
+    }
+
+    .category-product-link {
+      width: 100%;
+    }
+
+    .category-product-text-link {
+      color: inherit;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .category-products.is-sizebox-open .category-product-item:not(.is-sizebox-active) .category-product-link,
+    .category-products.is-sizebox-open .category-product-item:not(.is-sizebox-active) .category-product-text-link {
+      pointer-events: none;
     }
 
     .category-product-image-wrapper {
@@ -162,111 +181,102 @@
       opacity:0.32;
     }
 
+    .category-product-button-box {
+      position: relative;
+      width: 100%;
+      margin-top: calc(var(--gap-unit) * 2);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow: visible;
+      font-size: var(--product-info-font-size);
+    }
+
     .category-product-add {
+      position: relative;
+      z-index: 2;
+      padding: 0;
       width: min(132px, 40%);
       height: calc(var(--header-topbar-height) * 1);
       box-sizing: border-box;
-      margin-top: calc(var(--gap-unit) * 2);
       border: var(--stroke--width) solid transparent;
+      background: transparent;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: calc(var(--gap-unit) * 5);
+      font: inherit;
       font-size: var(--product-info-font-size);
       color: #000;
       cursor: pointer;
-      transition: width .28s ease, height .28s ease, color .28s ease, border-color .28s ease;
-    }
-
-    .category-product-add > * {
-      transition: opacity .12s ease;
-    }
-
-    .category-product-add-label {
-      border-bottom: var(--stroke--width) solid transparent;
       line-height: 1;
+      transition: opacity .25s ease;
     }
 
-    .category-product-add-label.is-text-fading {
+    .category-product-add:hover,
+    .category-product-size-item:hover {
+      border-bottom: var(--stroke--width) solid transparent;
+      text-decoration: underline;
+    }
+
+    .category-product-add.is-hidden {
       opacity: 0;
+      pointer-events: none;
     }
 
-    .category-product-add-label.is-x {
-      position: relative;
-      width: 1em;
-      height: 1em;
-      border-bottom: 0;
-    }
-
-    .category-product-add-label.is-x::before,
-    .category-product-add-label.is-x::after {
-      content: "";
+    .category-product-size-box {
       position: absolute;
-      top: 50%;
       left: 50%;
-      width: 0.72em;
-      border-bottom: 2.2px solid #000;
-      transform-origin: center;
-    }
-
-    .category-product-add-label.is-x::before {
-      transform: translate(-50%, -50%) rotate(45deg);
-    }
-
-    .category-product-add-label.is-x::after {
-      transform: translate(-50%, -50%) rotate(-45deg);
-    }
-
-    .category-product-add:hover .category-product-add-label,
-    .category-product-add.is-active .category-product-add-label,
-    .category-product-add.is-added .category-product-add-label,
-    .category-product-size-item:hover,
-    .category-product-size-item.is-active {
-      border-bottom-color: #000;
-    }
-
-    .category-product-add.is-open,
-    .category-product-add.is-closing {
-      position: absolute;
-      top: var(--category-add-top, 0px);
-      left: var(--category-add-left, 50%);
-      z-index: 3;
-      margin-top: 0;
+      top: 0;
+      z-index: 1;
+      width: max-content;
+      min-width: min(132px, 40%);
+      max-width: min(180px, 72vw);
+      box-sizing: border-box;
+      padding: calc(var(--gap-unit) * 2) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+      border: var(--stroke--width) solid #000;
       background: #fff;
-      transform: translateX(-50%);
-    }
-
-    .category-product-add.is-open {
-      width:50%;
-      height: calc(var(--header-topbar-height) * 3);
-      border-color: #000;
-      flex-wrap: wrap;
-      align-content: center;
-      row-gap: calc(var(--gap-unit) * 3);
-      padding: calc(var(--gap-unit) * 2) calc(var(--gap-unit) * 4) calc(var(--gap-unit) * 3);
-    }
-
-    .category-product-add.is-open:not(.is-open-ready) > *,
-    .category-product-add.is-closing > * {
       opacity: 0;
-      visibility: hidden;
+      pointer-events: none;
+      transform: translateX(-50%) scale(.55);
+      transform-origin: top center;
+      transition: opacity .25s ease, transform .25s ease;
     }
 
-    .category-product-add.is-open.is-open-ready > * {
-      visibility: visible;
+    .category-product-size-box.is-open {
+      z-index: 5;
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) scale(1);
     }
 
-    .category-product-add.is-open .category-product-add-label {
-      width: 100%;
-      border-bottom-color: transparent;
-      font-size: var(--button-font-size);
+    .category-product-size-top {
       display: flex;
       align-items: center;
       justify-content: center;
+      margin-bottom: calc(var(--gap-unit) * 2);
     }
 
-    .category-product-add.is-added {
+    .category-product-size-close {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-bottom: var(--stroke--width) solid transparent;
+      background: none;
       color: #000;
+      font: inherit;
+      cursor: pointer;
+      user-select: none;
+      line-height: 1;
+    }
+
+    .category-product-size-close:hover {
+      border-bottom-color: #000;
+    }
+
+    .category-product-size-close-icon {
+      width: 1em;
+      height: 1em;
+      display: block;
     }
 
     .category-product-size-item {
@@ -279,10 +289,15 @@
       font: inherit;
       line-height: 1;
       cursor: pointer;
+      user-select: none;
     }
 
-    .category-product-size-item[hidden] {
-      display: none;
+    .category-product-size-bottom {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: calc(var(--gap-unit) * 2) calc(var(--gap-unit) * 2.5);
+      max-width: 100px;
     }
 
     .category-empty {
@@ -342,18 +357,32 @@
       </section>
 
       <section id="category-products" class="category-products" aria-label="Products">
-        <a id="category-product-unit" class="category-product-item" href="../product/index.html?c=01&p=01&product=example-product&item=01" hidden>
-          <div class="category-product-image-wrapper">
-            <img class="category-product-image" src="../../product-data/c-01/01/images/1.jpg" alt="Product name">
-          </div>
+        <div id="category-product-unit" class="category-product-item" hidden>
+          <a class="category-product-link" href="../product/index.html?c=01&p=01&product=example-product&item=01">
+            <div class="category-product-image-wrapper">
+              <img class="category-product-image" src="../../product-data/c-01/01/images/1.jpg" alt="Product name">
+            </div>
+          </a>
 
           <div class="category-product-info">
-            <p class="category-product-name">Product Name</p>
-            <p class="category-product-subtitle">Product Subtitle</p>
-            <p class="category-product-price">173.43 usd</p>
-            <span class="category-product-add">Add +</span>
+            <a class="category-product-text-link" href="../product/index.html?c=01&p=01&product=example-product&item=01">
+              <p class="category-product-name">Product Name</p>
+              <p class="category-product-subtitle">Product Subtitle</p>
+              <p class="category-product-price">173.43 usd</p>
+            </a>
+            <div class="category-product-button-box">
+              <button class="category-product-add" type="button">Add +</button>
+              <div class="category-product-size-box" aria-hidden="true">
+                <div class="category-product-size-top">
+                  <button class="category-product-size-close" type="button" aria-label="Close sizes">
+                    <img class="category-product-size-close-icon" src="../../images/icon/xicon.svg" alt="">
+                  </button>
+                </div>
+                <div class="category-product-size-bottom"></div>
+              </div>
+            </div>
           </div>
-        </a>
+        </div>
       </section>
     </div>
 

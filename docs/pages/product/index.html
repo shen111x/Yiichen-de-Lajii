@@ -99,106 +99,93 @@
       box-sizing: border-box;
       padding: 0;
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: calc(var(--gap-unit) * 2.6);
+      display: block;
+      overflow: hidden;
 
       border: var(--stroke--width) solid #000;
-      cursor: pointer;
       font-size: var(--product-info-font-size);
       font-family: inherit;
       line-height: 1;
       -webkit-text-stroke: 0.01em #000;
-      transition: width .28s ease, height .28s ease;
+      transition: height .25s ease;
 
       filter:brightness(0.97);
     }
 
-    .product-body-topbar-right-add-to-cart > * {
-      transition: opacity .12s ease;
-    }
-
-    .product-body-add-label {
-      border-bottom: var(--stroke--width) solid transparent;
-      line-height: 1;
-    }
-
-    .product-body-add-label.is-text-fading {
-      opacity: 0;
-    }
-
-    .product-body-add-label.is-x {
-      position: relative;
-      width: 1em;
-      height: 1em;
-      border-bottom: 0;
-      margin-top: 2em;
-      margin-bottom: 1em;
-    }
-
-    .product-body-add-label.is-x::before,
-    .product-body-add-label.is-x::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0.82em;
-      border-bottom: 2.2px solid #000;
-      transform-origin: center;
-    }
-
-    .product-body-add-label.is-x::before {
-      transform: translate(-50%, -50%) rotate(45deg);
-    }
-
-    .product-body-add-label.is-x::after {
-      transform: translate(-50%, -50%) rotate(-45deg);
-    }
-
-    .product-body-topbar-right-add-to-cart:hover .product-body-add-label,
-    .product-body-topbar-right-add-to-cart.is-active .product-body-add-label {
-      border-bottom-color: #000;
-    }
-
-    .product-body-size-item:hover,
-    .product-body-size-item.is-active {
-      border-bottom-color: #000;
-    }
-
-    .product-body-topbar-right-add-to-cart.is-open {
-      width: 61%;
-      height: calc(var(--header-topbar-height) * 4.4 + 4em);
-      flex-direction: column;
-      justify-content: flex-start;
-      padding: 0 0 calc(var(--gap-unit) * 2);
-    }
-
-    .product-body-topbar-right-add-to-cart.is-open:not(.is-open-ready) > *,
-    .product-body-topbar-right-add-to-cart.is-closing > * {
-      opacity: 0;
-      visibility: hidden;
-    }
-
-    .product-body-topbar-right-add-to-cart.is-open.is-open-ready > * {
-      visibility: visible;
-    }
-
-    .product-body-topbar-right-add-to-cart.is-open .product-body-add-label {
+    .product-body-add-button {
       width: 100%;
-      height: var(--header-topbar-height);
-      box-sizing: border-box;
-      border-bottom-color: transparent;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: #000;
       display: flex;
       align-items: center;
       justify-content: center;
+      font: inherit;
+      line-height: 1;
+      -webkit-text-stroke: inherit;
+      cursor: pointer;
     }
 
-    .product-body-topbar-right-add-to-cart.is-open .product-body-add-label.is-x {
+    .product-body-add-button:hover {
+      text-decoration: underline;
+    }
+
+    .product-body-topbar-right-add-to-cart.is-open .product-body-add-button {
+      display: none;
+    }
+
+    .product-body-size-box {
+      display: none;
+      width: 100%;
+      box-sizing: border-box;
+      padding: calc(var(--gap-unit) * 2) 0 calc(var(--gap-unit) * 3);
+    }
+
+    .product-body-topbar-right-add-to-cart.is-open .product-body-size-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .product-body-size-top {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: calc(var(--gap-unit) * 2);
+    }
+
+    .product-body-size-close {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-bottom: var(--stroke--width) solid transparent;
+      background: none;
+      color: #000;
+      font: inherit;
+      line-height: 1;
+      -webkit-text-stroke: inherit;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .product-body-size-close:hover {
+      border-bottom-color: #000;
+    }
+
+    .product-body-size-close-icon {
       width: 1em;
       height: 1em;
       display: block;
-      flex: none;
+    }
+
+    .product-body-size-bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: calc(var(--gap-unit) * 2);
     }
 
     .product-body-size-item {
@@ -212,10 +199,11 @@
       line-height: 1;
       -webkit-text-stroke: 0.01em #000;
       cursor: pointer;
+      user-select: none;
     }
 
-    .product-body-size-item[hidden] {
-      display: none;
+    .product-body-size-item:hover {
+      border-bottom-color: #000;
     }
 
     .product-body-goback {
@@ -353,16 +341,26 @@
   <div class="product-body-topbar">
     <div class="product-body-topbar-left">
       <div class="product-body-topbar-left-name-wrapper">
-        <p id="product-name">Typography Flag Tee R.O.C.</p>
+        <p id="product-name"><!-- Typography Flag Tee R.O.C. --></p>
       </div>
 
       <div class="product-body-topbar-left-price-wrapper">
-        <p id="product-price">127.43 usd</p>
+        <p id="product-price"><!-- 127.43 usd --></p>
       </div>
     </div>
 
     <div class="product-body-topbar-right">
-      <div id="product-add-button" class="product-body-topbar-right-add-to-cart">Add</div>
+      <div id="product-add-button" class="product-body-topbar-right-add-to-cart">
+        <button class="product-body-add-button" type="button">Add</button>
+        <div class="product-body-size-box" aria-hidden="true">
+          <div class="product-body-size-top">
+            <button class="product-body-size-close" type="button" aria-label="Close sizes">
+              <img class="product-body-size-close-icon" src="../../images/icon/xicon.svg" alt="">
+            </button>
+          </div>
+          <div class="product-body-size-bottom"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -372,7 +370,7 @@
     </div>
 
     <div class="product-body-img-wrapper">
-      <img id="product-image" src="../../product-data/c-01/01/images/1.jpg" alt="product-img">
+      <img id="product-image" src="../../images/placeholder/1.jpg" alt="product-img"><!-- src="../../product-data/c-01/01/images/1.jpg" -->
     </div>
 
     <div id="product-dropdown-section" class="product-body-dropdown-section">
@@ -380,7 +378,7 @@
         <summary class="product-body-dropdown-summary"><span>Detail</span><span class="product-body-dropdown-icon"></span></summary>
         <div class="product-body-dropdown-content">
           <div class="product-body-dropdown-content-inner">
-            <p>Oversized fit<br>Dropped shoulders<br>Heavyweight cotton jersey</p>
+            <p><!-- Oversized fit<br>Dropped shoulders<br>Heavyweight cotton jersey --></p>
           </div>
         </div>
       </details>
@@ -389,7 +387,7 @@
         <summary class="product-body-dropdown-summary"><span>Size</span><span class="product-body-dropdown-icon"></span></summary>
         <div class="product-body-dropdown-content">
           <div class="product-body-dropdown-content-inner">
-            <p>One size<br>Width: 38 cm<br>Height: 42 cm<br>Handle drop: 28 cm</p>
+            <p><!-- One size<br>Width: 38 cm<br>Height: 42 cm<br>Handle drop: 28 cm --></p>
           </div>
         </div>
       </details>
@@ -398,7 +396,7 @@
         <summary class="product-body-dropdown-summary"><span>Shipping</span><span class="product-body-dropdown-icon"></span></summary>
         <div class="product-body-dropdown-content">
           <div class="product-body-dropdown-content-inner">
-            <p>Ships within 3-7 business days<br>Tracking will be sent after dispatch</p>
+            <p><!-- Ships within 3-7 business days<br>Tracking will be sent after dispatch --></p>
           </div>
         </div>
       </details>
@@ -407,7 +405,7 @@
         <summary class="product-body-dropdown-summary"><span>Care</span><span class="product-body-dropdown-icon"></span></summary>
         <div class="product-body-dropdown-content">
           <div class="product-body-dropdown-content-inner">
-            <p>Spot clean only<br>Do not bleach<br>Dry flat away from direct sunlight</p>
+            <p><!-- Spot clean only<br>Do not bleach<br>Dry flat away from direct sunlight --></p>
           </div>
         </div>
       </details>
@@ -416,7 +414,7 @@
         <summary class="product-body-dropdown-summary"><span>Log</span><span class="product-body-dropdown-icon"></span></summary>
         <div class="product-body-dropdown-content">
           <div class="product-body-dropdown-content-inner">
-            <p>Designed by Yiichen de Lajii<br>Product record: Typography Flag Tee R.O.C.</p>
+            <p><!-- Designed by Yiichen de Lajii<br>Product record: Typography Flag Tee R.O.C. --></p>
           </div>
         </div>
       </details>
