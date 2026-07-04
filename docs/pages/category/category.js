@@ -5,7 +5,11 @@
   var state = {
     category: null,
     products: [],
-    sort: 'default'
+    sort: 'default',
+    touchRaf: 0,
+    touchX: 0,
+    touchY: 0,
+    touchImageItem: null
   };
 
   var title = document.getElementById('category-title');
@@ -19,6 +23,22 @@
     state.sort = sortSelect.value;
     renderProducts();
   });
+
+  productContainer.addEventListener('pointerover', function(event) {
+    if (event.pointerType === 'mouse') setProductImageVariant(event.target, true);
+  });
+
+  productContainer.addEventListener('pointerout', function(event) {
+    var item = getProductItem(event.target);
+
+    if (event.pointerType === 'mouse' && (!item || !item.contains(event.relatedTarget))) {
+      setProductImageVariant(item, false);
+    }
+  });
+
+  productContainer.addEventListener('touchmove', handleProductTouchMove, { passive: true });
+  productContainer.addEventListener('touchend', resetTouchProductImageVariant, { passive: true });
+  productContainer.addEventListener('touchcancel', resetTouchProductImageVariant, { passive: true });
 
   initCategoryPage();
 
@@ -106,15 +126,14 @@
       currency: product.currency || '',
       sizes: getProductSizes(product),
       oddness: parseOddness(product, index),
-      imageCandidates: getCategoryImageCandidates(categoryPath, thumbnail, thumbnail2),
+      thumbnailSrc: getCategoryImageSrc(categoryPath, thumbnail),
+      thumbnail2Src: getCategoryImageSrc(categoryPath, thumbnail2),
       href: getProductHref(category, folderId, product)
     };
   }
 
-  function getCategoryImageCandidates(categoryPath, thumbnail, thumbnail2) {
-    return [thumbnail, thumbnail2].filter(Boolean).map(function(imagePath) {
-      return '../../product-data/' + categoryPath + '/' + imagePath.replace(/^\/+/, '');
-    });
+  function getCategoryImageSrc(categoryPath, imagePath) {
+    return imagePath ? '../../product-data/' + categoryPath + '/' + imagePath.replace(/^\/+/, '') : '';
   }
 
   function getProductHref(category, folderId, product) {
@@ -198,7 +217,10 @@
     if (image) {
       image.classList.remove('is-missing');
       image.alt = product.name;
-      setImageWithFallbacks(image, product.imageCandidates);
+      image.src = product.thumbnailSrc;
+      image.dataset.thumbnailSrc = product.thumbnailSrc;
+      image.dataset.thumbnail2Src = product.thumbnail2Src;
+      preloadImage(product.thumbnail2Src);
     }
 
     if (name) name.textContent = product.name;
@@ -361,22 +383,60 @@
     }
   }
 
-  function setImageWithFallbacks(image, candidates) {
-    var index = 0;
+  function setProductImageVariant(target, useThumbnail2) {
+    var item = getProductItem(target);
+    var image = item ? item.querySelector('.category-product-image') : null;
+    var src = image ? (useThumbnail2 ? image.dataset.thumbnail2Src : image.dataset.thumbnailSrc) : '';
 
-    function next() {
-      if (index >= candidates.length) {
-        image.removeAttribute('src');
-        image.classList.add('is-missing');
-        return;
-      }
+    if (src) image.src = src;
+  }
 
-      image.src = candidates[index];
-      index += 1;
+  function handleProductTouchMove(event) {
+    var touch = event.touches && event.touches[0];
+
+    if (!touch) return;
+    state.touchX = touch.clientX;
+    state.touchY = touch.clientY;
+    if (state.touchRaf) return;
+
+    state.touchRaf = window.requestAnimationFrame(function() {
+      state.touchRaf = 0;
+      setTouchProductImageVariant(document.elementFromPoint(state.touchX, state.touchY));
+    });
+  }
+
+  function setTouchProductImageVariant(target) {
+    var item = getProductItem(target);
+    var image = item ? item.querySelector('.category-product-image') : null;
+
+    if (!item || !image || !image.dataset.thumbnail2Src) return;
+    if (state.touchImageItem === item) return;
+    resetTouchProductImageVariant();
+    state.touchImageItem = item;
+    setProductImageVariant(item, true);
+  }
+
+  function resetTouchProductImageVariant() {
+    if (state.touchRaf) {
+      window.cancelAnimationFrame(state.touchRaf);
+      state.touchRaf = 0;
     }
 
-    image.addEventListener('error', next);
-    next();
+    if (!state.touchImageItem) return;
+
+    setProductImageVariant(state.touchImageItem, false);
+    state.touchImageItem = null;
+  }
+
+  function getProductItem(target) {
+    return target ? target.closest('.category-product-item') : null;
+  }
+
+  function preloadImage(src) {
+    if (!src) return;
+
+    var image = new Image();
+    image.src = src;
   }
 
   function renderEmpty(message) {

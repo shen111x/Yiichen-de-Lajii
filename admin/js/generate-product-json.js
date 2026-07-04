@@ -286,7 +286,7 @@ async function generateProductJsonNode(options) {
       var displayName = product.name || 'Untitled';
       var images = await scanProductImages(productDir);
       var thumbnail = images[0] || 'images/1.jpg';
-      var thumbnail2 = images[1] || 'images/2.jpg';
+      var thumbnail2 = images[1] || thumbnail;
 
       delete product.img;
       product.images = images;
