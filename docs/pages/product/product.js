@@ -128,8 +128,10 @@
       group.innerHTML = '';
 
       imagePaths.forEach(function(imagePath) {
+        var cell = document.createElement('div');
         var image = document.createElement('img');
 
+        cell.className = 'product-body-img-cell';
         image.src = imagePath;
         image.alt = product.name || 'product-img';
         image.decoding = 'async';
@@ -137,7 +139,8 @@
         image.addEventListener('load', function() {
           measureInfiniteGallery();
         });
-        group.appendChild(image);
+        cell.appendChild(image);
+        group.appendChild(cell);
       });
     });
 
@@ -160,8 +163,7 @@
 
   function measureInfiniteGallery(forceCenter) {
     var mainGroup = galleryGroups[galleryCenterIndex];
-    var gap = parseFloat(window.getComputedStyle(galleryTrack).columnGap) || 0;
-    var nextGroupWidth = mainGroup ? mainGroup.offsetWidth + gap : 0;
+    var nextGroupWidth = getGalleryGroupDistance(mainGroup);
     var nextCenterScrollLeft;
     var nextViewportWidth = galleryNode.clientWidth;
 
@@ -185,7 +187,7 @@
   }
 
   function getGalleryCenteredImageScrollLeft(group) {
-    var image = group ? group.querySelector('img') : null;
+    var image = group ? group.querySelector('.product-body-img-cell') : null;
     var galleryRect;
     var imageRect;
 
@@ -201,6 +203,16 @@
       imageRect.width / 2 -
       galleryRect.left -
       galleryRect.width / 2;
+  }
+
+  function getGalleryGroupDistance(group) {
+    var nextGroup = group ? group.nextElementSibling : null;
+    var previousGroup = group ? group.previousElementSibling : null;
+
+    if (nextGroup) return nextGroup.offsetLeft - group.offsetLeft;
+    if (previousGroup) return group.offsetLeft - previousGroup.offsetLeft;
+
+    return group ? group.offsetWidth : 0;
   }
 
   function scheduleInfiniteGalleryReset() {
