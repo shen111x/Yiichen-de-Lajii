@@ -19,6 +19,7 @@
   var galleryViewportWidth = 0;
   var galleryLastScrollLeft = 0;
   var galleryResetPending = false;
+  var galleryUserScrolled = false;
 
   if (!nameNode || !priceNode || !galleryNode || !galleryTrack || !galleryGroups.length || !dropdownSection) return;
 
@@ -123,6 +124,7 @@
     var imagePaths = getGalleryImagePaths(productState.productBasePath, product);
 
     galleryIsMeasured = false;
+    galleryUserScrolled = false;
 
     Array.prototype.slice.call(galleryGroups).forEach(function(group) {
       group.innerHTML = '';
@@ -132,13 +134,16 @@
         var image = document.createElement('img');
 
         cell.className = 'product-body-img-cell';
-        image.src = imagePath;
         image.alt = product.name || 'product-img';
         image.decoding = 'async';
         image.draggable = false;
         image.addEventListener('load', function() {
-          measureInfiniteGallery();
+          measureInfiniteGallery(!galleryUserScrolled);
         });
+        image.addEventListener('error', function() {
+          measureInfiniteGallery(!galleryUserScrolled);
+        });
+        image.src = imagePath;
         cell.appendChild(image);
         group.appendChild(cell);
       });
@@ -166,11 +171,14 @@
     var nextGroupWidth = getGalleryGroupDistance(mainGroup);
     var nextCenterScrollLeft;
     var nextViewportWidth = galleryNode.clientWidth;
+    var groupWidthChanged = galleryGroupWidth && Math.abs(nextGroupWidth - galleryGroupWidth) > 1;
 
     if (!nextGroupWidth) return;
 
+    forceCenter = forceCenter ||
+      (!galleryUserScrolled && groupWidthChanged) ||
+      (galleryViewportWidth && Math.abs(nextViewportWidth - galleryViewportWidth) > 1);
     galleryGroupWidth = nextGroupWidth;
-    forceCenter = forceCenter || (galleryViewportWidth && Math.abs(nextViewportWidth - galleryViewportWidth) > 1);
     galleryViewportWidth = nextViewportWidth;
     nextCenterScrollLeft = getGalleryCenteredImageScrollLeft(mainGroup);
 
@@ -187,22 +195,16 @@
   }
 
   function getGalleryCenteredImageScrollLeft(group) {
-    var image = group ? group.querySelector('.product-body-img-cell') : null;
-    var galleryRect;
-    var imageRect;
+    var cell = group ? group.querySelector('.product-body-img-cell') : null;
+    var cellCenter;
 
-    if (!image) return null;
+    if (!cell) return null;
 
-    galleryRect = galleryNode.getBoundingClientRect();
-    imageRect = image.getBoundingClientRect();
+    cellCenter = cell.offsetLeft + cell.offsetWidth / 2;
 
-    if (!imageRect.width || !galleryRect.width) return null;
+    if (!cell.offsetWidth || !galleryNode.clientWidth) return null;
 
-    return galleryNode.scrollLeft +
-      imageRect.left +
-      imageRect.width / 2 -
-      galleryRect.left -
-      galleryRect.width / 2;
+    return cellCenter - galleryNode.clientWidth / 2;
   }
 
   function getGalleryGroupDistance(group) {
@@ -221,6 +223,7 @@
     if (!galleryGroupWidth) return;
     if (Math.abs(nextScrollLeft - galleryLastScrollLeft) < 2) return;
 
+    if (galleryIsMeasured) galleryUserScrolled = true;
     galleryLastScrollLeft = nextScrollLeft;
     galleryResetPending = true;
 
