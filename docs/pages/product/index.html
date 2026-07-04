@@ -229,9 +229,32 @@
     }
 
     .product-body-img-wrapper {
+      width: 100vw;
+      margin-left: calc(var(--gap-unit) * -3);
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-behavior: auto;
+      -webkit-overflow-scrolling: auto;
+      scrollbar-width: none;
+    }
+
+    .product-body-img-wrapper::-webkit-scrollbar {
+      display: none;
+    }
+
+    .product-body-img-track {
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: calc(var(--gap-unit) * 3);
+      width: max-content;
+      padding: 0 calc(var(--gap-unit) * 3);
+    }
+
+    .product-body-img-group {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--gap-unit) * 3);
+      flex: none;
     }
 
     .product-body-img-wrapper img {
@@ -240,6 +263,9 @@
       max-width: 130vw;
       max-height: 70vh;
       display: block;
+      flex: none;
+      user-select: none;
+      -webkit-user-drag: none;
     }
 
     .product-body-dropdown-section {
@@ -369,8 +395,16 @@
       <img src="../../images/icon/goback.svg" alt="goback-icon">
     </div>
 
-    <div class="product-body-img-wrapper">
-      <img id="product-image" src="../../images/placeholder/1.jpg" alt="product-img"><!-- src="../../product-data/c-01/01/images/1.jpg" -->
+    <div id="product-gallery" class="product-body-img-wrapper">
+      <div id="product-gallery-track" class="product-body-img-track">
+        <div class="product-body-img-group"></div>
+        <div class="product-body-img-group"></div>
+        <div class="product-body-img-group"></div>
+        <div class="product-body-img-group" id="product-gallery-main"></div>
+        <div class="product-body-img-group"></div>
+        <div class="product-body-img-group"></div>
+        <div class="product-body-img-group"></div>
+      </div>
     </div>
 
     <div id="product-dropdown-section" class="product-body-dropdown-section">

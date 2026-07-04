@@ -28,8 +28,13 @@
   var generateNavButton = document.getElementById('generate-product-json');
   var navButtons = Array.prototype.slice.call(document.querySelectorAll('[data-view]'));
   var outputNode = null;
+  var serverStatusNode = document.getElementById('admin-server-status');
+  var serverStatusTextNode = serverStatusNode ? serverStatusNode.querySelector('.server-status-text') : null;
+  var runButtonNode = null;
+  var serverIsOnline = false;
   var viewStorageKey = 'yiichen-admin-active-view';
   var outputStorageKey = 'yiichen-admin-generate-output';
+  var startCommand = 'node admin/js/node-server.js';
 
   if (!display || !generateNavButton) return;
 
@@ -40,6 +45,7 @@
   });
 
   showView(localStorage.getItem(viewStorageKey) || 'home');
+  checkServerStatus();
 
   function showView(viewName) {
     localStorage.setItem(viewStorageKey, viewName);
@@ -58,6 +64,7 @@
 
   function renderHomeView() {
     outputNode = null;
+    runButtonNode = null;
     display.innerHTML = '<div class="admin-home" aria-label="Dashboard home"></div>';
   }
 
@@ -68,13 +75,17 @@
       '    <div class="terminal-titlebar">Product Folder: ../docs/product-data</div>',
       '    <pre class="terminal-output" id="generate-product-json-output"></pre>',
       '  </section>',
-      '  <button class="admin-button generate-button" type="button" id="generate-product-json-run">Generate</button>',
+      '  <div class="generate-controls">',
+      '    <button class="admin-button generate-button" type="button" id="generate-product-json-run">Generate</button>',
+      '  </div>',
       '</div>'
     ].join('');
 
     outputNode = document.getElementById('generate-product-json-output');
+    runButtonNode = document.getElementById('generate-product-json-run');
     setOutput(localStorage.getItem(outputStorageKey) || 'Ready...');
-    document.getElementById('generate-product-json-run').addEventListener('click', runGenerate);
+    runButtonNode.addEventListener('click', runGenerate);
+    checkServerStatus();
   }
 
   function setOutput(message) {
@@ -86,12 +97,12 @@
 
   function runGenerate(event) {
     var button = event.currentTarget;
-    var intro = 'Connecting [ ' + getGenerateApiUrl() + ' ]\nFetching [ ../docs/product-data ]\n\n';
+    var intro = 'Connecting [ ' + getApiUrl('/api/generate-product-json') + ' ]\nFetching [ ../docs/product-data ]\n\n';
 
     button.disabled = true;
     setOutput(intro);
 
-    postJson(getGenerateApiUrl())
+    postJson(getApiUrl('/api/generate-product-json'))
       .then(function(payload) {
         var log = payload.log || 'Success!';
         var done = '\n\nCompleted at ' + formatTimestamp(new Date());
@@ -99,11 +110,48 @@
         setOutput(log + done);
       })
       .catch(function(error) {
-        setOutput('Error:\n' + (error && error.message ? error.message : String(error)) + '\n\nCompleted at ' + formatTimestamp(new Date()));
+        setOutput(formatServerError(error));
+        updateServerStatus(false);
       })
       .finally(function() {
-        button.disabled = false;
+        button.disabled = !serverIsOnline;
       });
+  }
+
+  function checkServerStatus() {
+    updateServerStatus(null);
+
+    getJson(getApiUrl('/api/admin-status'))
+      .then(function() {
+        updateServerStatus(true);
+      })
+      .catch(function() {
+        updateServerStatus(false);
+      });
+  }
+
+  function updateServerStatus(isOnline) {
+    if (!serverStatusNode || !serverStatusTextNode) return;
+
+    serverIsOnline = isOnline === true;
+    serverStatusNode.classList.toggle('is-checking', isOnline === null);
+    serverStatusNode.classList.toggle('is-online', isOnline === true);
+    serverStatusNode.classList.toggle('is-offline', isOnline === false);
+
+    if (isOnline === null) {
+      serverStatusTextNode.textContent = 'Admin server: checking...';
+      if (runButtonNode) runButtonNode.disabled = true;
+      return;
+    }
+
+    if (isOnline) {
+      serverStatusTextNode.textContent = 'Admin server: online';
+      if (runButtonNode) runButtonNode.disabled = false;
+      return;
+    }
+
+    serverStatusTextNode.textContent = 'Admin server: offline';
+    if (runButtonNode) runButtonNode.disabled = true;
   }
 
   function formatTimestamp(date) {
@@ -122,15 +170,43 @@
     return String(value).padStart(2, '0');
   }
 
-  function getGenerateApiUrl() {
-    return 'http://127.0.0.1:8790/api/generate-product-json';
+  function getApiUrl(pathname) {
+    if (window.location.protocol.indexOf('http') === 0 && window.location.port === '8790') {
+      return window.location.origin + pathname;
+    }
+
+    return 'http://127.0.0.1:8790' + pathname;
+  }
+
+  function formatServerError(error) {
+    return [
+      'Error:',
+      error && error.message ? error.message : String(error),
+      '',
+      'Admin server is required because the browser cannot write JSON files directly.',
+      'Start it from the repo root:',
+      startCommand,
+      '',
+      'Then open:',
+      'http://127.0.0.1:8790/',
+      '',
+      'Completed at ' + formatTimestamp(new Date())
+    ].join('\n');
+  }
+
+  function getJson(url) {
+    return requestJson('GET', url);
   }
 
   function postJson(url) {
+    return requestJson('POST', url);
+  }
+
+  function requestJson(method, url) {
     return new Promise(function(resolve, reject) {
       var request = new XMLHttpRequest();
 
-      request.open('POST', url, true);
+      request.open(method, url, true);
       request.setRequestHeader('Accept', 'application/json');
 
       request.onload = function() {

@@ -86,6 +86,33 @@ button {
 
 }
 
+.server-status {
+  margin-top: 10px;
+  margin-left: 0.3em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.server-status-light {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border-radius: 50%;
+  background: #ffbd32;
+}
+
+.server-status.is-online .server-status-light {
+  background: #29c84a;
+}
+
+.server-status.is-offline .server-status-light,
+.server-status.is-checking .server-status-light {
+  background: #ffbd32;
+}
+
 .admin-actions {
   min-width: min(250px, 18vw);
 }
@@ -174,6 +201,23 @@ button {
   min-width: 230px;
 }
 
+.generate-controls {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.admin-button:disabled:hover {
+  background: #fff;
+  color: #000;
+}
+
 @media (max-width: 820px) {
   .admin-shell {
     grid-template-rows: minmax(260px, var(--admin-header-height)) minmax(0, 1fr);
@@ -185,6 +229,7 @@ button {
 
   .admin-actions,
   .admin-button,
+  .generate-controls,
   .generate-product-json-view {
     width: 100%;
     min-width: 0;

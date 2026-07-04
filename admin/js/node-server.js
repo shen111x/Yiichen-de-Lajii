@@ -6,7 +6,7 @@ const { generateProductJson } = require('./generate-product-json');
 const repoRoot = path.resolve(__dirname, '../..');
 const adminRoot = path.resolve(__dirname, '..');
 const port = Number(process.env.PORT || 8790);
-const host = process.env.HOST || '0.0.0.0';
+const host = process.env.HOST || '127.0.0.1';
 
 const mimeTypes = {
   '.html': 'text/html; charset=utf-8',
@@ -31,6 +31,16 @@ const server = http.createServer(async (request, response) => {
     }
 
     const requestUrl = new URL(request.url, `http://${host}:${port}`);
+
+    if (request.method === 'GET' && requestUrl.pathname === '/api/admin-status') {
+      sendJson(response, 200, {
+        ok: true,
+        server: 'admin',
+        port,
+        repoRoot
+      });
+      return;
+    }
 
     if (request.method === 'POST' && requestUrl.pathname === '/api/generate-product-json') {
       const lines = [];
@@ -62,7 +72,10 @@ const server = http.createServer(async (request, response) => {
 
 server.listen(port, host, () => {
   console.log(`Admin dashboard: http://127.0.0.1:${port}/`);
-  console.log(`Network dashboard: http://192.168.1.251:${port}/`);
+
+  if (host === '0.0.0.0') {
+    console.log(`Network dashboard: http://192.168.1.251:${port}/`);
+  }
 });
 
 function serveStatic(request, response) {

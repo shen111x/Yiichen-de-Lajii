@@ -5,15 +5,26 @@
 
   var nameNode = document.getElementById('product-name');
   var priceNode = document.getElementById('product-price');
-  var imageNode = document.getElementById('product-image');
+  var galleryNode = document.getElementById('product-gallery');
+  var galleryTrack = document.getElementById('product-gallery-track');
+  var galleryGroups = galleryNode ? galleryNode.querySelectorAll('.product-body-img-group') : [];
   var dropdownSection = document.getElementById('product-dropdown-section');
   var addButton = document.getElementById('product-add-button');
   var currentProductState = null;
+  var galleryGroupWidth = 0;
+  var galleryIsMeasured = false;
+  var gallerySettleTimer = 0;
+  var galleryCenterIndex = galleryGroups.length ? Math.floor(galleryGroups.length / 2) : 0;
+  var galleryCenterScrollLeft = 0;
+  var galleryViewportWidth = 0;
+  var galleryLastScrollLeft = 0;
+  var galleryResetPending = false;
 
-  if (!nameNode || !priceNode || !imageNode || !dropdownSection) return;
+  if (!nameNode || !priceNode || !galleryNode || !galleryTrack || !galleryGroups.length || !dropdownSection) return;
 
   initProductPage();
   initAddToCartDropdown();
+  initInfiniteGallery();
 
   function initProductPage() {
     resolveProductLocation()
@@ -102,10 +113,138 @@
     priceNode.textContent = price.label;
     document.title = (product.name ? product.name + ' - ' : '') + 'Yiichen de Lajii';
 
-    imageNode.alt = product.name || 'product-img';
-    setImageWithFallbacks(imageNode, getImageCandidates(productState.productBasePath, product));
+    renderProductGallery(productState);
     renderDropdowns(product.dropdowns || []);
     renderSizeOptions(getProductSizes(product));
+  }
+
+  function renderProductGallery(productState) {
+    var product = productState.product;
+    var imagePaths = getGalleryImagePaths(productState.productBasePath, product);
+
+    galleryIsMeasured = false;
+
+    Array.prototype.slice.call(galleryGroups).forEach(function(group) {
+      group.innerHTML = '';
+
+      imagePaths.forEach(function(imagePath) {
+        var image = document.createElement('img');
+
+        image.src = imagePath;
+        image.alt = product.name || 'product-img';
+        image.decoding = 'async';
+        image.draggable = false;
+        image.addEventListener('load', function() {
+          measureInfiniteGallery();
+        });
+        group.appendChild(image);
+      });
+    });
+
+    requestAnimationFrame(function() {
+      measureInfiniteGallery(true);
+    });
+  }
+
+  function initInfiniteGallery() {
+    galleryNode.addEventListener('scroll', scheduleInfiniteGalleryReset, { passive: true });
+
+    if ('onscrollend' in window) {
+      galleryNode.addEventListener('scrollend', resetInfiniteGalleryAfterScroll, { passive: true });
+    }
+
+    window.addEventListener('resize', function() {
+      measureInfiniteGallery(!galleryIsMeasured);
+    });
+  }
+
+  function measureInfiniteGallery(forceCenter) {
+    var mainGroup = galleryGroups[galleryCenterIndex];
+    var gap = parseFloat(window.getComputedStyle(galleryTrack).columnGap) || 0;
+    var nextGroupWidth = mainGroup ? mainGroup.offsetWidth + gap : 0;
+    var nextCenterScrollLeft;
+    var nextViewportWidth = galleryNode.clientWidth;
+
+    if (!nextGroupWidth) return;
+
+    galleryGroupWidth = nextGroupWidth;
+    forceCenter = forceCenter || (galleryViewportWidth && Math.abs(nextViewportWidth - galleryViewportWidth) > 1);
+    galleryViewportWidth = nextViewportWidth;
+    nextCenterScrollLeft = getGalleryCenteredImageScrollLeft(mainGroup);
+
+    if (nextCenterScrollLeft === null) return;
+
+    galleryCenterScrollLeft = nextCenterScrollLeft;
+
+    if (forceCenter || !galleryIsMeasured) {
+      galleryNode.scrollLeft = galleryCenterScrollLeft;
+      galleryLastScrollLeft = galleryNode.scrollLeft;
+      galleryResetPending = false;
+      galleryIsMeasured = true;
+    }
+  }
+
+  function getGalleryCenteredImageScrollLeft(group) {
+    var image = group ? group.querySelector('img') : null;
+    var galleryRect;
+    var imageRect;
+
+    if (!image) return null;
+
+    galleryRect = galleryNode.getBoundingClientRect();
+    imageRect = image.getBoundingClientRect();
+
+    if (!imageRect.width || !galleryRect.width) return null;
+
+    return galleryNode.scrollLeft +
+      imageRect.left +
+      imageRect.width / 2 -
+      galleryRect.left -
+      galleryRect.width / 2;
+  }
+
+  function scheduleInfiniteGalleryReset() {
+    var nextScrollLeft = galleryNode.scrollLeft;
+
+    if (!galleryGroupWidth) return;
+    if (Math.abs(nextScrollLeft - galleryLastScrollLeft) < 2) return;
+
+    galleryLastScrollLeft = nextScrollLeft;
+    galleryResetPending = true;
+
+    window.clearTimeout(gallerySettleTimer);
+    gallerySettleTimer = window.setTimeout(resetInfiniteGalleryAfterScroll, 180);
+  }
+
+  function resetInfiniteGalleryAfterScroll() {
+    var left;
+    var centerLeft;
+    var relativeLeft;
+    var nextLeft;
+
+    if (!galleryGroupWidth) return;
+    if (!galleryResetPending) return;
+
+    left = galleryNode.scrollLeft;
+    centerLeft = galleryCenterScrollLeft;
+    relativeLeft = left - centerLeft;
+
+    while (relativeLeft < galleryGroupWidth * -0.5) {
+      relativeLeft += galleryGroupWidth;
+    }
+
+    while (relativeLeft > galleryGroupWidth * 0.5) {
+      relativeLeft -= galleryGroupWidth;
+    }
+
+    nextLeft = centerLeft + relativeLeft;
+
+    if (Math.abs(nextLeft - left) > 1) {
+      galleryNode.scrollLeft = nextLeft;
+    }
+
+    galleryLastScrollLeft = galleryNode.scrollLeft;
+    galleryResetPending = false;
   }
 
   function initAddToCartDropdown() {
@@ -377,6 +516,14 @@
     }
 
     return unique(candidates);
+  }
+
+  function getGalleryImagePaths(productBasePath, product) {
+    var productImages = Array.isArray(product.images) ? product.images.map(function(imagePath) {
+      return imagePath ? productBasePath + imagePath.replace(/^\/+/, '') : '';
+    }).filter(Boolean) : [];
+
+    return unique(productImages.length ? productImages : getImageCandidates(productBasePath, product));
   }
 
   function setImageWithFallbacks(image, candidates) {
