@@ -159,11 +159,7 @@ app.post("/create-payment-intent", async (req, res) => {
       }
     );
 
-    // ============================================================
-    // GOOGLE SHEET WRITE
-    // ============================================================
-
-    await appendFirstStepOrderToSheet({
+    writeFirstStepOrderInBackground({
       orderId,
       timeOrdered,
       notes: cleanText(notes, 500),
@@ -191,6 +187,12 @@ app.post("/create-payment-intent", async (req, res) => {
 // ============================================================
 // GOOGLE SHEET WRITE HELPERS
 // ============================================================
+
+function writeFirstStepOrderInBackground(order) {
+  appendFirstStepOrderToSheet(order).catch((error) => {
+    console.error("Background Google Sheet write failed:", error);
+  });
+}
 
 async function appendFirstStepOrderToSheet(order) {
   const sheets = await getSheetsClient();

@@ -5,38 +5,461 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
 
-  <title>Yiichen de Lajii</title>
+  <title>Checkout - Yiichen de Lajii</title>
 
   <link rel="stylesheet" href="../../css/universal.css">
+
+  <style>
+    .checkout-body-topbar {
+      position: fixed;
+      top: calc(var(--header-topbar-height) + var(--gap-unit) * 6);
+      left: 0;
+      z-index: 9;
+
+      width: 100%;
+      height: var(--header-topbar-height);
+      box-sizing: border-box;
+      padding: 0 calc(var(--gap-unit) * 3);
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: calc(var(--gap-unit) * 3);
+
+      font-size: var(--product-info-font-size);
+      background: #fff;
+    }
+
+    .checkout-body-topbar-left {
+      width: calc(var(--header-topbar-height) * 7.2);
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 66px;
+      min-width: 0;
+    }
+
+    .checkout-body-topbar-left-name-wrapper,
+    .checkout-body-topbar-left-price-wrapper {
+      min-width: 0;
+      flex: 0 1 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .checkout-body-topbar-left-name-wrapper {
+      align-items: flex-start;
+      width: max-content;
+      max-width: 100%;
+      margin-left: 5px;
+    }
+
+    .checkout-body-topbar-left-price-wrapper {
+      align-items: flex-end;
+      width: max-content;
+    }
+
+    .checkout-body-topbar-left-name-wrapper p,
+    .checkout-body-topbar-left-price-wrapper p {
+      margin: 0;
+      text-align: center;
+    }
+
+    .checkout-body-topbar-subline {
+      color: rgba(0, 0, 0, 0.22);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35em;
+    }
+
+    .checkout-stripe-icon {
+      width: 2.2em;
+      height: auto;
+      display: none;
+    }
+
+    .checkout-body-topbar-right {
+      position: relative;
+      flex: 1;
+      max-width: 150px;
+      margin-right: clamp(0px, calc(4vw + 1vw - 16px), calc(var(--gap-unit) * 3));
+      height: 100%;
+    }
+
+    .checkout-body-main {
+      width: 100vw;
+      box-sizing: border-box;
+      padding: calc(var(--gap-unit) * 1.5);
+      margin: calc(var(--header-topbar-height) * 2 + var(--gap-unit) * 9) auto 0;
+      background: #fff;
+    }
+
+    .checkout-body-main-inner {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--gap-unit) * 3);
+    }
+
+    .checkout-container {
+      box-sizing: border-box;
+      width: 100%;
+      padding: calc(var(--gap-unit) * 1.5);
+      border: var(--stroke--width) solid #000;
+      font-size: var(--product-info-font-size);
+    }
+
+    .checkout-section-title-row {
+      min-height: var(--header-topbar-height);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: calc(var(--gap-unit) * 3);
+      text-transform: uppercase;
+    }
+
+    .checkout-field-stack {
+      display: flex;
+      flex-direction: column;
+    
+    }
+
+    .checkout-field {
+      min-height: calc(var(--header-topbar-height) * 1);
+      display: flex;
+      align-items: flex-end;
+      border-bottom: var(--stroke--width) solid #000;
+      box-sizing: border-box;
+    }
+
+    .checkout-field label {
+      flex: none;
+      line-height: 1;
+    }
+
+    .checkout-field input {
+      width: 100%;
+      min-width: 0;
+      height: var(--header-topbar-height);
+      box-sizing: border-box;
+      padding: 0 0 0 0.35em;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: #000;
+      font: inherit;
+      -webkit-text-stroke: inherit;
+    }
+
+    .checkout-field-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: calc(var(--gap-unit) * 6);
+    }
+
+    .checkout-policy {
+      margin-top: var(--header-topbar-height);
+      color: rgba(0, 0, 0, 0.22);
+      -webkit-text-stroke-color: rgba(0, 0, 0, 0.22);
+    }
+
+    .checkout-policy p {
+      margin: 0;
+      font-size: inherit;
+    }
+
+    .checkout-billing-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: calc(var(--gap-unit) * 2);
+      text-transform: none;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .checkout-billing-toggle input {
+      width: 0.9em;
+      height: 0.9em;
+      margin: 0;
+      accent-color: #000;
+    }
+
+    .checkout-billing-address {
+      display: none;
+      margin-bottom: var(--header-topbar-height);
+    }
+
+    .checkout-billing-address.is-open {
+      display: flex;
+    }
+
+    .checkout-card-line {
+      min-height: var(--header-topbar-height);
+      display: flex;
+      align-items: flex-end;
+      border-bottom: var(--stroke--width) solid #000;
+      box-sizing: border-box;
+    }
+
+    #card-element {
+      width: 100%;
+      padding-bottom: calc(var(--gap-unit) * 1.25);
+    }
+
+    .checkout-express-select-div {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      row-gap: calc(var(--gap-unit) * 5);
+      padding: calc(var(--gap-unit) * 8) calc(var(--gap-unit) * 1.5);
+      font-size: var(--product-info-font-size);
+    }
+
+    .checkout-express-button {
+      flex: 0 0 25%;
+      display: flex;
+      justify-content: center;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0 0 calc(var(--stroke--width) * 0.65);
+      border: 0;
+      background: transparent;
+      color: #000;
+      font: inherit;
+      -webkit-text-stroke: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      text-decoration-thickness: var(--stroke--width);
+      text-underline-offset: calc(var(--stroke--width) * 1.5);
+    }
+
+    .checkout-express-button.is-selected {
+      text-decoration: underline;
+    }
+
+    .checkout-express-button[hidden] {
+      display: none;
+    }
+
+    .checkout-submit-stack {
+      position: relative;
+      width: 100%;
+      min-height: var(--header-topbar-height);
+    }
+
+    .checkout-button,
+    #express-checkout-element {
+      width: 100%;
+      min-height: var(--header-topbar-height);
+    }
+
+    .checkout-button {
+      height: var(--header-topbar-height);
+      border: 0;
+      background: #000;
+      color: #fff;
+      font: inherit;
+      -webkit-text-stroke: 0.01em #fff;
+      cursor: pointer;
+    }
+
+    .checkout-button:hover {
+      text-decoration: underline;
+    }
+
+    .checkout-button[disabled] {
+      cursor: default;
+      opacity: 0.35;
+      text-decoration: none;
+    }
+
+    #express-checkout-element {
+      display: none;
+    }
+
+    #express-checkout-element.is-open {
+      display: block;
+    }
+
+    #checkout-status {
+      min-height: var(--header-topbar-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--product-info-font-size);
+      color: rgba(0, 0, 0, 0.35);
+      -webkit-text-stroke-color: rgba(0, 0, 0, 0.35);
+    }
+
+    #express-checkout-detector {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .checkout-copyright-container {
+      font-size: var(--product-info-font-size);
+    }
+
+    @media (max-width: 767px) {
+      .checkout-body-topbar-left {
+        width: min(72vw, calc(var(--header-topbar-height) * 7.2));
+        gap: calc(var(--gap-unit) * 8);
+      }
+
+      .checkout-field-row {
+        gap: calc(var(--gap-unit) * 3);
+      }
+
+      .checkout-billing-toggle {
+        white-space: normal;
+        justify-content: flex-end;
+        text-align: right;
+      }
+
+    }
+  </style>
 </head>
+
 <body>
   <header id="header-container"></header>
-  <main class="checkout-page">
-    <h1>Checkout</h1>
-    <div id="checkout-status">Loading checkout...</div>
 
-    <section>
-      <h2>Express Checkout</h2>
-      <div id="express-checkout-element"></div>
-    </section>
+  <div class="checkout-body-topbar">
+    <div class="checkout-body-topbar-left">
+      <div class="checkout-body-topbar-left-name-wrapper">
+        <p>Checkout Terminal</p>
+        <p class="checkout-body-topbar-subline">
+          <span>secured by</span>
+          <span id="checkout-stripe-fallback">stripe.</span>
+        </p>
+      </div>
 
-    <section>
-      <h2>Shipping</h2>
-      <div id="shipping-address-element"></div>
-    </section>
+      <div class="checkout-body-topbar-left-price-wrapper">
+        <p id="checkout-cart-total">0.00</p>
+        <p>usd</p>
+      </div>
+    </div>
 
-    <section>
-      <h2>Billing</h2>
-      <div id="billing-address-element"></div>
-    </section>
+    <div class="checkout-body-topbar-right"></div>
+  </div>
 
-    <section>
-      <h2>Payment</h2>
-      <form id="payment-form">
-        <div id="payment-element"></div>
-        <button id="payment-submit" type="submit">Pay</button>
+  <main class="checkout-body-main">
+    <div class="checkout-body-main-inner">
+      <section class="checkout-container" aria-labelledby="checkout-shipping-title">
+        <div class="checkout-section-title-row" id="checkout-shipping-title">Shipping</div>
+        <div class="checkout-field-stack">
+          <div class="checkout-field">
+            <label for="shipping-name">Name:</label>
+            <input id="shipping-name" name="shipping_name" autocomplete="shipping name">
+          </div>
+          <div class="checkout-field">
+            <label for="shipping-email">Email:</label>
+            <input id="shipping-email" name="email" type="email" autocomplete="email">
+          </div>
+          <div class="checkout-field">
+            <label for="shipping-phone">Number:</label>
+            <input id="shipping-phone" name="phone" type="tel" autocomplete="tel">
+          </div>
+          <div class="checkout-field">
+            <label for="shipping-address-1">Address:</label>
+            <input id="shipping-address-1" name="address_1" autocomplete="shipping address-line1">
+          </div>
+          <div class="checkout-field">
+            <label for="shipping-address-2">Address+:</label>
+            <input id="shipping-address-2" name="address_2" autocomplete="shipping address-line2">
+          </div>
+          <div class="checkout-field-row">
+            <div class="checkout-field">
+              <label for="shipping-country">Country:</label>
+              <input id="shipping-country" name="country" autocomplete="shipping country">
+            </div>
+            <div class="checkout-field">
+              <label for="shipping-state">State:</label>
+              <input id="shipping-state" name="state" autocomplete="shipping address-level1">
+            </div>
+          </div>
+          <div class="checkout-field-row">
+            <div class="checkout-field">
+              <label for="shipping-city">City:</label>
+              <input id="shipping-city" name="city" autocomplete="shipping address-level2">
+            </div>
+            <div class="checkout-field">
+              <label for="shipping-postal-code">Zip:</label>
+              <input id="shipping-postal-code" name="postal_code" autocomplete="shipping postal-code">
+            </div>
+          </div>
+        </div>
+        <div class="checkout-policy">
+          <p>Shipping Policy:</p>
+          <p>Most our product ships within 7 days, trasit time depends on the destination and carrer.</p>
+        </div>
+      </section>
+
+      <section class="checkout-container" aria-labelledby="checkout-billing-title">
+        <div class="checkout-section-title-row">
+          <span id="checkout-billing-title">Billing</span>
+          <label class="checkout-billing-toggle">
+            <input id="billing-same-as-shipping" type="checkbox" checked>
+            <span>Billing info same as shipping info</span>
+          </label>
+        </div>
+
+        <div id="billing-address-fields" class="checkout-field-stack checkout-billing-address" aria-hidden="true">
+          <div class="checkout-field">
+            <label for="billing-name">Name:</label>
+            <input id="billing-name" name="billing_name" autocomplete="billing name">
+          </div>
+          <div class="checkout-field">
+            <label for="billing-address-1">Address:</label>
+            <input id="billing-address-1" name="billing_address_1" autocomplete="billing address-line1">
+          </div>
+          <div class="checkout-field">
+            <label for="billing-address-2">Address+:</label>
+            <input id="billing-address-2" name="billing_address_2" autocomplete="billing address-line2">
+          </div>
+          <div class="checkout-field-row">
+            <div class="checkout-field">
+              <label for="billing-country">Country:</label>
+              <input id="billing-country" name="billing_country" autocomplete="billing country">
+            </div>
+            <div class="checkout-field">
+              <label for="billing-state">State:</label>
+              <input id="billing-state" name="billing_state" autocomplete="billing address-level1">
+            </div>
+          </div>
+          <div class="checkout-field-row">
+            <div class="checkout-field">
+              <label for="billing-city">City:</label>
+              <input id="billing-city" name="billing_city" autocomplete="billing address-level2">
+            </div>
+            <div class="checkout-field">
+              <label for="billing-postal-code">Zip:</label>
+              <input id="billing-postal-code" name="billing_postal_code" autocomplete="billing postal-code">
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-card-line">
+          <div id="card-element"></div>
+        </div>
+      </section>
+
+      <div id="express-selector" class="checkout-express-select-div" aria-label="Payment method"></div>
+
+      <form id="payment-form" class="checkout-submit-stack">
+        <button id="payment-submit" class="checkout-button" type="submit">Check Out</button>
+        <div id="express-checkout-element"></div>
       </form>
-    </section>
+
+      <div id="checkout-status" role="status">Loading checkout...</div>
+      <div id="express-checkout-detector"></div>
+      <div id="copyright-container" class="checkout-copyright-container"></div>
+    </div>
   </main>
 
   <script src="https://js.stripe.com/v3/"></script>

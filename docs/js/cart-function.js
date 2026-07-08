@@ -1,6 +1,9 @@
 (function() {
   var storageKey = 'yiichen-cart';
+  var checkoutStorageKey = 'yiichen-checkout-session';
+  var backendUrl = 'https://ydl-api-436365230181.us-central1.run.app/create-payment-intent';
   var initialized = false;
+  var checkoutIsLoading = false;
 
   function init() {
     if (initialized) return;
@@ -28,8 +31,79 @@
 
     if (checkoutButton) {
       event.preventDefault();
-      window.location.href = getCheckoutHref();
+      startCheckout(checkoutButton);
     }
+  }
+
+  function startCheckout(button) {
+    var cart = readCart();
+    var cartHash = getCartHash(cart);
+    var savedCheckout = readCheckoutSession();
+
+    if (!cart.length) return;
+
+    if (savedCheckout && savedCheckout.cart_hash === cartHash && savedCheckout.client_secret) {
+      window.location.href = getCheckoutHref();
+      return;
+    }
+
+    if (checkoutIsLoading) return;
+
+    checkoutIsLoading = true;
+    setCheckoutButtonLoading(button, true);
+
+    createPaymentIntent(cart)
+      .then(function(payload) {
+        if (!payload || !payload.client_secret) {
+          throw new Error('Missing client_secret from backend.');
+        }
+
+        writeCheckoutSession({
+          cart_hash: cartHash,
+          order_id: payload.order_id || '',
+          client_secret: payload.client_secret,
+          stripe_payment_intent_id: payload.stripe_payment_intent_id || '',
+          created_at: Date.now()
+        });
+
+        window.location.href = getCheckoutHref();
+      })
+      .catch(function(error) {
+        console.error(error);
+        window.alert(error.message || 'Unable to start checkout.');
+      })
+      .finally(function() {
+        checkoutIsLoading = false;
+        setCheckoutButtonLoading(button, false);
+      });
+  }
+
+  function createPaymentIntent(cart) {
+    return fetch(backendUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        items: cart.map(function(item) {
+          return {
+            product_id: item.product_id,
+            variant: item.variant || '',
+            size: item.size || '',
+            qty: item.quantity || 1
+          };
+        }),
+        notes: ''
+      })
+    }).then(function(response) {
+      return response.json().then(function(payload) {
+        if (!response.ok) {
+          throw new Error(payload && payload.error ? payload.error : 'Backend request failed.');
+        }
+
+        return payload;
+      });
+    });
   }
 
   function readProductFromTrigger(trigger) {
@@ -221,6 +295,7 @@
 
   function writeCart(cart) {
     localStorage.setItem(storageKey, JSON.stringify(cart));
+    clearCheckoutSession();
   }
 
   function getCartTotal() {
@@ -240,6 +315,40 @@
   function getCheckoutHref() {
     var root = window.siteRoot || getFallbackSiteRoot();
     return root + 'pages/checkout/index.html';
+  }
+
+  function readCheckoutSession() {
+    try {
+      return JSON.parse(sessionStorage.getItem(checkoutStorageKey)) || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeCheckoutSession(checkoutSession) {
+    sessionStorage.setItem(checkoutStorageKey, JSON.stringify(checkoutSession));
+  }
+
+  function clearCheckoutSession() {
+    sessionStorage.removeItem(checkoutStorageKey);
+  }
+
+  function getCartHash(cart) {
+    return JSON.stringify(cart.map(function(item) {
+      return {
+        product_id: item.product_id,
+        variant: item.variant || '',
+        size: item.size || '',
+        qty: item.quantity || 1
+      };
+    }));
+  }
+
+  function setCheckoutButtonLoading(button, isLoading) {
+    if (!button) return;
+
+    button.disabled = isLoading;
+    button.textContent = isLoading ? 'Loading...' : 'Check Out';
   }
 
   function getFallbackSiteRoot() {
