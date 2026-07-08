@@ -77,8 +77,10 @@
     }
 
     .checkout-stripe-icon {
-      width: 2.2em;
-      height: auto;
+      width: auto;
+      height: 1.05em;
+      padding-top:0.3em;
+      opacity: 0.22;
       display: none;
     }
 
@@ -99,7 +101,8 @@
       min-height: 100vh;
       box-sizing: border-box;
       padding: calc(var(--gap-unit) * 1.5);
-      padding-top: calc(var(--header-topbar-height) * 2 + var(--gap-unit) * 9);
+    
+      padding-top:max(17vh, calc(var(--header-topbar-height) * 2 + var(--gap-unit) * 12));
       display: flex;
       flex-direction: column;
       background: #fff;
@@ -376,8 +379,9 @@
       <div class="checkout-body-topbar-left-name-wrapper">
         <p>Checkout Terminal</p>
         <p class="checkout-body-topbar-subline">
-          <span>secured by</span>
-          <span id="checkout-stripe-fallback">stripe.</span>
+          <span>Secured by</span>
+          <img id="checkout-stripe-icon" class="checkout-stripe-icon" src="../../images/icon/stripe-logo.svg" alt="Stripe">
+          <span id="checkout-stripe-fallback">stripe</span>
         </p>
       </div>
 
