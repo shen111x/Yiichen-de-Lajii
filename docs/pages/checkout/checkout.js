@@ -170,7 +170,8 @@
     if (!stripe || !detectorNode) return;
 
     detectorElements = stripe.elements({
-      clientSecret: clientSecret
+      clientSecret: clientSecret,
+      appearance: getStripeElementAppearance()
     });
     detector = detectorElements.create('expressCheckout', {
       paymentMethods: getDetectorPaymentMethods(),
@@ -210,7 +211,8 @@
     paymentMethods[selectedExpressMethod] = getSelectedExpressMode(selectedExpressMethod);
 
     expressElements = stripe.elements({
-      clientSecret: clientSecret
+      clientSecret: clientSecret,
+      appearance: getStripeElementAppearance()
     });
 
     expressCheckoutElement = expressElements.create('expressCheckout', {
@@ -256,6 +258,15 @@
 
   function getSelectedExpressMode(method) {
     return method === 'applePay' || method === 'googlePay' ? 'always' : 'auto';
+  }
+
+  function getStripeElementAppearance() {
+    return {
+      variables: {
+        borderRadius: '0px',
+        buttonBorderRadius: '0px'
+      }
+    };
   }
 
   function renderExpressSelector() {
