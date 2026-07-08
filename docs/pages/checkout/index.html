@@ -96,11 +96,10 @@
 
     .checkout-body-main {
       width: 100vw;
-      min-height: calc(100vh - var(--header-topbar-height) * 2 - var(--gap-unit) * 9);
-      min-height: calc(100dvh - var(--header-topbar-height) * 2 - var(--gap-unit) * 9);
+      min-height: 100vh;
       box-sizing: border-box;
       padding: calc(var(--gap-unit) * 1.5);
-      margin: calc(var(--header-topbar-height) * 2 + var(--gap-unit) * 9) auto 0;
+      padding-top: calc(var(--header-topbar-height) * 2 + var(--gap-unit) * 9);
       display: flex;
       flex-direction: column;
       background: #fff;
@@ -145,7 +144,6 @@
       align-items: flex-end;
       border-bottom: var(--stroke--width) solid #000;
       box-sizing: border-box;
-            padding-bottom: calc(var(--gap-unit) * 1.25);
     }
 
     .checkout-field-inner {
@@ -171,8 +169,11 @@
       height: auto;
       box-sizing: border-box;
       padding-left:1em;
-      padding-bottom:0.05em;
+      padding-bottom:0.04em;
 
+      font-size: var(--base-font-size);
+      transform: scale(0.75);
+      transform-origin: left center;
       vertical-align: bottom;
       border: 0;
       outline: 0;
