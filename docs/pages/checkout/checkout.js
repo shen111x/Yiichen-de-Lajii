@@ -24,7 +24,6 @@
   var billingSameCheckbox = document.getElementById('billing-same-as-shipping');
   var billingAddressFields = document.getElementById('billing-address-fields');
   var cartTotalNode = document.getElementById('checkout-cart-total');
-  var stripeIcon = document.getElementById('checkout-stripe-icon');
   var expressSelector = document.getElementById('express-selector');
 
   var stripe = null;
@@ -42,7 +41,6 @@
     var checkoutSession = readCheckoutSession();
 
     renderCartTotal(cart);
-    initStripeIcon();
     initBillingToggle();
     renderExpressSelector();
 
@@ -83,18 +81,6 @@
     }
 
     setStatus('');
-  }
-
-  function initStripeIcon() {
-    if (!stripeIcon) return;
-
-    stripeIcon.addEventListener('load', function() {
-      stripeIcon.style.display = 'inline-block';
-    });
-
-    stripeIcon.addEventListener('error', function() {
-      stripeIcon.style.display = 'none';
-    });
   }
 
   function initBillingToggle() {
