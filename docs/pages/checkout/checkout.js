@@ -19,6 +19,7 @@
   var paymentForm = document.getElementById('payment-form');
   var submitButton = document.getElementById('payment-submit');
   var cardElementNode = document.getElementById('card-element');
+  var expressWrapper = document.getElementById('express-checkout-wrapper');
   var expressNode = document.getElementById('express-checkout-element');
   var billingSameCheckbox = document.getElementById('billing-same-as-shipping');
   var billingAddressFields = document.getElementById('billing-address-fields');
@@ -191,7 +192,7 @@
     var expressElements;
     var paymentMethods = getDefaultPaymentMethods();
 
-    if (!stripe || !expressNode) return;
+    if (!stripe || !expressNode || !expressWrapper) return;
 
     if (expressCheckoutElement) {
       expressCheckoutElement.unmount();
@@ -201,7 +202,7 @@
     expressNode.innerHTML = '';
 
     if (!selectedExpressMethod) {
-      expressNode.classList.remove('is-open');
+      expressWrapper.classList.remove('is-open');
       if (submitButton) submitButton.style.display = '';
       return;
     }
@@ -214,7 +215,8 @@
 
     expressCheckoutElement = expressElements.create('expressCheckout', {
       paymentMethods: paymentMethods,
-      paymentMethodOrder: [selectedExpressMethod]
+      paymentMethodOrder: [selectedExpressMethod],
+      buttonHeight: 40
     });
 
     expressCheckoutElement.on('confirm', function() {
@@ -234,7 +236,7 @@
     });
 
     expressCheckoutElement.mount('#express-checkout-element');
-    expressNode.classList.add('is-open');
+    expressWrapper.classList.add('is-open');
     if (submitButton) submitButton.style.display = 'none';
   }
 

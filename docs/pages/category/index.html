@@ -18,14 +18,16 @@
     .category-body-main {
       width: 100vw;
       min-height: 100vh;
+      min-height: 100dvh;
       box-sizing: border-box;
       padding: calc(var(--header-topbar-height) + var(--gap-unit) * 3) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+      display: flex;
+      flex-direction: column;
       background: transparent;
     }
 
     .category-page {
       width: 100%;
-      min-height: 100vh;
     }
 
     .category-hero {
@@ -316,7 +318,8 @@
     }
 
     .category-body-copyright-container {
-      margin-top: calc(var(--gap-unit) * 8);
+      margin-top: auto;
+      padding-top: calc(var(--gap-unit) * 8);
     }
 
     @media (max-width: 767px) {

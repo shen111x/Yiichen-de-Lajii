@@ -20,6 +20,8 @@
       height: var(--header-topbar-height);
       box-sizing: border-box;
       padding: 0 calc(var(--gap-unit) * 3);
+      overscroll-behavior: none;
+      touch-action: pan-x;
 
       display: flex;
       align-items: center;
@@ -27,7 +29,6 @@
       gap: calc(var(--gap-unit) * 3);
 
       font-size: var(--product-info-font-size);
-      background: #fff;
     }
 
     .checkout-body-topbar-left {
@@ -37,6 +38,7 @@
       justify-content: flex-start;
       gap: 66px;
       min-width: 0;
+      height: 100%;
     }
 
     .checkout-body-topbar-left-name-wrapper,
@@ -45,10 +47,12 @@
       flex: 0 1 auto;
       display: flex;
       flex-direction: column;
+      justify-content: center;
+      height: 100%;
     }
 
     .checkout-body-topbar-left-name-wrapper {
-      align-items: flex-start;
+      align-items: center;
       width: max-content;
       max-width: 100%;
       margin-left: 5px;
@@ -83,14 +87,22 @@
       flex: 1;
       max-width: 150px;
       margin-right: clamp(0px, calc(4vw + 1vw - 16px), calc(var(--gap-unit) * 3));
+
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
       height: 100%;
     }
 
     .checkout-body-main {
       width: 100vw;
+      min-height: calc(100vh - var(--header-topbar-height) * 2 - var(--gap-unit) * 9);
+      min-height: calc(100dvh - var(--header-topbar-height) * 2 - var(--gap-unit) * 9);
       box-sizing: border-box;
       padding: calc(var(--gap-unit) * 1.5);
       margin: calc(var(--header-topbar-height) * 2 + var(--gap-unit) * 9) auto 0;
+      display: flex;
+      flex-direction: column;
       background: #fff;
     }
 
@@ -100,7 +112,7 @@
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: calc(var(--gap-unit) * 3);
+      gap: calc(var(--gap-unit) * 1.5);
     }
 
     .checkout-container {
@@ -109,6 +121,7 @@
       padding: calc(var(--gap-unit) * 1.5);
       border: var(--stroke--width) solid #000;
       font-size: var(--product-info-font-size);
+      -webkit-text-stroke: 0.02em currentColor;
     }
 
     .checkout-section-title-row {
@@ -132,25 +145,46 @@
       align-items: flex-end;
       border-bottom: var(--stroke--width) solid #000;
       box-sizing: border-box;
+            padding-bottom: calc(var(--gap-unit) * 1.25);
     }
 
-    .checkout-field label {
-      flex: none;
+    .checkout-field-inner {
+      width: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .checkout-field label,
+    .checkout-field input {
+      display: block;
+      margin: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      font: inherit;
       line-height: 1;
+      -webkit-text-stroke: inherit;
     }
 
     .checkout-field input {
       width: 100%;
       min-width: 0;
-      height: var(--header-topbar-height);
+      height: auto;
       box-sizing: border-box;
-      padding: 0 0 0 0.35em;
+      padding-left:1em;
+      padding-bottom:0.05em;
+
+      vertical-align: bottom;
       border: 0;
       outline: 0;
       background: transparent;
       color: #000;
-      font: inherit;
-      -webkit-text-stroke: inherit;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+
+    .checkout-field label {
+      flex: none;
     }
 
     .checkout-field-row {
@@ -162,7 +196,7 @@
     .checkout-policy {
       margin-top: var(--header-topbar-height);
       color: rgba(0, 0, 0, 0.22);
-      -webkit-text-stroke-color: rgba(0, 0, 0, 0.22);
+      -webkit-text-stroke: 0.02em currentColor;
     }
 
     .checkout-policy p {
@@ -215,6 +249,7 @@
       row-gap: calc(var(--gap-unit) * 5);
       padding: calc(var(--gap-unit) * 8) calc(var(--gap-unit) * 1.5);
       font-size: var(--product-info-font-size);
+      -webkit-text-stroke: 0.02em currentColor;
     }
 
     .checkout-express-button {
@@ -249,20 +284,16 @@
       min-height: var(--header-topbar-height);
     }
 
-    .checkout-button,
-    #express-checkout-element {
-      width: 100%;
-      min-height: var(--header-topbar-height);
-    }
-
     .checkout-button {
+      width: 100%;
       height: var(--header-topbar-height);
       border: 0;
       background: #000;
       color: #fff;
       font: inherit;
-      -webkit-text-stroke: 0.01em #fff;
+      -webkit-text-stroke: 0.02em currentColor;
       cursor: pointer;
+      border-radius: 5px;
     }
 
     .checkout-button:hover {
@@ -275,12 +306,25 @@
       text-decoration: none;
     }
 
-    #express-checkout-element {
+    #express-checkout-wrapper {
       display: none;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: var(--header-topbar-height);
+      height: var(--header-topbar-height);
     }
 
-    #express-checkout-element.is-open {
-      display: block;
+    #express-checkout-wrapper.is-open {
+      display: flex;
+    }
+
+    #express-checkout-element {
+      width: calc(100% / 0.875);
+      height: 40px;
+      flex: none;
+      transform: scale(0.875);
+      transform-origin: center center;
     }
 
     #checkout-status {
@@ -290,7 +334,7 @@
       justify-content: center;
       font-size: var(--product-info-font-size);
       color: rgba(0, 0, 0, 0.35);
-      -webkit-text-stroke-color: rgba(0, 0, 0, 0.35);
+      -webkit-text-stroke: 0.02em currentColor;
     }
 
     #express-checkout-detector {
@@ -303,15 +347,13 @@
     }
 
     .checkout-copyright-container {
+      margin-top: auto;
+      padding-top: calc(var(--gap-unit) * 8);
       font-size: var(--product-info-font-size);
+      -webkit-text-stroke: 0.02em currentColor;
     }
 
     @media (max-width: 767px) {
-      .checkout-body-topbar-left {
-        width: min(72vw, calc(var(--header-topbar-height) * 7.2));
-        gap: calc(var(--gap-unit) * 8);
-      }
-
       .checkout-field-row {
         gap: calc(var(--gap-unit) * 3);
       }
@@ -340,8 +382,7 @@
       </div>
 
       <div class="checkout-body-topbar-left-price-wrapper">
-        <p id="checkout-cart-total">0.00</p>
-        <p>usd</p>
+        <p><span id="checkout-cart-total">0.00</span> usd</p>
       </div>
     </div>
 
@@ -354,43 +395,61 @@
         <div class="checkout-section-title-row" id="checkout-shipping-title">Shipping</div>
         <div class="checkout-field-stack">
           <div class="checkout-field">
-            <label for="shipping-name">Name:</label>
-            <input id="shipping-name" name="shipping_name" autocomplete="shipping name">
+            <div class="checkout-field-inner">
+              <label for="shipping-name">Name:</label>
+              <input id="shipping-name" name="shipping_name" autocomplete="shipping name">
+            </div>
           </div>
           <div class="checkout-field">
-            <label for="shipping-email">Email:</label>
-            <input id="shipping-email" name="email" type="email" autocomplete="email">
+            <div class="checkout-field-inner">
+              <label for="shipping-email">Email:</label>
+              <input id="shipping-email" name="email" type="email" autocomplete="email">
+            </div>
           </div>
           <div class="checkout-field">
-            <label for="shipping-phone">Number:</label>
-            <input id="shipping-phone" name="phone" type="tel" autocomplete="tel">
+            <div class="checkout-field-inner">
+              <label for="shipping-phone">Number:</label>
+              <input id="shipping-phone" name="phone" type="tel" autocomplete="tel">
+            </div>
           </div>
           <div class="checkout-field">
-            <label for="shipping-address-1">Address:</label>
-            <input id="shipping-address-1" name="address_1" autocomplete="shipping address-line1">
+            <div class="checkout-field-inner">
+              <label for="shipping-address-1">Address:</label>
+              <input id="shipping-address-1" name="address_1" autocomplete="shipping address-line1">
+            </div>
           </div>
           <div class="checkout-field">
-            <label for="shipping-address-2">Address+:</label>
-            <input id="shipping-address-2" name="address_2" autocomplete="shipping address-line2">
+            <div class="checkout-field-inner">
+              <label for="shipping-address-2">Address+:</label>
+              <input id="shipping-address-2" name="address_2" autocomplete="shipping address-line2">
+            </div>
           </div>
           <div class="checkout-field-row">
             <div class="checkout-field">
-              <label for="shipping-country">Country:</label>
-              <input id="shipping-country" name="country" autocomplete="shipping country">
+              <div class="checkout-field-inner">
+                <label for="shipping-country">Country:</label>
+                <input id="shipping-country" name="country" autocomplete="shipping country">
+              </div>
             </div>
             <div class="checkout-field">
-              <label for="shipping-state">State:</label>
-              <input id="shipping-state" name="state" autocomplete="shipping address-level1">
+              <div class="checkout-field-inner">
+                <label for="shipping-state">State:</label>
+                <input id="shipping-state" name="state" autocomplete="shipping address-level1">
+              </div>
             </div>
           </div>
           <div class="checkout-field-row">
             <div class="checkout-field">
-              <label for="shipping-city">City:</label>
-              <input id="shipping-city" name="city" autocomplete="shipping address-level2">
+              <div class="checkout-field-inner">
+                <label for="shipping-city">City:</label>
+                <input id="shipping-city" name="city" autocomplete="shipping address-level2">
+              </div>
             </div>
             <div class="checkout-field">
-              <label for="shipping-postal-code">Zip:</label>
-              <input id="shipping-postal-code" name="postal_code" autocomplete="shipping postal-code">
+              <div class="checkout-field-inner">
+                <label for="shipping-postal-code">Zip:</label>
+                <input id="shipping-postal-code" name="postal_code" autocomplete="shipping postal-code">
+              </div>
             </div>
           </div>
         </div>
@@ -411,35 +470,49 @@
 
         <div id="billing-address-fields" class="checkout-field-stack checkout-billing-address" aria-hidden="true">
           <div class="checkout-field">
-            <label for="billing-name">Name:</label>
-            <input id="billing-name" name="billing_name" autocomplete="billing name">
-          </div>
-          <div class="checkout-field">
-            <label for="billing-address-1">Address:</label>
-            <input id="billing-address-1" name="billing_address_1" autocomplete="billing address-line1">
-          </div>
-          <div class="checkout-field">
-            <label for="billing-address-2">Address+:</label>
-            <input id="billing-address-2" name="billing_address_2" autocomplete="billing address-line2">
-          </div>
-          <div class="checkout-field-row">
-            <div class="checkout-field">
-              <label for="billing-country">Country:</label>
-              <input id="billing-country" name="billing_country" autocomplete="billing country">
+            <div class="checkout-field-inner">
+              <label for="billing-name">Name:</label>
+              <input id="billing-name" name="billing_name" autocomplete="billing name">
             </div>
-            <div class="checkout-field">
-              <label for="billing-state">State:</label>
-              <input id="billing-state" name="billing_state" autocomplete="billing address-level1">
+          </div>
+          <div class="checkout-field">
+            <div class="checkout-field-inner">
+              <label for="billing-address-1">Address:</label>
+              <input id="billing-address-1" name="billing_address_1" autocomplete="billing address-line1">
+            </div>
+          </div>
+          <div class="checkout-field">
+            <div class="checkout-field-inner">
+              <label for="billing-address-2">Address+:</label>
+              <input id="billing-address-2" name="billing_address_2" autocomplete="billing address-line2">
             </div>
           </div>
           <div class="checkout-field-row">
             <div class="checkout-field">
-              <label for="billing-city">City:</label>
-              <input id="billing-city" name="billing_city" autocomplete="billing address-level2">
+              <div class="checkout-field-inner">
+                <label for="billing-country">Country:</label>
+                <input id="billing-country" name="billing_country" autocomplete="billing country">
+              </div>
             </div>
             <div class="checkout-field">
-              <label for="billing-postal-code">Zip:</label>
-              <input id="billing-postal-code" name="billing_postal_code" autocomplete="billing postal-code">
+              <div class="checkout-field-inner">
+                <label for="billing-state">State:</label>
+                <input id="billing-state" name="billing_state" autocomplete="billing address-level1">
+              </div>
+            </div>
+          </div>
+          <div class="checkout-field-row">
+            <div class="checkout-field">
+              <div class="checkout-field-inner">
+                <label for="billing-city">City:</label>
+                <input id="billing-city" name="billing_city" autocomplete="billing address-level2">
+              </div>
+            </div>
+            <div class="checkout-field">
+              <div class="checkout-field-inner">
+                <label for="billing-postal-code">Zip:</label>
+                <input id="billing-postal-code" name="billing_postal_code" autocomplete="billing postal-code">
+              </div>
             </div>
           </div>
         </div>
@@ -452,14 +525,16 @@
       <div id="express-selector" class="checkout-express-select-div" aria-label="Payment method"></div>
 
       <form id="payment-form" class="checkout-submit-stack">
-        <button id="payment-submit" class="checkout-button" type="submit">Check Out</button>
-        <div id="express-checkout-element"></div>
+        <button id="payment-submit" class="checkout-button" type="submit">Pay by Card</button>
+        <div id="express-checkout-wrapper">
+          <div id="express-checkout-element"></div>
+        </div>
       </form>
 
       <div id="checkout-status" role="status">Loading checkout...</div>
       <div id="express-checkout-detector"></div>
-      <div id="copyright-container" class="checkout-copyright-container"></div>
     </div>
+    <div id="copyright-container" class="checkout-copyright-container"></div>
   </main>
 
   <script src="https://js.stripe.com/v3/"></script>

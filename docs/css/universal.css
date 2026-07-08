@@ -79,7 +79,7 @@ p{
   margin:0;
   margin-top:1em;
   line-height: 1.3em;
-  -webkit-text-stroke: 0.01em #000;
+  -webkit-text-stroke: 0.01em currentColor;
 
 }
 

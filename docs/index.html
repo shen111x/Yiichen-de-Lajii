@@ -17,8 +17,12 @@
     .home-body-main {
       width: 100vw;
       min-height: 100vh;
+      min-height: 100dvh;
       box-sizing: border-box;
       padding: calc(var(--header-topbar-height) + var(--gap-unit) * 6) calc(var(--gap-unit) * 3) calc(var(--gap-unit) * 3);
+
+      display: flex;
+      flex-direction: column;
 
       background: #ffffff;
     }
@@ -78,7 +82,8 @@
     }
 
     .home-body-copyright-container {
-      margin-top: calc(var(--header-topbar-height) * 3);
+      margin-top: auto;
+      padding-top: calc(var(--header-topbar-height) * 3);
     }
   </style>
 </head>
