@@ -194,6 +194,7 @@ app.post("/create-payment-intent", async (req, res) => {
 
 async function appendFirstStepOrderToSheet(order) {
   const sheets = await getSheetsClient();
+  const startRow = await getNextOrderRow(sheets);
 
   const rows = order.items.map((item, index) => {
     const isFirstItemRow = index === 0;
@@ -252,15 +253,35 @@ async function appendFirstStepOrderToSheet(order) {
     ];
   });
 
-  await sheets.spreadsheets.values.append({
+  await sheets.spreadsheets.values.update({
     spreadsheetId: HANDLE.googleSheetId,
-    range: `'${HANDLE.googleSheetTabName}'!A:AG`,
+    range: `'${HANDLE.googleSheetTabName}'!A${startRow}:AG${startRow + rows.length - 1}`,
     valueInputOption: "USER_ENTERED",
-    insertDataOption: "INSERT_ROWS",
     requestBody: {
       values: rows,
     },
   });
+}
+
+async function getNextOrderRow(sheets) {
+  const firstDataRow = 5;
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: HANDLE.googleSheetId,
+    range: `'${HANDLE.googleSheetTabName}'!A:AG`,
+  });
+  const values = response.data.values || [];
+  let lastDataRow = firstDataRow - 1;
+
+  values.forEach((row, index) => {
+    const rowNumber = index + 1;
+    const hasValue = row.some((cell) => String(cell || "").trim() !== "");
+
+    if (rowNumber >= firstDataRow && hasValue) {
+      lastDataRow = rowNumber;
+    }
+  });
+
+  return lastDataRow + 1;
 }
 
 async function getSheetsClient() {
