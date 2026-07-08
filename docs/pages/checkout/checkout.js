@@ -25,7 +25,6 @@
   var billingAddressFields = document.getElementById('billing-address-fields');
   var cartTotalNode = document.getElementById('checkout-cart-total');
   var stripeIcon = document.getElementById('checkout-stripe-icon');
-  var stripeFallback = document.getElementById('checkout-stripe-fallback');
   var expressSelector = document.getElementById('express-selector');
 
   var stripe = null;
@@ -91,12 +90,10 @@
 
     stripeIcon.addEventListener('load', function() {
       stripeIcon.style.display = 'inline-block';
-      if (stripeFallback) stripeFallback.hidden = true;
     });
 
     stripeIcon.addEventListener('error', function() {
       stripeIcon.style.display = 'none';
-      if (stripeFallback) stripeFallback.hidden = false;
     });
   }
 
