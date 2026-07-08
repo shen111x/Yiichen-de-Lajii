@@ -25,6 +25,7 @@
   }
 
   var display = document.getElementById('admin-display');
+  var orderStatusTemplate = document.getElementById('order-status-template');
   var generateNavButton = document.getElementById('generate-product-json');
   var navButtons = Array.prototype.slice.call(document.querySelectorAll('[data-view]'));
   var outputNode = null;
@@ -54,8 +55,25 @@
       button.classList.toggle('is-active', button.getAttribute('data-view') === viewName);
     });
 
+    display.classList.toggle('is-fill', viewName === 'order-status');
+
     if (viewName === 'generate-product-json') {
       renderGenerateView();
+      return;
+    }
+
+    if (viewName === 'order-status') {
+      renderOrderStatusView();
+      return;
+    }
+
+    if (viewName === 'product-management') {
+      renderProductManagementView();
+      return;
+    }
+
+    if (viewName === 'tba') {
+      renderTbaView();
       return;
     }
 
@@ -66,6 +84,27 @@
     outputNode = null;
     runButtonNode = null;
     display.innerHTML = '<div class="admin-home" aria-label="Dashboard home"></div>';
+  }
+
+  function renderOrderStatusView() {
+    outputNode = null;
+    runButtonNode = null;
+    display.innerHTML = '';
+    if (orderStatusTemplate) {
+      display.appendChild(orderStatusTemplate.content.cloneNode(true));
+    }
+  }
+
+  function renderProductManagementView() {
+    outputNode = null;
+    runButtonNode = null;
+    display.innerHTML = '';
+  }
+
+  function renderTbaView() {
+    outputNode = null;
+    runButtonNode = null;
+    display.innerHTML = '';
   }
 
   function renderGenerateView() {
@@ -267,7 +306,11 @@ async function generateProductJsonNode(options) {
   log('Fetching [ ../docs/product-data/' + summarizeRange(categoryFolders) + ' ]');
   log('Found:');
 
-  var searchIndex = [];
+  var existingSearchIndex = await readJsonIfExists(path.join(productDataDir, 'search-index.json'));
+  var shippingfee = existingSearchIndex && Object.prototype.hasOwnProperty.call(existingSearchIndex, 'shippingfee') ?
+    existingSearchIndex.shippingfee :
+    '0';
+  var searchProducts = [];
   var categoriesWritten = [];
 
   for (var categoryIndexNumber = 0; categoryIndexNumber < categoryFolders.length; categoryIndexNumber += 1) {
@@ -287,8 +330,21 @@ async function generateProductJsonNode(options) {
       var images = await scanProductImages(productDir);
       var thumbnail = images[0] || 'images/1.jpg';
       var thumbnail2 = images[1] || thumbnail;
+      var sizes = normalizeSizes(product);
+      var keywords = normalizeKeywords(product);
 
       delete product.img;
+      delete product.color;
+      delete product.description;
+      delete product.size;
+      delete product.key_words;
+      delete product.thumbnail;
+      delete product.thumbnail2;
+      product.product_id = productId;
+      product.variant = product.variant || '';
+      product.status = product.status || 'available';
+      product.keywords = keywords;
+      product.sizes = sizes;
       product.images = images;
       await writeJson(productJsonPath, product);
 
@@ -296,29 +352,32 @@ async function generateProductJsonNode(options) {
       log(publicId + ' images: ' + images.length + (images.length ? ' [' + images.join(', ') + ']' : ''));
 
       categoryProducts.push({
-        id: productId,
         product_id: productId,
         product_folder: productFolder,
+        variant: product.variant || '',
+        status: product.status || '',
         name: product.name || '',
         subtitle: product.subtitle || '',
         price: product.price || '',
         currency: product.currency || '',
-        size: product.size || '',
+        sizes: sizes,
         thumbnail: productFolder + '/' + thumbnail,
         thumbnail2: productFolder + '/' + thumbnail2
       });
 
-      searchIndex.push({
-        id: productId,
+      searchProducts.push({
         product_id: productId,
         category: categoryFolder,
         product_folder: productFolder,
+        variant: product.variant || '',
+        status: product.status || '',
         name: product.name || '',
         price: product.price || '',
         currency: product.currency || '',
-        size: product.size || '',
+        sizes: sizes,
         keywords: buildKeywords(product),
-        thumbnail: categoryFolder + '/' + productFolder + '/' + thumbnail
+        thumbnail: productFolder + '/' + thumbnail,
+        thumbnail2: productFolder + '/' + thumbnail2
       });
     }
 
@@ -328,7 +387,10 @@ async function generateProductJsonNode(options) {
 
   log('...');
   log('Writing " Search Index " at [ ../docs/product-data/search-index.json ]');
-  await writeJson(path.join(productDataDir, 'search-index.json'), searchIndex);
+  await writeJson(path.join(productDataDir, 'search-index.json'), {
+    shippingfee: shippingfee,
+    products: searchProducts
+  });
   log('Success!');
 
   log('');
@@ -337,7 +399,7 @@ async function generateProductJsonNode(options) {
 
   return {
     categories: categoryFolders.length,
-    products: searchIndex.length
+    products: searchProducts.length
   };
 }
 
@@ -345,6 +407,15 @@ async function readJson(filePath) {
   var fs = require('fs');
   var content = await fs.promises.readFile(filePath, 'utf8');
   return JSON.parse(content);
+}
+
+async function readJsonIfExists(filePath) {
+  try {
+    return await readJson(filePath);
+  } catch (error) {
+    if (error && error.code === 'ENOENT') return null;
+    throw error;
+  }
 }
 
 async function writeJson(filePath, data) {
@@ -395,10 +466,65 @@ function getProductId(categoryFolder, productFolder, product) {
   return product.product_id || product.id || categoryFolder + '-' + productFolder;
 }
 
+function normalizeSizes(product) {
+  var raw = product.sizes || product.size || [];
+
+  if (Array.isArray(raw)) {
+    return raw.map(normalizeSizeOption).filter(function(sizeOption) {
+      return sizeOption.size;
+    });
+  }
+
+  return String(raw).split(/[,/|\n]+/).map(function(sizeText) {
+    return normalizeSizeOption(sizeText);
+  }).filter(function(sizeOption) {
+    return sizeOption.size;
+  });
+}
+
+function normalizeSizeOption(size) {
+  if (size && typeof size === 'object') {
+    return {
+      size: String(size.size || size.label || size.name || '').trim(),
+      availability: String(size.availability || size.status || 'available').trim() || 'available'
+    };
+  }
+
+  return {
+    size: String(size || '').trim(),
+    availability: 'available'
+  };
+}
+
+function normalizeKeywords(product) {
+  var raw = product.keywords || product.key_words || [];
+  var keywords = [];
+
+  if (Array.isArray(raw)) {
+    raw.forEach(function(keyword) {
+      addExplicitKeyword(keywords, keyword);
+    });
+  } else {
+    String(raw).split(',').forEach(function(keyword) {
+      addExplicitKeyword(keywords, keyword);
+    });
+  }
+
+  return unique(keywords);
+}
+
+function addExplicitKeyword(target, value) {
+  var keyword = String(value || '').trim().toLowerCase();
+  if (keyword) target.push(keyword);
+}
+
 function buildKeywords(product) {
   var keywords = [];
 
   addKeywordSource(keywords, product.name);
+  addKeywordSource(keywords, product.subtitle);
+  addKeywordSource(keywords, product.variant);
+  addKeywordSource(keywords, product.collection);
 
   if (Array.isArray(product.keywords)) {
     product.keywords.forEach(function(keyword) {
@@ -414,7 +540,7 @@ function buildKeywords(product) {
 function addKeywordSource(target, value) {
   if (!value) return;
 
-  String(value).split(/[^A-Za-z0-9]+/).forEach(function(part) {
+  String(value).split(/[^A-Za-z0-9_-]+/).forEach(function(part) {
     var keyword = part.trim().toLowerCase();
     if (keyword) target.push(keyword);
   });

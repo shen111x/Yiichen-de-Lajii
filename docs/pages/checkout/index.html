@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+
+  <title>Yiichen de Lajii</title>
+
+  <link rel="stylesheet" href="../../css/universal.css">
+</head>
+<body>
+  <header id="header-container"></header>
+  <main class="checkout-page">
+    <h1>Checkout</h1>
+    <div id="checkout-status">Loading checkout...</div>
+
+    <section>
+      <h2>Express Checkout</h2>
+      <div id="express-checkout-element"></div>
+    </section>
+
+    <section>
+      <h2>Shipping</h2>
+      <div id="shipping-address-element"></div>
+    </section>
+
+    <section>
+      <h2>Billing</h2>
+      <div id="billing-address-element"></div>
+    </section>
+
+    <section>
+      <h2>Payment</h2>
+      <form id="payment-form">
+        <div id="payment-element"></div>
+        <button id="payment-submit" type="submit">Pay</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="https://js.stripe.com/v3/"></script>
+  <script src="../../js/universal.js"></script>
+  <script src="checkout.js"></script>
+</body>
+</html>

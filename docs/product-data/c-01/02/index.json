@@ -1,14 +1,38 @@
 {
   "product_id": "monogram-flag-tee-usa",
+  "variant": "black",
+  "status": "available",
   "name": "Monogram Flag Tee U.S.A.",
   "subtitle": "7.1oz Heavyweight Cotton",
+  "collection": "Main",
+  "keywords": [
+    "t-shirt",
+    "tee",
+    "top"
+  ],
+  "sizes": [
+    {
+      "size": "M",
+      "availability": "available"
+    },
+    {
+      "size": "L",
+      "availability": "available"
+    },
+    {
+      "size": "XL",
+      "availability": "available"
+    },
+    {
+      "size": "XXL",
+      "availability": "available"
+    }
+  ],
   "price": "171.43",
   "currency": "USD",
-  "status": "available",
-  "collection": "Main",
-  "color": "Black",
-  "size": "M, L, XL, XXL",
-  "description": "A heavyweight oversized T-shirt designed for everyday wear.",
+  "images": [
+    "images/1.jpg"
+  ],
   "dropdowns": [
     {
       "title": "Details",
@@ -30,9 +54,5 @@
       "title": "Log",
       "text": "This garment is part of the ongoing Yiichen de Lajii archive. Future production updates and release information will be documented here."
     }
-  ],
-  "thumbnail": "thumbnail.jpeg",
-  "images": [
-    "images/1.jpg"
   ]
 }

@@ -120,6 +120,7 @@
       folderId: folderId,
       defaultIndex: index,
       id: product.product_id || product.id || folderId,
+      variant: product.variant || '',
       name: product.name || '',
       subtitle: product.subtitle || product.sub_title || product.description || '',
       price: parsePrice(product.price, product.currency),
@@ -243,19 +244,24 @@
     add.textContent = 'Add +';
     buttonBox.hidden = !product.sizes.length;
     buttonBox.dataset.productId = product.id;
+    buttonBox.dataset.productVariant = product.variant;
     buttonBox.dataset.productFolder = product.folderId;
     buttonBox.dataset.categoryPath = product.categoryPath;
 
     sizeBox.setAttribute('aria-hidden', 'true');
     sizeBottom.innerHTML = '';
 
-    product.sizes.forEach(function(size) {
+    product.sizes.forEach(function(sizeOption) {
       var sizeItem = document.createElement('button');
+      var available = isSizeAvailable(sizeOption);
 
       sizeItem.className = 'category-product-size-item';
+      sizeItem.classList.toggle('is-unavailable', !available);
       sizeItem.type = 'button';
-      sizeItem.textContent = size;
-      sizeItem.dataset.size = size;
+      sizeItem.textContent = sizeOption.size;
+      sizeItem.dataset.size = sizeOption.size;
+      sizeItem.dataset.availability = sizeOption.availability;
+      sizeItem.setAttribute('aria-disabled', available ? 'false' : 'true');
       sizeBottom.appendChild(sizeItem);
     });
   }
@@ -310,6 +316,8 @@
   function selectProductSize(sizeItem) {
     var buttonBox = sizeItem.closest('.category-product-button-box');
     var product = getProductFromButtonBox(buttonBox);
+
+    if (!isSizeItemAvailable(sizeItem)) return;
 
     if (product) {
       addProductToCart(product, sizeItem.dataset.size || sizeItem.textContent);
@@ -366,9 +374,14 @@
 
   function addProductToCart(product, size) {
     var item = {
-      key: [product.id || product.name, product.folderId, size].join('|'),
+      key: [product.id || product.name, product.variant, product.categoryPath, product.folderId, size].join('|'),
+      product_id: product.id,
+      variant: product.variant,
+      category_path: product.categoryPath,
+      product_folder: product.folderId,
       name: product.name.trim(),
       price: product.price.label.trim(),
+      currency: product.currency,
       size: size,
       href: product.href,
       quantity: 1
@@ -409,7 +422,12 @@
     var item = getProductItem(target);
     var image = item ? item.querySelector('.category-product-image') : null;
 
-    if (!item || !image || !image.dataset.thumbnail2Src) return;
+    if (!item) {
+      resetTouchProductImageVariant();
+      return;
+    }
+
+    if (!image || !image.dataset.thumbnail2Src) return;
     if (state.touchImageItem === item) return;
     resetTouchProductImageVariant();
     state.touchImageItem = item;
@@ -429,7 +447,7 @@
   }
 
   function getProductItem(target) {
-    return target ? target.closest('.category-product-item') : null;
+    return target ? target.closest('.category-product-image-wrapper') : null;
   }
 
   function preloadImage(src) {
@@ -483,17 +501,45 @@
   }
 
   function getProductSizes(product) {
-    var size = product.size || product.sizes || [];
+    var size = product.sizes || product.size || [];
 
     if (Array.isArray(size)) {
-      return size.map(cleanSize).filter(Boolean);
+      return size.map(normalizeSizeOption).filter(function(sizeOption) {
+        return sizeOption.size;
+      });
     }
 
-    return String(size).split(/[,/|\n]+/).map(cleanSize).filter(Boolean);
+    return String(size).split(/[,/|\n]+/).map(function(sizeText) {
+      return normalizeSizeOption(sizeText);
+    }).filter(function(sizeOption) {
+      return sizeOption.size;
+    });
   }
 
-  function cleanSize(size) {
-    return String(size || '').trim();
+  function normalizeSizeOption(size) {
+    if (size && typeof size === 'object') {
+      return {
+        size: String(size.size || size.label || size.name || '').trim(),
+        availability: String(size.availability || size.status || 'available').trim() || 'available'
+      };
+    }
+
+    return {
+      size: String(size || '').trim(),
+      availability: 'available'
+    };
+  }
+
+  function isSizeItemAvailable(sizeItem) {
+    return isAvailabilityAvailable(sizeItem ? sizeItem.dataset.availability : '');
+  }
+
+  function isSizeAvailable(sizeOption) {
+    return isAvailabilityAvailable(sizeOption ? sizeOption.availability : '');
+  }
+
+  function isAvailabilityAvailable(availability) {
+    return String(availability || 'available').trim().toLowerCase() === 'available';
   }
 
   function loadJson(path) {

@@ -1,88 +1,217 @@
-[
-  {
-    "id": "monogram-flag-tee-roc",
-    "product_id": "monogram-flag-tee-roc",
-    "category": "c-01",
-    "product_folder": "01",
-    "name": "Monogram Flag Tee R.O.C.",
-    "price": "173.43",
-    "currency": "USD",
-    "size": "M, L, XL, XXL",
-    "keywords": [
-      "monogram",
-      "flag",
-      "tee",
-      "r",
-      "o",
-      "c"
-    ],
-    "thumbnail": "c-01/01/images/1.jpg"
-  },
-  {
-    "id": "monogram-flag-tee-usa",
-    "product_id": "monogram-flag-tee-usa",
-    "category": "c-01",
-    "product_folder": "02",
-    "name": "Monogram Flag Tee U.S.A.",
-    "price": "171.43",
-    "currency": "USD",
-    "size": "M, L, XL, XXL",
-    "keywords": [
-      "monogram",
-      "flag",
-      "tee",
-      "u",
-      "s",
-      "a"
-    ],
-    "thumbnail": "c-01/02/images/1.jpg"
-  },
-  {
-    "id": "centered-logo-tee-black",
-    "product_id": "centered-logo-tee-black",
-    "category": "c-01",
-    "product_folder": "03",
-    "name": "Centered Logo Tee",
-    "price": "107.43",
-    "currency": "USD",
-    "size": "M, L, XL, XXL",
-    "keywords": [
-      "centered",
-      "logo",
-      "tee"
-    ],
-    "thumbnail": "c-01/03/images/1.jpg"
-  },
-  {
-    "id": "centered-logo-tee-black",
-    "product_id": "centered-logo-tee-black",
-    "category": "c-01",
-    "product_folder": "04",
-    "name": "Centered Logo Tee",
-    "price": "105.43",
-    "currency": "USD",
-    "size": "M, L, XL, XXL",
-    "keywords": [
-      "centered",
-      "logo",
-      "tee"
-    ],
-    "thumbnail": "c-01/04/images/1.jpg"
-  },
-  {
-    "id": "typography-tote-bag",
-    "product_id": "typography-tote-bag",
-    "category": "c-02",
-    "product_folder": "01",
-    "name": "Typography Tote Bag",
-    "price": "148.92",
-    "currency": "USD",
-    "size": "One Size",
-    "keywords": [
-      "typography",
-      "tote",
-      "bag"
-    ],
-    "thumbnail": "c-02/01/images/2.jpg"
-  }
-]
+{
+  "shippingfee": "0",
+
+
+
+
+
+
+
+  
+  "products": [
+    {
+      "product_id": "monogram-flag-tee-roc",
+      "category": "c-01",
+      "product_folder": "01",
+      "variant": "Default",
+      "status": "available",
+      "name": "Monogram Flag Tee R.O.C.",
+      "price": "173.43",
+      "currency": "USD",
+      "sizes": [
+        {
+          "size": "M",
+          "availability": "available"
+        },
+        {
+          "size": "L",
+          "availability": "available"
+        },
+        {
+          "size": "XL",
+          "availability": "available"
+        },
+        {
+          "size": "XXL",
+          "availability": "available"
+        }
+      ],
+      "keywords": [
+        "monogram",
+        "flag",
+        "tee",
+        "r",
+        "o",
+        "c",
+        "7",
+        "1oz",
+        "heavyweight",
+        "cotton",
+        "default",
+        "main",
+        "t-shirt",
+        "top"
+      ],
+      "thumbnail": "01/images/1.jpg",
+      "thumbnail2": "01/images/2.jpg"
+    },
+    {
+      "product_id": "monogram-flag-tee-usa",
+      "category": "c-01",
+      "product_folder": "02",
+      "variant": "black",
+      "status": "available",
+      "name": "Monogram Flag Tee U.S.A.",
+      "price": "171.43",
+      "currency": "USD",
+      "sizes": [
+        {
+          "size": "M",
+          "availability": "available"
+        },
+        {
+          "size": "L",
+          "availability": "available"
+        },
+        {
+          "size": "XL",
+          "availability": "available"
+        },
+        {
+          "size": "XXL",
+          "availability": "available"
+        }
+      ],
+      "keywords": [
+        "monogram",
+        "flag",
+        "tee",
+        "u",
+        "s",
+        "a",
+        "7",
+        "1oz",
+        "heavyweight",
+        "cotton",
+        "black",
+        "main",
+        "t-shirt",
+        "top"
+      ],
+      "thumbnail": "02/images/1.jpg",
+      "thumbnail2": "02/images/1.jpg"
+    },
+    {
+      "product_id": "centered-logo-tee-black",
+      "category": "c-01",
+      "product_folder": "3",
+      "variant": "black",
+      "status": "available",
+      "name": "Centered Logo Tee",
+      "price": "107.43",
+      "currency": "USD",
+      "sizes": [
+        {
+          "size": "M",
+          "availability": "available"
+        },
+        {
+          "size": "L",
+          "availability": "available"
+        },
+        {
+          "size": "XL",
+          "availability": "available"
+        },
+        {
+          "size": "XXL",
+          "availability": "available"
+        }
+      ],
+      "keywords": [
+        "centered",
+        "logo",
+        "tee",
+        "heavyweight",
+        "cotton",
+        "jersey",
+        "black",
+        "main",
+        "t-shirt",
+        "top"
+      ],
+      "thumbnail": "3/images/1.jpg",
+      "thumbnail2": "3/images/2.jpg"
+    },
+    {
+      "product_id": "centered-logo-tee-black",
+      "category": "c-01",
+      "product_folder": "04",
+      "variant": "black",
+      "status": "available",
+      "name": "Centered Logo Tee",
+      "price": "105.43",
+      "currency": "USD",
+      "sizes": [
+        {
+          "size": "M",
+          "availability": "available"
+        },
+        {
+          "size": "L",
+          "availability": "available"
+        },
+        {
+          "size": "XL",
+          "availability": "available"
+        },
+        {
+          "size": "XXL",
+          "availability": "available"
+        }
+      ],
+      "keywords": [
+        "centered",
+        "logo",
+        "tee",
+        "heavyweight",
+        "cotton",
+        "jersey",
+        "black",
+        "main",
+        "t-shirt",
+        "top"
+      ],
+      "thumbnail": "04/images/1.jpg",
+      "thumbnail2": "04/images/1.jpg"
+    },
+    {
+      "product_id": "typography-tote-bag",
+      "category": "c-02",
+      "product_folder": "01",
+      "variant": "black",
+      "status": "available",
+      "name": "Typography Tote Bag",
+      "price": "148.92",
+      "currency": "USD",
+      "sizes": [
+        {
+          "size": "One Size",
+          "availability": "available"
+        }
+      ],
+      "keywords": [
+        "typography",
+        "tote",
+        "bag",
+        "matte",
+        "canvas",
+        "black",
+        "main",
+        "accessory"
+      ],
+      "thumbnail": "01/images/2.jpg",
+      "thumbnail2": "01/images/2.jpg"
+    }
+  ]
+}

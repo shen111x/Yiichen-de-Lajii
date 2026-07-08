@@ -1,49 +1,121 @@
 [
   {
-    "id": "monogram-flag-tee-roc",
     "product_id": "monogram-flag-tee-roc",
     "product_folder": "01",
+    "variant": "Default",
+    "status": "available",
     "name": "Monogram Flag Tee R.O.C.",
     "subtitle": "7.1oz Heavyweight Cotton",
     "price": "173.43",
     "currency": "USD",
-    "size": "M, L, XL, XXL",
+    "sizes": [
+      {
+        "size": "M",
+        "availability": "available"
+      },
+      {
+        "size": "L",
+        "availability": "available"
+      },
+      {
+        "size": "XL",
+        "availability": "available"
+      },
+      {
+        "size": "XXL",
+        "availability": "available"
+      }
+    ],
     "thumbnail": "01/images/1.jpg",
     "thumbnail2": "01/images/2.jpg"
   },
   {
-    "id": "monogram-flag-tee-usa",
     "product_id": "monogram-flag-tee-usa",
     "product_folder": "02",
+    "variant": "black",
+    "status": "available",
     "name": "Monogram Flag Tee U.S.A.",
     "subtitle": "7.1oz Heavyweight Cotton",
     "price": "171.43",
     "currency": "USD",
-    "size": "M, L, XL, XXL",
+    "sizes": [
+      {
+        "size": "M",
+        "availability": "available"
+      },
+      {
+        "size": "L",
+        "availability": "available"
+      },
+      {
+        "size": "XL",
+        "availability": "available"
+      },
+      {
+        "size": "XXL",
+        "availability": "available"
+      }
+    ],
     "thumbnail": "02/images/1.jpg",
     "thumbnail2": "02/images/1.jpg"
   },
   {
-    "id": "centered-logo-tee-black",
     "product_id": "centered-logo-tee-black",
-    "product_folder": "03",
+    "product_folder": "3",
+    "variant": "black",
+    "status": "available",
     "name": "Centered Logo Tee",
     "subtitle": "Heavyweight Cotton Jersey",
     "price": "107.43",
     "currency": "USD",
-    "size": "M, L, XL, XXL",
-    "thumbnail": "03/images/1.jpg",
-    "thumbnail2": "03/images/2.jpg"
+    "sizes": [
+      {
+        "size": "M",
+        "availability": "available"
+      },
+      {
+        "size": "L",
+        "availability": "available"
+      },
+      {
+        "size": "XL",
+        "availability": "available"
+      },
+      {
+        "size": "XXL",
+        "availability": "available"
+      }
+    ],
+    "thumbnail": "3/images/1.jpg",
+    "thumbnail2": "3/images/2.jpg"
   },
   {
-    "id": "centered-logo-tee-black",
     "product_id": "centered-logo-tee-black",
     "product_folder": "04",
+    "variant": "black",
+    "status": "available",
     "name": "Centered Logo Tee",
     "subtitle": "Heavyweight Cotton Jersey",
     "price": "105.43",
     "currency": "USD",
-    "size": "M, L, XL, XXL",
+    "sizes": [
+      {
+        "size": "M",
+        "availability": "available"
+      },
+      {
+        "size": "L",
+        "availability": "available"
+      },
+      {
+        "size": "XL",
+        "availability": "available"
+      },
+      {
+        "size": "XXL",
+        "availability": "available"
+      }
+    ],
     "thumbnail": "04/images/1.jpg",
     "thumbnail2": "04/images/1.jpg"
   }

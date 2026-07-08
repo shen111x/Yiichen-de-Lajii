@@ -12,6 +12,7 @@
   function handleCartClick(event) {
     var addButton = event.target.closest('[data-cart-add], .category-product-add, .product-body-topbar-right-add-to-cart');
     var deleteButton = event.target.closest('.panel-cart-item-delete');
+    var checkoutButton = event.target.closest('.panel-cart-checkout-button');
 
     if (addButton) {
       event.preventDefault();
@@ -22,6 +23,12 @@
     if (deleteButton) {
       var cartItem = deleteButton.closest('.panel-cart-item');
       removeItem(cartItem && cartItem.dataset ? cartItem.dataset.cartKey : '');
+      return;
+    }
+
+    if (checkoutButton) {
+      event.preventDefault();
+      window.location.href = getCheckoutHref();
     }
   }
 
@@ -36,16 +43,30 @@
       (priceNode ? priceNode.textContent : '') ||
       '0';
     var size = trigger.dataset.cartSize || '';
+    var variant = trigger.dataset.cartVariant ||
+      (wrapper && wrapper.dataset ? wrapper.dataset.productVariant || '' : '');
     var href = trigger.dataset.cartHref ||
       (wrapper && wrapper.href ? wrapper.href : '') ||
       window.location.href;
     var key = [
       wrapper && wrapper.dataset ? wrapper.dataset.productId || trigger.dataset.productId || name : trigger.dataset.productId || name,
+      variant,
       wrapper && wrapper.dataset ? wrapper.dataset.productFolder || trigger.dataset.productFolder || '' : trigger.dataset.productFolder || '',
       size
     ].join('|');
 
-    return { key: key, name: name.trim(), price: price.trim(), size: size.trim(), href: href, quantity: 1 };
+    return {
+      key: key,
+      product_id: wrapper && wrapper.dataset ? wrapper.dataset.productId || trigger.dataset.productId || '' : trigger.dataset.productId || '',
+      variant: variant.trim(),
+      product_folder: wrapper && wrapper.dataset ? wrapper.dataset.productFolder || trigger.dataset.productFolder || '' : trigger.dataset.productFolder || '',
+      category_path: wrapper && wrapper.dataset ? wrapper.dataset.categoryPath || trigger.dataset.categoryPath || '' : trigger.dataset.categoryPath || '',
+      name: name.trim(),
+      price: price.trim(),
+      size: size.trim(),
+      href: href,
+      quantity: 1
+    };
   }
 
   function addItem(item) {
@@ -56,6 +77,7 @@
 
     if (existing) {
       existing.quantity += 1;
+      hydrateCartItem(existing, item);
     } else {
       cart.push(item);
     }
@@ -84,6 +106,22 @@
     writeCart(readCart().filter(function(item) {
       return item.key !== key;
     }));
+  }
+
+  function hydrateCartItem(target, source) {
+    [
+      'product_id',
+      'variant',
+      'product_folder',
+      'category_path',
+      'currency',
+      'href',
+      'name',
+      'price',
+      'size'
+    ].forEach(function(field) {
+      if (!target[field] && source[field]) target[field] = source[field];
+    });
   }
 
   function findCartItemNode(key) {
@@ -197,6 +235,20 @@
 
   function formatPrice(value) {
     return (Math.round(value * 100) / 100).toFixed(2);
+  }
+
+  function getCheckoutHref() {
+    var root = window.siteRoot || getFallbackSiteRoot();
+    return root + 'pages/checkout/index.html';
+  }
+
+  function getFallbackSiteRoot() {
+    var script = document.querySelector('script[src$="js/cart-function.js"]');
+    var scriptPath = script ? script.getAttribute('src') : '';
+
+    if (scriptPath) return scriptPath.replace(/js\/cart-function\.js(\?.*)?$/, '');
+
+    return '../../';
   }
 
   window.CartFunction = {

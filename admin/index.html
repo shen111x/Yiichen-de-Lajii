@@ -25,16 +25,24 @@
       </div>
 
       <nav class="admin-functions" aria-label="Admin functions">
+        <button class="admin-button" type="button" data-view="order-status">Order Status</button>
         <button class="admin-button" type="button" data-view="product-management">Product Management</button>
         <button class="admin-button" id="generate-product-json" type="button" data-view="generate-product-json">Generate Product Jsons</button>
-        <button class="admin-button" type="button" data-view="tba-1">TBA</button>
-        <button class="admin-button" type="button" data-view="tba-2">TBA</button>
+        <button class="admin-button" type="button" data-view="tba">TBA</button>
       </nav>
     </header>
 
     <section class="admin-display" id="admin-display" aria-live="polite"></section>
+
+    <template id="order-status-template">
+      <div class="iframe-box">
+        <iframe
+          src="https://docs.google.com/spreadsheets/d/1jLnb_X71sXKPCuw1mJNUd9Dcm-Ac-QNQjMHsK0RpTwA/edit?usp=sharing"
+        ></iframe>
+      </div>
+    </template>
   </main>
 
-  <script src="js/generate-product-json.js?v=20260703-7"></script>
+  <script src="js/generate-product-json.js?v=20260703-8"></script>
 </body>
 </html>

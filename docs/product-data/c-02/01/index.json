@@ -1,14 +1,27 @@
 {
   "product_id": "typography-tote-bag",
+  "variant": "black",
+  "status": "available",
   "name": "Typography Tote Bag",
   "subtitle": "matte Canvas",
+  "collection": "Main",
+  "keywords": [
+    "tote",
+    "bag",
+    "canvas",
+    "accessory"
+  ],
+  "sizes": [
+    {
+      "size": "One Size",
+      "availability": "available"
+    }
+  ],
   "price": "148.92",
   "currency": "USD",
-  "status": "available",
-  "collection": "Main",
-  "color": "Black",
-  "size": "One Size",
-  "description": "What's in my bag?",
+  "images": [
+    "images/2.jpg"
+  ],
   "dropdowns": [
     {
       "title": "Details",
@@ -30,9 +43,5 @@
       "title": "Log",
       "text": "This bag is part of the ongoing Yiichen de Lajii archive. Future production updates and release information will be documented here."
     }
-  ],
-  "thumbnail": "thumbnail.jpeg",
-  "images": [
-    "images/2.jpg"
   ]
 }

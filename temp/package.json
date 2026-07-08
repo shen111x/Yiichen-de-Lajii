@@ -1,0 +1,18 @@
+{
+  "name": "ydl-api",
+  "version": "1.0.0",
+  "private": true,
+  "main": "function.js",
+  "scripts": {
+    "start": "functions-framework --target=api"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.4.6",
+    "express": "^4.18.3",
+    "googleapis": "^144.0.0",
+    "stripe": "^16.12.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
