@@ -300,6 +300,21 @@
       padding-bottom: 0.25em;
     }
 
+    .checkout-button.is-revealing {
+      animation: checkout-button-reveal 1s ease-out both;
+    }
+
+    @keyframes checkout-button-reveal {
+      0%,
+      50% {
+        opacity: 0;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
     .checkout-button:hover {
       text-decoration: underline;
     }

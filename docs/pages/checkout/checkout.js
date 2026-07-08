@@ -187,11 +187,12 @@
 
     if (!selectedExpressMethod) {
       expressWrapper.classList.remove('is-open');
-      if (submitButton) submitButton.style.display = '';
+      revealSubmitButton();
       return;
     }
 
     paymentMethods[selectedExpressMethod] = getSelectedExpressMode(selectedExpressMethod);
+    hideSubmitButton();
 
     expressElements = stripe.elements({
       clientSecret: clientSecret,
@@ -222,7 +223,22 @@
 
     expressCheckoutElement.mount('#express-checkout-element');
     expressWrapper.classList.add('is-open');
-    if (submitButton) submitButton.style.display = 'none';
+  }
+
+  function hideSubmitButton() {
+    if (!submitButton) return;
+
+    submitButton.classList.remove('is-revealing');
+    submitButton.style.display = 'none';
+  }
+
+  function revealSubmitButton() {
+    if (!submitButton) return;
+
+    submitButton.style.display = '';
+    submitButton.classList.remove('is-revealing');
+    void submitButton.offsetWidth;
+    submitButton.classList.add('is-revealing');
   }
 
   function getDefaultPaymentMethods() {
