@@ -12,6 +12,7 @@ const app = express();
 
 const HANDLE = {
   stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
 
   googleSheetId: process.env.GOOGLE_SHEET_ID,
   googleSheetTabName: process.env.GOOGLE_SHEET_TAB_NAME || "Orders",
@@ -24,6 +25,8 @@ const HANDLE = {
   orderIdBrandPrefix: "YDL",
   orderIdCountryCode: "01",
   firstStepOrderStatus: "abandon",
+  paidOrderStatus: "ordered",
+  paidShippingStatus: "waiting",
   currency: "usd",
 
   allowedOrigins: (process.env.ALLOWED_ORIGIN || "https://yiichendelajii.com")
@@ -63,6 +66,47 @@ app.use((req, res, next) => {
   next();
 });
 
+// ============================================================
+// WEBHOOK PROCESSING: STRIPE PAYMENT SUCCESS -> GOOGLE SHEET
+// ============================================================
+// Stripe webhook must receive the raw request body, so this route stays
+// above express.json(). It fills the blue + green sheet areas after a
+// PaymentIntent succeeds.
+
+app.post("/stripe-webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  try {
+    assertStripeConfig();
+    assertStripeWebhookConfig();
+
+    const signature = req.get("Stripe-Signature") || "";
+    const webhookPayload = req.rawBody || req.body;
+    const event = getStripeClient().webhooks.constructEvent(
+      webhookPayload,
+      signature,
+      HANDLE.stripeWebhookSecret
+    );
+
+    console.log("Stripe webhook received:", event.type, event.id);
+
+    if (event.type !== "payment_intent.succeeded") {
+      res.json({ ok: true, ignored: true });
+      return;
+    }
+
+    await updatePaidOrderInSheetFromPaymentIntentId(event.data.object.id);
+
+    console.log("Stripe webhook sheet update completed:", event.data.object.id);
+
+    res.json({ ok: true, sheet_updated: true });
+  } catch (error) {
+    console.error("Stripe webhook failed:", error);
+    res.status(error.statusCode || 400).json({
+      ok: false,
+      error: error.isPublic ? error.message : "Webhook processing failed.",
+    });
+  }
+});
+
 app.use(express.json({ limit: "20kb" }));
 
 app.use((error, req, res, next) => {
@@ -85,7 +129,7 @@ app.use((error, req, res, next) => {
 
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    assertRequiredConfig();
+    assertStripeConfig();
 
     const { items = [], notes = "" } = req.body;
 
@@ -140,6 +184,7 @@ app.post("/create-payment-intent", async (req, res) => {
         return sum + item.unit_price * item.qty;
       }, 0)
     );
+    const tax = 0;
     const total = roundMoney(subtotal + shippingFee);
 
     const paymentIntent = await getStripeClient().paymentIntents.create(
@@ -152,6 +197,11 @@ app.post("/create-payment-intent", async (req, res) => {
         metadata: {
           order_id: orderId,
           order_status: HANDLE.firstStepOrderStatus,
+          subtotal: formatMoney(subtotal),
+          shipping_fee: formatMoney(shippingFee),
+          tax: formatMoney(tax),
+          total: formatMoney(total),
+          currency: HANDLE.currency,
         },
       },
       {
@@ -265,6 +315,108 @@ async function appendFirstStepOrderToSheet(order) {
   });
 }
 
+// ============================================================
+// WEBHOOK SHEET UPDATE HELPERS: FILL BLUE + GREEN AREAS
+// ============================================================
+// On payment success, update only the first row of the order:
+// E       order_status
+// R-Z     customer + shipping details (blue area)
+// AC-AG   totals after stripe_payment_intent_id (green area)
+
+async function updatePaidOrderInSheetFromPaymentIntentId(stripePaymentIntentId) {
+  const paymentIntent = await getHydratedPaymentIntent(stripePaymentIntentId);
+
+  await updatePaidOrderInSheet({
+    stripePaymentIntentId: paymentIntent.id,
+    orderStatus: HANDLE.paidOrderStatus,
+    customer: getCustomerDetailsFromPaymentIntent(paymentIntent),
+    totals: getTotalsFromPaymentIntent(paymentIntent),
+  });
+}
+
+async function updatePaidOrderInSheet(order) {
+  const sheets = await getSheetsClient();
+  const rowNumber = await findOrderRowByPaymentIntentIdWithRetry(
+    sheets,
+    order.stripePaymentIntentId
+  );
+
+  await sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId: HANDLE.googleSheetId,
+    requestBody: {
+      valueInputOption: "USER_ENTERED",
+      data: [
+        {
+          range: `'${HANDLE.googleSheetTabName}'!E${rowNumber}`,
+          values: [[order.orderStatus]],
+        },
+        {
+          range: `'${HANDLE.googleSheetTabName}'!M${rowNumber}`,
+          values: [[HANDLE.paidShippingStatus]],
+        },
+        {
+          range: `'${HANDLE.googleSheetTabName}'!R${rowNumber}:Z${rowNumber}`,
+          values: [
+            [
+              order.customer.email,
+              order.customer.phone,
+              order.customer.shippingName,
+              order.customer.address1,
+              order.customer.address2,
+              order.customer.city,
+              order.customer.state,
+              order.customer.postalCode,
+              order.customer.country,
+            ],
+          ],
+        },
+        {
+          range: `'${HANDLE.googleSheetTabName}'!AC${rowNumber}:AG${rowNumber}`,
+          values: [
+            [
+              formatMoney(order.totals.subtotal),
+              formatMoney(order.totals.shippingFee),
+              formatMoney(order.totals.tax),
+              formatMoney(order.totals.total),
+              order.totals.currency,
+            ],
+          ],
+        },
+      ],
+    },
+  });
+}
+
+async function findOrderRowByPaymentIntentIdWithRetry(sheets, stripePaymentIntentId) {
+  const retryCount = 6;
+
+  for (let attempt = 0; attempt < retryCount; attempt += 1) {
+    const rowNumber = await findOrderRowByPaymentIntentId(sheets, stripePaymentIntentId);
+
+    if (rowNumber) return rowNumber;
+    await wait(500 * (attempt + 1));
+  }
+
+  throw new Error(`Cannot find order row for payment intent: ${stripePaymentIntentId}`);
+}
+
+async function findOrderRowByPaymentIntentId(sheets, stripePaymentIntentId) {
+  const firstDataRow = 5;
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: HANDLE.googleSheetId,
+    range: `'${HANDLE.googleSheetTabName}'!AB${firstDataRow}:AB`,
+  });
+  const values = response.data.values || [];
+
+  for (let index = 0; index < values.length; index += 1) {
+    if (String(values[index][0] || "").trim() === stripePaymentIntentId) {
+      return firstDataRow + index;
+    }
+  }
+
+  return 0;
+}
+
 async function getNextOrderRow(sheets) {
   const firstDataRow = 5;
   const response = await sheets.spreadsheets.values.get({
@@ -287,6 +439,8 @@ async function getNextOrderRow(sheets) {
 }
 
 async function getSheetsClient() {
+  assertGoogleSheetConfig();
+
   const credentials = JSON.parse(HANDLE.googleServiceAccountJson);
 
   const auth = new google.auth.JWT({
@@ -299,6 +453,77 @@ async function getSheetsClient() {
     version: "v4",
     auth,
   });
+}
+
+// ============================================================
+// WEBHOOK STRIPE DATA HELPERS: NORMALIZE PAYMENT INTENT DATA
+// ============================================================
+
+async function getHydratedPaymentIntent(paymentIntentId) {
+  return getStripeClient().paymentIntents.retrieve(paymentIntentId, {
+    expand: ["latest_charge"],
+  });
+}
+
+function getCustomerDetailsFromPaymentIntent(paymentIntent) {
+  const charge = paymentIntent.latest_charge && typeof paymentIntent.latest_charge === "object"
+    ? paymentIntent.latest_charge
+    : {};
+  const billing = charge.billing_details || {};
+  const shipping = paymentIntent.shipping || {};
+  const shippingAddress = shipping.address || {};
+  const billingAddress = billing.address || {};
+  const address = hasAddressValue(shippingAddress) ? shippingAddress : billingAddress;
+
+  return {
+    email: cleanText(paymentIntent.receipt_email || billing.email, 160),
+    phone: cleanText(shipping.phone || billing.phone, 60),
+    shippingName: cleanText(shipping.name || billing.name, 160),
+    address1: cleanText(address.line1, 180),
+    address2: cleanText(address.line2, 180),
+    city: cleanText(address.city, 100),
+    state: cleanText(address.state, 100),
+    postalCode: cleanText(address.postal_code, 40),
+    country: cleanText(address.country, 80),
+  };
+}
+
+function getTotalsFromPaymentIntent(paymentIntent) {
+  const metadata = paymentIntent.metadata || {};
+  const total = parseMoney(metadata.total) || fromStripeAmount(paymentIntent.amount_received || paymentIntent.amount);
+  const shippingFee = parseMoney(metadata.shipping_fee) || getStripeAmountDetail(paymentIntent, "shipping");
+  const tax = parseMoney(metadata.tax) || getStripeAmountDetail(paymentIntent, "tax");
+  const subtotal = roundMoney(total - shippingFee - tax);
+
+  return {
+    subtotal: parseMoney(metadata.subtotal) || subtotal,
+    shippingFee,
+    tax,
+    total,
+    currency: cleanText(metadata.currency || paymentIntent.currency || HANDLE.currency, 20).toLowerCase(),
+  };
+}
+
+function getStripeAmountDetail(paymentIntent, detailName) {
+  const amountDetails = paymentIntent.amount_details || {};
+  const detail = amountDetails[detailName];
+
+  if (!detail) return 0;
+  if (typeof detail === "number") return fromStripeAmount(detail);
+  if (typeof detail.amount === "number") return fromStripeAmount(detail.amount);
+
+  return 0;
+}
+
+function hasAddressValue(address) {
+  return [
+    address.line1,
+    address.line2,
+    address.city,
+    address.state,
+    address.postal_code,
+    address.country,
+  ].some((value) => String(value || "").trim() !== "");
 }
 
 // ============================================================
@@ -366,9 +591,20 @@ function getAllowedOrigin(origin) {
   return HANDLE.allowedOrigins.includes(origin) ? origin : "";
 }
 
-function assertRequiredConfig() {
+function assertStripeConfig() {
+  if (!HANDLE.stripeSecretKey) {
+    throw new Error("Missing required env var: STRIPE_SECRET_KEY");
+  }
+}
+
+function assertStripeWebhookConfig() {
+  if (!HANDLE.stripeWebhookSecret) {
+    throw new Error("Missing required env var: STRIPE_WEBHOOK_SECRET");
+  }
+}
+
+function assertGoogleSheetConfig() {
   [
-    ["STRIPE_SECRET_KEY", HANDLE.stripeSecretKey],
     ["GOOGLE_SHEET_ID", HANDLE.googleSheetId],
     ["GOOGLE_SERVICE_ACCOUNT_JSON", HANDLE.googleServiceAccountJson],
   ].forEach(([name, value]) => {
@@ -424,6 +660,16 @@ function formatMoney(value) {
 
 function toStripeAmount(value) {
   return Math.round(roundMoney(value) * 100);
+}
+
+function fromStripeAmount(value) {
+  return roundMoney((Number(value) || 0) / 100);
+}
+
+function wait(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 // ============================================================

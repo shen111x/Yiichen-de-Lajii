@@ -151,7 +151,8 @@
 
     .checkout-field-inner {
       width: 100%;
-      display: flex;
+      display: grid;
+      grid-template-columns: max-content minmax(0, 1fr);
       align-items: center;
     }
 
@@ -167,7 +168,7 @@
     }
 
     .checkout-field input {
-      width: 100%;
+      width: calc(100% / 0.75);
       min-width: 0;
       height: auto;
       box-sizing: border-box;
@@ -269,8 +270,8 @@
       -webkit-text-stroke: inherit;
       cursor: pointer;
       text-decoration: none;
-      text-decoration-thickness: var(--stroke--width);
-      text-underline-offset: calc(var(--stroke--width) * 1.5);
+      text-decoration-thickness: var(--text-underline-thickness);
+      text-underline-offset: var(--text-underline-offset);
     }
 
     .checkout-express-button.is-selected {
@@ -344,6 +345,25 @@
       flex: none;
       transform: scale(0.875);
       transform-origin: center center;
+    }
+
+    #payment-message {
+      position: absolute;
+      top: calc(var(--header-topbar-height) + var(--gap-unit) * 1.5);
+      left: 0;
+      width: 100%;
+      font-size: var(--product-info-font-size);
+      text-align: center;
+      color: #ba0000;
+      -webkit-text-stroke: 0.02em currentColor;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #payment-message.is-open {
+      opacity: 1;
+      visibility: visible;
     }
 
     #checkout-status {
@@ -548,6 +568,7 @@
         <div id="express-checkout-wrapper">
           <div id="express-checkout-element"></div>
         </div>
+        <div id="payment-message" role="alert" aria-live="polite"></div>
       </form>
 
       <div id="checkout-status" role="status">Loading checkout...</div>

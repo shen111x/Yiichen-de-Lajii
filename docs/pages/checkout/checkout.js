@@ -1,7 +1,7 @@
 (function() {
   var cartStorageKey = 'yiichen-cart';
   var checkoutStorageKey = 'yiichen-checkout-session';
-  var stripePublishableKey = 'pk_test_51TpisRE9FD00WisxNzPQrGJ3qUfRCluI6RIZIsxFX9tiRF55IotUzL7WTMREaXC52uN111odOAt1TIHIpWPoVizK00C9caDSey';
+  var stripePublishableKey = 'pk_test_51TpisICZ9f6B7AFUzBiftI8cq8GNNy1JXTK6I724gNc5nR3bTyFYxTpDHP2yq4n1cPi8xLiDjxlYOLh8FZC9rWyu0046QGVfVF';
   var expressMethodOrder = ['applePay', 'googlePay', 'link', 'amazonPay', 'paypal', 'klarna'];
   var expressMethodLabels = {
     applePay: 'ApplePay',
@@ -18,6 +18,7 @@
   var statusNode = document.getElementById('checkout-status');
   var paymentForm = document.getElementById('payment-form');
   var submitButton = document.getElementById('payment-submit');
+  var paymentMessageNode = document.getElementById('payment-message');
   var cardElementNode = document.getElementById('card-element');
   var expressWrapper = document.getElementById('express-checkout-wrapper');
   var expressNode = document.getElementById('express-checkout-element');
@@ -33,6 +34,7 @@
   var selectedExpressMethod = '';
   var availableExpressMethods = {};
   var expressAvailabilityResolved = false;
+  var confirmingStatusTimer = null;
 
   initCheckout();
 
@@ -139,6 +141,7 @@
 
       if (method && !isExpressMethodAvailable(method)) return;
 
+      setPaymentMessage('');
       selectedExpressMethod = method;
       renderExpressSelector();
       mountSelectedExpressCheckout(clientSecret);
@@ -206,9 +209,11 @@
     });
 
     expressCheckoutElement.on('confirm', function() {
+      scheduleConfirmingStatus();
+
       expressElements.submit().then(function(result) {
         if (result.error) {
-          setStatus(result.error.message);
+          handleStripeResult(result);
           return;
         }
 
@@ -216,7 +221,8 @@
           elements: expressElements,
           confirmParams: {
             return_url: getReturnUrl()
-          }
+          },
+          redirect: 'if_required'
         }).then(handleStripeResult);
       });
     });
@@ -333,7 +339,7 @@
     if (!stripe || !cardElement) return;
 
     if (submitButton) submitButton.disabled = true;
-    setStatus('Confirming payment...');
+    scheduleConfirmingStatus();
 
     stripe.confirmCardPayment(clientSecret, {
       payment_method: {
@@ -354,13 +360,33 @@
   }
 
   function handleStripeResult(result) {
+    var paymentIntent = result && result.paymentIntent;
+    var status = paymentIntent && paymentIntent.status ? paymentIntent.status : '';
+
+    clearConfirmingStatusTimer();
+
     if (result && result.error) {
-      setStatus(result.error.message || 'Payment failed.');
+      setStatus('');
+      setPaymentMessage(result.error.message || 'Payment failed. Please try again.');
       return;
     }
 
-    setStatus('Payment submitted.');
-    window.location.href = getReturnUrl();
+    if (status === 'succeeded' || status === 'processing') {
+      setPaymentMessage('');
+      setStatus(status === 'succeeded' ? 'Payment submitted.' : 'Payment processing.');
+      window.location.href = getReturnUrl();
+      return;
+    }
+
+    if (status) {
+      setStatus('');
+      setPaymentMessage('Payment is not complete yet. Status: ' + status + '.');
+      return;
+    }
+
+    setStatus('');
+    setPaymentMessage('Payment confirmation did not return a completed payment. Please try again.');
+    console.warn('Unexpected Stripe confirmation result:', result);
   }
 
   function getShippingDetails() {
@@ -454,7 +480,7 @@
   }
 
   function getReturnUrl() {
-    return window.location.origin + window.location.pathname + '?checkout=return';
+    return window.location.origin + window.location.pathname.replace(/[^/]*$/, 'checkout-success.html');
   }
 
   function readCart() {
@@ -486,5 +512,27 @@
 
   function setStatus(message) {
     if (statusNode) statusNode.textContent = message || '';
+  }
+
+  function scheduleConfirmingStatus() {
+    clearConfirmingStatusTimer();
+    confirmingStatusTimer = window.setTimeout(function() {
+      confirmingStatusTimer = null;
+      setStatus('Confirming payment...');
+    }, 350);
+  }
+
+  function clearConfirmingStatusTimer() {
+    if (!confirmingStatusTimer) return;
+
+    window.clearTimeout(confirmingStatusTimer);
+    confirmingStatusTimer = null;
+  }
+
+  function setPaymentMessage(message) {
+    if (!paymentMessageNode) return;
+
+    paymentMessageNode.textContent = message || '';
+    paymentMessageNode.classList.toggle('is-open', !!message);
   }
 })();

@@ -14,6 +14,8 @@
   --base-font-size: clamp(1rem, 5vh, 1.1rem);  /* 这个是中间商，目的是把一个变量包到变量，实际的1rem的anchor在universal的body的fontsize=1rem*/
   --button-font-size: var(--base-font-size);
   --product-info-font-size: calc(var(--base-font-size) * 0.75);
+  --text-underline-thickness: 0.114em;
+  --text-underline-offset: 0.2em;
 }
 
 /* ====================================================================

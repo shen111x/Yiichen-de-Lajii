@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+
+  <title>Checkout Success - Yiichen de Lajii</title>
+
+  <link rel="stylesheet" href="../../css/universal.css">
+
+  <style>
+    .checkout-success-main {
+      width: 100vw;
+      min-height: 100vh;
+      min-height: 100dvh;
+      box-sizing: border-box;
+      padding: calc(var(--gap-unit) * 1.5);
+      padding-top: max(27.5vh, calc(var(--header-topbar-height) + var(--gap-unit) * 6));
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+
+    .checkout-success-main-inner {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .checkout-success-box {
+      box-sizing: border-box;
+      width: 100%;
+      padding: calc(var(--gap-unit) * 1.5);
+      border: var(--stroke--width) solid #000;
+      font-size: var(--product-info-font-size);
+      -webkit-text-stroke: 0.02em currentColor;
+    }
+
+    .checkout-success-panel-header {
+      height: var(--header-topbar-height);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: calc(var(--gap-unit) * 3);
+    }
+
+    .checkout-success-panel-left,
+    .checkout-success-panel-right {
+      height: var(--header-topbar-height);
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .checkout-success-panel-left {
+      justify-content: flex-start;
+    }
+
+    .checkout-success-panel-right {
+      justify-content: flex-end;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .checkout-success-panel-logo {
+      display: block;
+      width: auto;
+      height: var(--header-topbar-height);
+    }
+
+    .checkout-success-body {
+      padding-top: calc(var(--header-topbar-height) * 2);
+      font-size: var(--product-info-font-size);
+    }
+
+    .checkout-success-body p {
+      margin: 0 0 1em;
+    }
+
+    .checkout-success-body a {
+      color: #000;
+      text-decoration: underline;
+      text-decoration-thickness: var(--text-underline-thickness);
+      text-underline-offset: var(--text-underline-offset);
+    }
+
+    .checkout-success-monogram {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin-top: calc(var(--gap-unit) * 1.5);
+      padding-bottom: calc(var(--gap-unit) * 0.75);
+    }
+
+    .checkout-success-exit {
+      display: block;
+      width: fit-content;
+      margin: var(--header-topbar-height) auto 0;
+      color: #000;
+      font-size: var(--product-info-font-size);
+      text-decoration: underline;
+      text-decoration-thickness: var(--text-underline-thickness);
+      text-underline-offset: var(--text-underline-offset);
+      -webkit-text-stroke: 0.02em currentColor;
+    }
+
+    .checkout-success-copyright-container {
+      margin-top: auto;
+      padding-top: calc(var(--gap-unit) * 8);
+      font-size: var(--product-info-font-size);
+      -webkit-text-stroke: 0.02em currentColor;
+    }
+  </style>
+</head>
+
+<body>
+  <header id="header-container"></header>
+
+  <main class="checkout-success-main">
+    <div class="checkout-success-main-inner">
+      <section class="checkout-success-box" aria-labelledby="checkout-success-title">
+        <div class="checkout-success-panel-header">
+          <div class="checkout-success-panel-left">
+            <img class="checkout-success-panel-logo" src="../../images/brand/logob-black.svg" alt="YdL">
+          </div>
+          <div class="checkout-success-panel-right" id="checkout-success-title">Order Confirmation</div>
+        </div>
+
+        <div class="checkout-success-body">
+          <p>Thank you, We have received your payment!</p>
+
+          <p>
+            Your YdL&trade; order number is:<br>
+            <span id="checkout-success-order-number">-</span>
+          </p>
+
+          <p>
+            Please use this order number and email to track your order at
+            <a href="../tracking/index.html">Tracking Page</a>.
+          </p>
+
+          <p>
+            Please reach out to:<br>
+            <a href="mailto:Contact@YiichendeLajii.com">Contact@YiichendeLajii.com</a><br>
+            if you have any question or concerns regarding your purchase.
+          </p>
+          <br>
+
+          <picture>
+            <source media="(max-width: 699px)" srcset="../../images/brand/monogram-22x4.svg">
+            <img class="checkout-success-monogram" src="../../images/brand/monogram-29x5.svg" alt="YdL monogram">
+          </picture>
+        </div>
+      </section>
+
+      <a class="checkout-success-exit" href="../../index.html">Exit</a>
+    </div>
+     
+    </div>
+    <div id="copyright-container" class="checkout-success-copyright-container"></div>
+  </main>
+
+  <script src="../../js/universal.js"></script>
+  <script>
+    (function() {
+      var orderNumberNode = document.getElementById('checkout-success-order-number');
+      var orderId = getOrderId();
+
+      if (orderNumberNode && orderId) orderNumberNode.textContent = orderId;
+
+      function getOrderId() {
+        var params = new URLSearchParams(window.location.search);
+        var orderId = params.get('order_id') || '';
+
+        if (orderId) return orderId;
+
+        try {
+          return (JSON.parse(sessionStorage.getItem('yiichen-checkout-session')) || {}).order_id || '';
+        } catch (error) {
+          return '';
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
