@@ -13,6 +13,7 @@ const app = express();
 const HANDLE = {
   stripeSecretKey: process.env.STRIPE_SECRET_KEY,
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  stripeProductTaxCode: process.env.STRIPE_PRODUCT_TAX_CODE || "txcd_30011000",
 
   googleSheetId: process.env.GOOGLE_SHEET_ID,
   googleSheetTabName: process.env.GOOGLE_SHEET_TAB_NAME || "Orders",
@@ -73,13 +74,28 @@ app.use((req, res, next) => {
 // above express.json(). It fills the blue + green sheet areas after a
 // PaymentIntent succeeds.
 
-app.post("/stripe-webhook", express.raw({ type: "application/json" }), async (req, res) => {
+app.post("/stripe-webhook", express.raw({
+  type: "application/json",
+  verify: (req, res, buffer) => {
+    req.stripeRawBody = buffer;
+  },
+}), async (req, res) => {
   try {
     assertStripeConfig();
     assertStripeWebhookConfig();
 
     const signature = req.get("Stripe-Signature") || "";
-    const webhookPayload = req.rawBody || req.body;
+    const webhookPayload = Buffer.isBuffer(req.rawBody)
+      ? req.rawBody
+      : Buffer.isBuffer(req.stripeRawBody)
+        ? req.stripeRawBody
+        : Buffer.isBuffer(req.body)
+          ? req.body
+          : null;
+
+    if (!webhookPayload) {
+      throw new Error("Stripe webhook raw body is unavailable.");
+    }
     const event = getStripeClient().webhooks.constructEvent(
       webhookPayload,
       signature,
@@ -150,34 +166,7 @@ app.post("/create-payment-intent", async (req, res) => {
     const orderId = createOrderId();
     const timeOrdered = formatSheetDate(new Date());
 
-    const normalizedItems = items.map((cartItem) => {
-      const productId = cleanText(cartItem.product_id, 120);
-      const product = productById.get(productId);
-
-      if (!product) {
-        throw new PublicError(400, `Unknown product_id: ${productId}`);
-      }
-
-      const qty = Number(cartItem.qty || 1);
-      const unitPrice = Number(product.price);
-
-      if (!Number.isInteger(qty) || qty < 1 || qty > 99) {
-        throw new PublicError(400, `Invalid qty for product_id: ${productId}`);
-      }
-
-      if (!Number.isFinite(unitPrice)) {
-        throw new Error(`Invalid price for product_id: ${productId}`);
-      }
-
-      return {
-        product_id: product.product_id,
-        product_name: product.name,
-        variant: cleanText(cartItem.variant || product.variant || "Default", 80),
-        size: cleanText(cartItem.size, 40),
-        qty,
-        unit_price: unitPrice,
-      };
-    });
+    const normalizedItems = normalizeCartItems(items, productById);
 
     const subtotal = roundMoney(
       normalizedItems.reduce((sum, item) => {
@@ -202,6 +191,7 @@ app.post("/create-payment-intent", async (req, res) => {
           tax: formatMoney(tax),
           total: formatMoney(total),
           currency: HANDLE.currency,
+          cart_signature: createCartSignature(normalizedItems),
         },
       },
       {
@@ -223,6 +213,11 @@ app.post("/create-payment-intent", async (req, res) => {
       order_id: orderId,
       client_secret: paymentIntent.client_secret,
       stripe_payment_intent_id: paymentIntent.id,
+      subtotal: formatMoney(subtotal),
+      shipping_fee: formatMoney(shippingFee),
+      tax: formatMoney(tax),
+      total: formatMoney(total),
+      currency: HANDLE.currency,
     });
   } catch (error) {
     console.error(error);
@@ -230,6 +225,139 @@ app.post("/create-payment-intent", async (req, res) => {
     res.status(error.statusCode || 500).json({
       ok: false,
       error: error.isPublic ? error.message : "Unable to create payment intent.",
+    });
+  }
+});
+
+app.post("/update-payment-intent-tax", async (req, res) => {
+  try {
+    assertStripeConfig();
+
+    const paymentIntentId = cleanText(req.body.stripe_payment_intent_id, 120);
+    const items = req.body.items || [];
+    const shipping = normalizeShippingDetails(req.body.shipping || {});
+
+    if (!/^pi_[A-Za-z0-9]+$/.test(paymentIntentId)) {
+      throw new PublicError(400, "Invalid payment intent.");
+    }
+
+    if (!Array.isArray(items) || items.length === 0 || items.length > 50) {
+      throw new PublicError(400, "Invalid cart.");
+    }
+
+    const productIndex = await getProductIndex();
+    const normalizedItems = normalizeCartItems(items, productIndex.productById);
+    const shippingFee = productIndex.shippingFee;
+    const subtotal = roundMoney(
+      normalizedItems.reduce((sum, item) => sum + item.unit_price * item.qty, 0)
+    );
+    const paymentIntent = await getStripeClient().paymentIntents.retrieve(paymentIntentId);
+
+    if (!["requires_payment_method", "requires_confirmation"].includes(paymentIntent.status)) {
+      throw new PublicError(409, "This payment can no longer be updated.");
+    }
+
+    if (
+      !paymentIntent.metadata.cart_signature ||
+      paymentIntent.metadata.cart_signature !== createCartSignature(normalizedItems)
+    ) {
+      throw new PublicError(409, "Checkout session expired. Please return to cart and try again.");
+    }
+
+    const calculationParams = {
+      currency: HANDLE.currency,
+      line_items: normalizedItems.map((item, index) => ({
+        amount: toStripeAmount(item.unit_price * item.qty),
+        reference: `${index + 1}-${item.product_id}`.slice(0, 200),
+        tax_behavior: "exclusive",
+        tax_code: item.tax_code,
+      })),
+      customer_details: {
+        address: compactTaxAddress(shipping.address),
+        address_source: "shipping",
+      },
+    };
+
+    if (shippingFee > 0) {
+      calculationParams.shipping_cost = {
+        amount: toStripeAmount(shippingFee),
+        tax_behavior: "exclusive",
+      };
+    }
+
+    const requestFingerprint = crypto
+      .createHash("sha256")
+      .update(JSON.stringify({ paymentIntentId, normalizedItems, shipping: shipping.address }))
+      .digest("hex");
+    const calculation = await getStripeClient().tax.calculations.create(
+      calculationParams,
+      { idempotencyKey: `tax-${requestFingerprint}` }
+    );
+    const tax = fromStripeAmount(
+      Number(calculation.tax_amount_exclusive || 0) +
+      Number(calculation.tax_amount_inclusive || 0)
+    );
+    const total = fromStripeAmount(calculation.amount_total);
+
+    const paymentIntentUpdate = {
+      amount: calculation.amount_total,
+      hooks: {
+        inputs: {
+          tax: {
+            calculation: calculation.id,
+          },
+        },
+      },
+      metadata: {
+        subtotal: formatMoney(subtotal),
+        shipping_fee: formatMoney(shippingFee),
+        tax: formatMoney(tax),
+        total: formatMoney(total),
+        currency: HANDLE.currency,
+        tax_calculation_id: calculation.id,
+      },
+    };
+
+    if (shipping.name) {
+      paymentIntentUpdate.shipping = {
+        name: shipping.name,
+        phone: shipping.phone || undefined,
+        address: shipping.address,
+      };
+    }
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shipping.email)) {
+      paymentIntentUpdate.receipt_email = shipping.email;
+    }
+
+    await getStripeClient().paymentIntents.update(paymentIntentId, paymentIntentUpdate);
+
+    res.json({
+      ok: true,
+      subtotal: formatMoney(subtotal),
+      shipping_fee: formatMoney(shippingFee),
+      tax: formatMoney(tax),
+      total: formatMoney(total),
+      currency: HANDLE.currency,
+    });
+  } catch (error) {
+    console.error("Tax calculation failed:", error);
+    const stripeCode = cleanText(error && error.code, 100);
+    const isLocationError = stripeCode === "customer_tax_location_invalid";
+    const isTaxSettingsError = [
+      "tax_settings_invalid",
+      "tax_settings_status_invalid",
+    ].includes(stripeCode);
+
+    res.status(error.statusCode || (isLocationError ? 400 : 500)).json({
+      ok: false,
+      code: stripeCode || "tax_calculation_failed",
+      error: error.isPublic
+        ? error.message
+        : isLocationError
+          ? "Stripe could not match this ZIP code to a tax location."
+          : isTaxSettingsError
+            ? "Stripe Tax settings are not ready."
+            : "Unable to calculate tax.",
     });
   }
 });
@@ -511,6 +639,9 @@ function getStripeAmountDetail(paymentIntent, detailName) {
   if (!detail) return 0;
   if (typeof detail === "number") return fromStripeAmount(detail);
   if (typeof detail.amount === "number") return fromStripeAmount(detail.amount);
+  if (typeof detail.total_tax_amount === "number") {
+    return fromStripeAmount(detail.total_tax_amount);
+  }
 
   return 0;
 }
@@ -524,6 +655,89 @@ function hasAddressValue(address) {
     address.postal_code,
     address.country,
   ].some((value) => String(value || "").trim() !== "");
+}
+
+function normalizeCartItems(items, productById) {
+  return items.map((cartItem) => {
+    const productId = cleanText(cartItem.product_id, 120);
+    const product = productById.get(productId);
+    const qty = Number(cartItem.qty || 1);
+
+    if (!product) throw new PublicError(400, `Unknown product_id: ${productId}`);
+    if (!Number.isInteger(qty) || qty < 1 || qty > 99) {
+      throw new PublicError(400, `Invalid qty for product_id: ${productId}`);
+    }
+    if (!Number.isFinite(Number(product.price))) {
+      throw new Error(`Invalid price for product_id: ${productId}`);
+    }
+
+    return {
+      product_id: product.product_id,
+      product_name: product.name,
+      variant: cleanText(cartItem.variant || product.variant || "Default", 80),
+      size: cleanText(cartItem.size, 40),
+      qty,
+      unit_price: Number(product.price),
+      tax_code: cleanText(product.tax_code || HANDLE.stripeProductTaxCode, 40),
+    };
+  });
+}
+
+function createCartSignature(items) {
+  return crypto
+    .createHash("sha256")
+    .update(JSON.stringify(items.map((item) => ({
+      product_id: item.product_id,
+      variant: item.variant,
+      size: item.size,
+      qty: item.qty,
+      unit_price: item.unit_price,
+      tax_code: item.tax_code,
+    }))))
+    .digest("hex");
+}
+
+function normalizeShippingDetails(value) {
+  const sourceAddress = value.address || {};
+  const country = cleanText(sourceAddress.country, 2).toUpperCase();
+  const postalCode = cleanText(sourceAddress.postal_code, 12).toUpperCase();
+
+  if (!/^[A-Z]{2}$/.test(country)) {
+    throw new PublicError(400, "Enter a two-letter shipping country code.");
+  }
+  if (!/^[A-Z0-9][A-Z0-9 -]{1,10}[A-Z0-9]$/.test(postalCode)) {
+    throw new PublicError(400, "Enter a valid shipping ZIP or postal code.");
+  }
+  if (country === "US" && !/^\d{5}(-\d{4})?$/.test(postalCode)) {
+    throw new PublicError(400, "Enter a valid US ZIP code.");
+  }
+
+  return {
+    name: cleanText(value.name, 160),
+    email: cleanText(value.email, 160),
+    phone: cleanText(value.phone, 60),
+    address: {
+      line1: cleanText(sourceAddress.line1, 180),
+      line2: cleanText(sourceAddress.line2, 180),
+      city: cleanText(sourceAddress.city, 100),
+      state: cleanText(sourceAddress.state, 100),
+      postal_code: postalCode,
+      country,
+    },
+  };
+}
+
+function compactTaxAddress(address) {
+  const compactAddress = {
+    country: address.country,
+    postal_code: address.postal_code,
+  };
+
+  ["line1", "line2", "city", "state"].forEach((field) => {
+    if (address[field]) compactAddress[field] = address[field];
+  });
+
+  return compactAddress;
 }
 
 // ============================================================

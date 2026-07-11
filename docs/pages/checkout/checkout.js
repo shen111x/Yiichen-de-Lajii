@@ -1,6 +1,7 @@
 (function() {
   var cartStorageKey = 'yiichen-cart';
   var checkoutStorageKey = 'yiichen-checkout-session';
+  var taxEndpoint = 'https://ydl-api-436365230181.us-central1.run.app/update-payment-intent-tax';
   var stripePublishableKey = 'pk_test_51TpisICZ9f6B7AFUzBiftI8cq8GNNy1JXTK6I724gNc5nR3bTyFYxTpDHP2yq4n1cPi8xLiDjxlYOLh8FZC9rWyu0046QGVfVF';
   var expressMethodOrder = ['applePay', 'googlePay', 'link', 'amazonPay', 'paypal', 'klarna'];
   var expressMethodLabels = {
@@ -24,7 +25,10 @@
   var expressNode = document.getElementById('express-checkout-element');
   var billingSameCheckbox = document.getElementById('billing-same-as-shipping');
   var billingAddressFields = document.getElementById('billing-address-fields');
-  var cartTotalNode = document.getElementById('checkout-cart-total');
+  var subtotalNode = document.getElementById('checkout-subtotal');
+  var taxNode = document.getElementById('checkout-tax');
+  var totalNode = document.getElementById('checkout-total');
+  var currencyNode = document.getElementById('checkout-currency');
   var expressSelector = document.getElementById('express-selector');
 
   var stripe = null;
@@ -35,6 +39,15 @@
   var availableExpressMethods = {};
   var expressAvailabilityResolved = false;
   var confirmingStatusTimer = null;
+  var activeCart = [];
+  var activeCheckoutSession = null;
+  var taxRequestTimer = null;
+  var taxAddressRevision = 0;
+  var lastTaxRequestKey = '';
+  var lastTaxResult = null;
+  var pendingTaxRequest = null;
+  var pendingTaxRequestKey = '';
+  var pendingTaxRequestRevision = -1;
 
   initCheckout();
 
@@ -42,7 +55,9 @@
     var cart = readCart();
     var checkoutSession = readCheckoutSession();
 
-    renderCartTotal(cart);
+    activeCart = cart;
+    activeCheckoutSession = checkoutSession;
+    renderTotals(checkoutSession || {});
     initBillingToggle();
     renderExpressSelector();
 
@@ -72,6 +87,7 @@
     stripe = Stripe(stripePublishableKey);
 
     mountCardElement();
+    initTaxCalculation();
     initExpressSelector(checkoutSession.client_secret);
     detectExpressAvailability(checkoutSession.client_secret);
 
@@ -211,20 +227,22 @@
     expressCheckoutElement.on('confirm', function() {
       scheduleConfirmingStatus();
 
-      expressElements.submit().then(function(result) {
+      ensureTaxCalculated().then(function() {
+        return expressElements.submit();
+      }).then(function(result) {
         if (result.error) {
           handleStripeResult(result);
           return;
         }
 
-        stripe.confirmPayment({
+        return stripe.confirmPayment({
           elements: expressElements,
           confirmParams: {
             return_url: getReturnUrl()
           },
           redirect: 'if_required'
-        }).then(handleStripeResult);
-      });
+        });
+      }).then(handleStripeResult).catch(handleTaxError);
     });
 
     expressCheckoutElement.mount('#express-checkout-element');
@@ -341,21 +359,26 @@
     if (submitButton) submitButton.disabled = true;
     scheduleConfirmingStatus();
 
-    stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: cardElement,
-        billing_details: billing
-      },
-      shipping: {
-        name: shipping.name || billing.name || '',
-        phone: shipping.phone || '',
-        address: shipping.address
-      },
-      return_url: getReturnUrl(),
-      receipt_email: shipping.email || billing.email || ''
+    ensureTaxCalculated().then(function() {
+      return stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: billing
+        },
+        shipping: {
+          name: shipping.name || billing.name || '',
+          phone: shipping.phone || '',
+          address: shipping.address
+        },
+        return_url: getReturnUrl(),
+        receipt_email: shipping.email || billing.email || ''
+      });
     }).then(function(result) {
       if (submitButton) submitButton.disabled = false;
       handleStripeResult(result);
+    }).catch(function(error) {
+      if (submitButton) submitButton.disabled = false;
+      handleTaxError(error);
     });
   }
 
@@ -444,19 +467,173 @@
     return country;
   }
 
-  function renderCartTotal(cart) {
-    if (!cartTotalNode) return;
-    cartTotalNode.textContent = formatPrice(getCartTotal(cart || []));
+  function initTaxCalculation() {
+    var postalCodeNode = document.getElementById('shipping-postal-code');
+
+    if (postalCodeNode) postalCodeNode.addEventListener('input', scheduleTaxCalculation);
   }
 
-  function getCartTotal(cart) {
-    return cart.reduce(function(sum, item) {
-      return sum + parsePriceValue(item.price) * (item.quantity || 1);
-    }, 0);
+  function scheduleTaxCalculation() {
+    var shipping;
+
+    window.clearTimeout(taxRequestTimer);
+    taxAddressRevision += 1;
+    lastTaxRequestKey = '';
+    lastTaxResult = null;
+    renderUntaxedTotals();
+
+    shipping = getShippingDetails();
+    if (!isTaxAddressReady(shipping.address)) return;
+
+    taxRequestTimer = window.setTimeout(function() {
+      requestTaxCalculation(false).catch(function(error) {
+        if (error && error.isStaleTaxRequest) return;
+        setStatus('');
+        setPaymentMessage(error.message || 'Unable to calculate tax for this address.');
+      });
+    }, 500);
   }
 
-  function parsePriceValue(price) {
-    return parseFloat(String(price).replace(/[^0-9.-]/g, '')) || 0;
+  function ensureTaxCalculated() {
+    var shipping = getShippingDetails();
+
+    window.clearTimeout(taxRequestTimer);
+
+    if (!isTaxAddressReady(shipping.address)) {
+      return Promise.reject(new Error('Enter a valid shipping ZIP or postal code before paying.'));
+    }
+
+    return requestTaxCalculation(true, true);
+  }
+
+  function requestTaxCalculation(showStatus, forceRefresh) {
+    var shipping = getShippingDetails();
+    var requestKey = JSON.stringify({
+      cart_hash: getCartHash(activeCart),
+      shipping: shipping
+    });
+    var requestRevision;
+
+    if (!forceRefresh && lastTaxRequestKey === requestKey && lastTaxResult) {
+      return Promise.resolve(lastTaxResult);
+    }
+    if (
+      pendingTaxRequestKey === requestKey &&
+      pendingTaxRequestRevision === taxAddressRevision &&
+      pendingTaxRequest
+    ) {
+      return pendingTaxRequest;
+    }
+    if (pendingTaxRequest) {
+      return pendingTaxRequest.catch(function() {}).then(function() {
+        return requestTaxCalculation(showStatus, forceRefresh);
+      });
+    }
+
+    requestRevision = taxAddressRevision;
+    lastTaxRequestKey = requestKey;
+    pendingTaxRequestKey = requestKey;
+    pendingTaxRequestRevision = requestRevision;
+    if (showStatus) setStatus('Calculating tax...');
+    setPaymentMessage('');
+
+    pendingTaxRequest = fetch(taxEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        stripe_payment_intent_id: activeCheckoutSession.stripe_payment_intent_id,
+        items: activeCart.map(function(item) {
+          return {
+            product_id: item.product_id,
+            variant: item.variant || '',
+            size: item.size || '',
+            qty: item.quantity || 1
+          };
+        }),
+        shipping: shipping
+      })
+    }).then(function(response) {
+      return response.json().then(function(payload) {
+        if (!response.ok) {
+          throw new Error(payload && payload.error ? payload.error : 'Unable to calculate tax.');
+        }
+        return payload;
+      });
+    }).then(function(payload) {
+      if (requestRevision !== taxAddressRevision) {
+        var staleError = new Error('Stale tax response.');
+        staleError.isStaleTaxRequest = true;
+        throw staleError;
+      }
+
+      lastTaxResult = payload;
+      pendingTaxRequest = null;
+      pendingTaxRequestKey = '';
+      pendingTaxRequestRevision = -1;
+      updateStoredTotals(payload);
+      renderTotals(payload);
+      setStatus('');
+      return payload;
+    }).catch(function(error) {
+      pendingTaxRequest = null;
+      pendingTaxRequestKey = '';
+      pendingTaxRequestRevision = -1;
+      if (requestRevision === taxAddressRevision) lastTaxRequestKey = '';
+      throw error;
+    });
+
+    return pendingTaxRequest;
+  }
+
+  function isTaxAddressReady(address) {
+    var country = String(address.country || '').toUpperCase();
+    var postalCode = String(address.postal_code || '').toUpperCase();
+
+    if (!/^[A-Z]{2}$/.test(country)) return false;
+    if (country === 'US') return /^\d{5}(-\d{4})?$/.test(postalCode);
+    return /^[A-Z0-9][A-Z0-9 -]{1,10}[A-Z0-9]$/.test(postalCode);
+  }
+
+  function renderUntaxedTotals() {
+    renderTotals({
+      subtotal: activeCheckoutSession && activeCheckoutSession.subtotal,
+      tax: '0.00',
+      total: activeCheckoutSession && roundMoneyValue(
+        Number(activeCheckoutSession.subtotal || 0) +
+        Number(activeCheckoutSession.shipping_fee || 0)
+      ),
+      currency: activeCheckoutSession && activeCheckoutSession.currency
+    });
+  }
+
+  function renderTotals(totals) {
+    if (subtotalNode) subtotalNode.textContent = formatPrice(totals.subtotal || 0);
+    if (taxNode) taxNode.textContent = formatPrice(totals.tax || 0);
+    if (totalNode) totalNode.textContent = formatPrice(totals.total || 0);
+    if (currencyNode) currencyNode.textContent = String(totals.currency || 'usd').toLowerCase();
+  }
+
+  function updateStoredTotals(totals) {
+    if (!activeCheckoutSession) return;
+
+    activeCheckoutSession.subtotal = totals.subtotal;
+    activeCheckoutSession.shipping_fee = totals.shipping_fee;
+    activeCheckoutSession.tax = totals.tax;
+    activeCheckoutSession.total = totals.total;
+    activeCheckoutSession.currency = totals.currency || 'usd';
+    sessionStorage.setItem(checkoutStorageKey, JSON.stringify(activeCheckoutSession));
+  }
+
+  function handleTaxError(error) {
+    clearConfirmingStatusTimer();
+    setStatus('');
+    setPaymentMessage(error && error.message ? error.message : 'Unable to calculate tax.');
+  }
+
+  function roundMoneyValue(value) {
+    return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
   }
 
   function formatPrice(value) {

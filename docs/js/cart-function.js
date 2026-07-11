@@ -42,7 +42,13 @@
 
     if (!cart.length) return;
 
-    if (savedCheckout && savedCheckout.cart_hash === cartHash && savedCheckout.client_secret) {
+    if (
+      savedCheckout &&
+      savedCheckout.cart_hash === cartHash &&
+      savedCheckout.client_secret &&
+      savedCheckout.subtotal != null &&
+      savedCheckout.total != null
+    ) {
       window.location.href = getCheckoutHref();
       return;
     }
@@ -63,6 +69,11 @@
           order_id: payload.order_id || '',
           client_secret: payload.client_secret,
           stripe_payment_intent_id: payload.stripe_payment_intent_id || '',
+          subtotal: payload.subtotal,
+          shipping_fee: payload.shipping_fee,
+          tax: payload.tax,
+          total: payload.total,
+          currency: payload.currency || 'usd',
           created_at: Date.now()
         });
 

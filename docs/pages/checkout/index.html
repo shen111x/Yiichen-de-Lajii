@@ -38,7 +38,6 @@
       justify-content: flex-start;
       gap: 66px;
       min-width: 0;
-      height: 100%;
     }
 
     .checkout-body-topbar-left-name-wrapper,
@@ -47,26 +46,35 @@
       flex: 0 1 auto;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      height: 100%;
     }
 
     .checkout-body-topbar-left-name-wrapper {
-      align-items: center;
+      align-items: flex-start;
       width: max-content;
       max-width: 100%;
       margin-left: 5px;
     }
 
     .checkout-body-topbar-left-price-wrapper {
-      align-items: flex-end;
+      align-items: stretch;
       width: max-content;
     }
 
     .checkout-body-topbar-left-name-wrapper p,
-    .checkout-body-topbar-left-price-wrapper p {
+    .checkout-body-topbar-left-price-wrapper p,
+    .checkout-body-topbar-right p {
       margin: 0;
-      text-align: center;
+    }
+
+    .checkout-body-topbar-price-line {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.35em;
+      white-space: nowrap;
+    }
+
+    .checkout-body-topbar-tax-line {
+      justify-content: space-between;
     }
 
     .checkout-body-topbar-subline {
@@ -94,6 +102,27 @@
       align-items: center;
       justify-content: flex-end;
       height: 100%;
+    }
+
+    .checkout-body-topbar-right-total {
+      position: relative;
+      align-self: flex-start;
+      width: 61%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 0;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    .checkout-body-topbar-total-label,
+    .checkout-body-topbar-total-value {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.35em;
     }
 
     .checkout-body-main {
@@ -421,11 +450,17 @@
       </div>
 
       <div class="checkout-body-topbar-left-price-wrapper">
-        <p><span id="checkout-cart-total">0.00</span> usd</p>
+        <p class="checkout-body-topbar-price-line"><span id="checkout-subtotal">0.00</span><span>order</span></p>
+        <p class="checkout-body-topbar-price-line checkout-body-topbar-tax-line"><span>+</span><span><span id="checkout-tax">0.00</span> tax</span></p>
       </div>
     </div>
 
-    <div class="checkout-body-topbar-right"></div>
+    <div class="checkout-body-topbar-right">
+      <div class="checkout-body-topbar-right-total">
+        <p class="checkout-body-topbar-total-label"><span>=</span><span>TOTAL:</span></p>
+        <p class="checkout-body-topbar-total-value"><span id="checkout-total">0.00</span><span id="checkout-currency">usd</span></p>
+      </div>
+    </div>
   </div>
 
   <main class="checkout-body-main">
@@ -467,7 +502,7 @@
             <div class="checkout-field">
               <div class="checkout-field-inner">
                 <label for="shipping-country">Country:</label>
-                <input id="shipping-country" name="country" autocomplete="shipping country">
+                <input id="shipping-country" name="country" autocomplete="shipping country" maxlength="2" pattern="[A-Za-z]{2}" title="Use a two-letter country code, such as US.">
               </div>
             </div>
             <div class="checkout-field">
@@ -487,7 +522,7 @@
             <div class="checkout-field">
               <div class="checkout-field-inner">
                 <label for="shipping-postal-code">Zip:</label>
-                <input id="shipping-postal-code" name="postal_code" autocomplete="shipping postal-code">
+                <input id="shipping-postal-code" name="postal_code" autocomplete="shipping postal-code" maxlength="12" pattern="[A-Za-z0-9][A-Za-z0-9 -]{1,10}[A-Za-z0-9]" title="Enter a valid ZIP or postal code.">
               </div>
             </div>
           </div>
