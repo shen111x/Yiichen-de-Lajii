@@ -1,9 +1,30 @@
 const functions = require("@google-cloud/functions-framework");
 const express = require("express");
-const Stripe = require("stripe");
-const { google } = require("googleapis");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+const env = require("./config/env");
+const constants = require("./config/constants");
+const { PublicError } = require("./shared/errors");
+const {
+  cleanText,
+  escapeHtml,
+  formatSheetDate,
+  roundMoney,
+  parseMoney,
+  formatMoney,
+  toStripeAmount,
+  fromStripeAmount,
+  wait,
+} = require("./shared/utils");
+const {
+  assertStripeConfig,
+  assertStripeWebhookConfig,
+  getStripeClient,
+} = require("./integrations/stripe/client");
+const { getSheetsClient } = require("./integrations/sheets/client");
+const {
+  assertOrderEmailConfig,
+  sendOrderEmail,
+} = require("./integrations/email/client");
 
 const app = express();
 
@@ -11,51 +32,11 @@ const app = express();
 // HANDLE: VARIABLES YOU NEED TO CHANGE
 // ============================================================
 
-const HANDLE = {
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
-  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-  stripeProductTaxCode: process.env.STRIPE_PRODUCT_TAX_CODE || "txcd_30011000",
-
-  googleSheetId: process.env.GOOGLE_SHEET_ID,
-  googleSheetTabName: process.env.GOOGLE_SHEET_TAB_NAME || "Orders",
-  googleServiceAccountJson: process.env.GOOGLE_SERVICE_ACCOUNT_JSON,
-
-  orderEmailApiKey: process.env.ORDER_EMAIL_API_KEY,
-  orderEmailFrom: process.env.ORDER_EMAIL_FROM,
-  zohoSmtpHost: "smtppro.zoho.com",
-  zohoSmtpPort: 465,
-  zohoSmtpUser: process.env.ZOHO_SMTP_USER,
-  zohoSmtpPassword: process.env.ZOHO_SMTP_PASSWORD,
-  orderEmailTemplateUrl:
-    process.env.ORDER_EMAIL_TEMPLATE_URL ||
-    "https://yiichendelajii.com/emails/order-success.html",
-  shippedEmailTemplateUrl:
-    process.env.SHIPPED_EMAIL_TEMPLATE_URL ||
-    "https://yiichendelajii.com/emails/order-shipped.html",
-
-  productIndexUrl:
-    process.env.PRODUCT_INDEX_URL ||
-    "https://yiichendelajii.com/product-data/search-index.json",
-
-  orderIdBrandPrefix: "YDL",
-  orderIdCountryCode: "01",
-  firstStepOrderStatus: "abandon",
-  paidOrderStatus: "ordered",
-  paidShippingStatus: "waiting",
-  currency: "usd",
-
-  allowedOrigins: (process.env.ALLOWED_ORIGIN || "https://yiichendelajii.com")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean),
-};
+const HANDLE = { ...env, ...constants };
 
 // ============================================================
 // HANDLE: STRIPE + EXPRESS SETUP
 // ============================================================
-
-let stripeClient = null;
-let emailTransport = null;
 
 app.use((req, res, next) => {
   const origin = req.get("Origin") || "";
@@ -713,30 +694,6 @@ async function sendOrderShippedEmail(order) {
   });
 }
 
-async function sendOrderEmail({ to, subject, html, messageId }) {
-  assertOrderEmailConfig();
-
-  if (!emailTransport) {
-    emailTransport = nodemailer.createTransport({
-      host: HANDLE.zohoSmtpHost,
-      port: HANDLE.zohoSmtpPort,
-      secure: HANDLE.zohoSmtpPort === 465,
-      auth: {
-        user: HANDLE.zohoSmtpUser,
-        pass: HANDLE.zohoSmtpPassword,
-      },
-    });
-  }
-
-  await emailTransport.sendMail({
-    from: HANDLE.orderEmailFrom,
-    to,
-    subject,
-    html,
-    messageId: `<${messageId}@yiichendelajii.com>`,
-  });
-}
-
 async function findOrderRowByPaymentIntentIdWithRetry(sheets, stripePaymentIntentId) {
   const retryCount = 6;
 
@@ -786,23 +743,6 @@ async function getNextOrderRow(sheets) {
   });
 
   return lastDataRow + 1;
-}
-
-async function getSheetsClient() {
-  assertGoogleSheetConfig();
-
-  const credentials = JSON.parse(HANDLE.googleServiceAccountJson);
-
-  const auth = new google.auth.JWT({
-    email: credentials.client_email,
-    key: credentials.private_key,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-  });
-
-  return google.sheets({
-    version: "v4",
-    auth,
-  });
 }
 
 // ============================================================
@@ -1027,37 +967,6 @@ function getAllowedOrigin(origin) {
   return HANDLE.allowedOrigins.includes(origin) ? origin : "";
 }
 
-function assertStripeConfig() {
-  if (!HANDLE.stripeSecretKey) {
-    throw new Error("Missing required env var: STRIPE_SECRET_KEY");
-  }
-}
-
-function assertStripeWebhookConfig() {
-  if (!HANDLE.stripeWebhookSecret) {
-    throw new Error("Missing required env var: STRIPE_WEBHOOK_SECRET");
-  }
-}
-
-function assertGoogleSheetConfig() {
-  [
-    ["GOOGLE_SHEET_ID", HANDLE.googleSheetId],
-    ["GOOGLE_SERVICE_ACCOUNT_JSON", HANDLE.googleServiceAccountJson],
-  ].forEach(([name, value]) => {
-    if (!value) throw new Error(`Missing required env var: ${name}`);
-  });
-}
-
-function assertOrderEmailConfig() {
-  [
-    ["ORDER_EMAIL_FROM", HANDLE.orderEmailFrom],
-    ["ZOHO_SMTP_USER", HANDLE.zohoSmtpUser],
-    ["ZOHO_SMTP_PASSWORD", HANDLE.zohoSmtpPassword],
-  ].forEach(([name, value]) => {
-    if (!value) throw new Error(`Missing required env var: ${name}`);
-  });
-}
-
 function assertOrderEmailRequestAuthorized(req) {
   if (!HANDLE.orderEmailApiKey) {
     throw new Error("Missing required env var: ORDER_EMAIL_API_KEY");
@@ -1071,76 +980,6 @@ function assertOrderEmailRequestAuthorized(req) {
   if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) {
     throw new PublicError(401, "Unauthorized.");
   }
-}
-
-function getStripeClient() {
-  if (!stripeClient) {
-    stripeClient = new Stripe(HANDLE.stripeSecretKey, {
-      apiVersion: "2026-02-25.clover",
-    });
-  }
-
-  return stripeClient;
-}
-
-function cleanText(value, maxLength) {
-  return String(value || "")
-    .replace(/[\u0000-\u001F\u007F]/g, "")
-    .trim()
-    .slice(0, maxLength);
-}
-
-function escapeHtml(value) {
-  return String(value || "").replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  })[character]);
-}
-
-class PublicError extends Error {
-  constructor(statusCode, message) {
-    super(message);
-    this.statusCode = statusCode;
-    this.isPublic = true;
-  }
-}
-
-function formatSheetDate(date) {
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-
-  return `${yyyy}/${mm}/${dd}`;
-}
-
-function roundMoney(value) {
-  return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
-}
-
-function parseMoney(value) {
-  const amount = Number(value);
-  return Number.isFinite(amount) ? roundMoney(amount) : 0;
-}
-
-function formatMoney(value) {
-  return roundMoney(value).toFixed(2);
-}
-
-function toStripeAmount(value) {
-  return Math.round(roundMoney(value) * 100);
-}
-
-function fromStripeAmount(value) {
-  return roundMoney((Number(value) || 0) / 100);
-}
-
-function wait(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
 }
 
 // ============================================================
