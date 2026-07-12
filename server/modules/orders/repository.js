@@ -68,6 +68,10 @@ async function updatePaidOrder(order) {
           values: [[constants.paidShippingStatus]],
         },
         {
+          range: `'${env.googleSheetTabName}'!P${rowNumber}`,
+          values: [[false]],
+        },
+        {
           range: `'${env.googleSheetTabName}'!R${rowNumber}:Z${rowNumber}`,
           values: [[
             order.customer.email,
