@@ -6,25 +6,27 @@ const constants = require("./config/constants");
 const { PublicError } = require("./shared/errors");
 const {
   cleanText,
-  escapeHtml,
   formatSheetDate,
   roundMoney,
   parseMoney,
   formatMoney,
   toStripeAmount,
   fromStripeAmount,
-  wait,
 } = require("./shared/utils");
 const {
   assertStripeConfig,
   assertStripeWebhookConfig,
   getStripeClient,
 } = require("./integrations/stripe/client");
-const { getSheetsClient } = require("./integrations/sheets/client");
 const {
-  assertOrderEmailConfig,
-  sendOrderEmail,
-} = require("./integrations/email/client");
+  appendFirstStepOrder,
+  updatePaidOrder,
+  getShippedOrderEmailDetails,
+} = require("./modules/orders/repository");
+const {
+  sendOrderSuccessEmail,
+  sendOrderShippedEmail,
+} = require("./modules/orders/email-service");
 
 const app = express();
 
@@ -388,79 +390,8 @@ app.post("/update-payment-intent-tax", async (req, res) => {
 // ============================================================
 
 function writeFirstStepOrderInBackground(order) {
-  appendFirstStepOrderToSheet(order).catch((error) => {
+  appendFirstStepOrder(order).catch((error) => {
     console.error("Background Google Sheet write failed:", error);
-  });
-}
-
-async function appendFirstStepOrderToSheet(order) {
-  const sheets = await getSheetsClient();
-  const startRow = await getNextOrderRow(sheets);
-
-  const rows = order.items.map((item, index) => {
-    const isFirstItemRow = index === 0;
-
-    return [
-      // A-C: purple area
-      isFirstItemRow ? order.orderId : "",
-      isFirstItemRow ? order.timeOrdered : "",
-      isFirstItemRow ? order.notes || "" : "",
-
-      // D: spacer
-      "",
-
-      // E-K: yellow area
-      isFirstItemRow ? order.orderStatus : "",
-      item.product_name,
-      item.product_id,
-      item.variant,
-      item.size,
-      item.qty,
-      formatMoney(item.unit_price),
-
-      // L: spacer
-      "",
-
-      // M-P: red area, second step or manual
-      "",
-      "",
-      "",
-      "",
-
-      // Q: spacer
-      "",
-
-      // R-Z: blue area, second step webhook
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-
-      // AA: spacer
-      "",
-
-      // AB-AG: green area, second step webhook
-      isFirstItemRow ? order.stripePaymentIntentId : "",
-      "",
-      "",
-      "",
-      "",
-      "",
-    ];
-  });
-
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: HANDLE.googleSheetId,
-    range: `'${HANDLE.googleSheetTabName}'!A${startRow}:AG${startRow + rows.length - 1}`,
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      values: rows,
-    },
   });
 }
 
@@ -481,268 +412,12 @@ async function updatePaidOrderInSheetFromPaymentIntentId(stripePaymentIntentId) 
     customer: getCustomerDetailsFromPaymentIntent(paymentIntent),
     totals: getTotalsFromPaymentIntent(paymentIntent),
   };
-  const sheetResult = await updatePaidOrderInSheet(order);
+  const storedOrder = await updatePaidOrder(order);
 
-  order.items = await getOrderItemsFromSheet(
-    sheetResult.sheets,
-    sheetResult.rowNumber
-  );
-  if (!order.orderId) order.orderId = sheetResult.orderId;
+  order.items = storedOrder.items;
+  if (!order.orderId) order.orderId = storedOrder.orderId;
 
   return order;
-}
-
-async function updatePaidOrderInSheet(order) {
-  const sheets = await getSheetsClient();
-  const rowNumber = await findOrderRowByPaymentIntentIdWithRetry(
-    sheets,
-    order.stripePaymentIntentId
-  );
-
-  await sheets.spreadsheets.values.batchUpdate({
-    spreadsheetId: HANDLE.googleSheetId,
-    requestBody: {
-      valueInputOption: "USER_ENTERED",
-      data: [
-        {
-          range: `'${HANDLE.googleSheetTabName}'!E${rowNumber}`,
-          values: [[order.orderStatus]],
-        },
-        {
-          range: `'${HANDLE.googleSheetTabName}'!M${rowNumber}`,
-          values: [[HANDLE.paidShippingStatus]],
-        },
-        {
-          range: `'${HANDLE.googleSheetTabName}'!R${rowNumber}:Z${rowNumber}`,
-          values: [
-            [
-              order.customer.email,
-              order.customer.phone,
-              order.customer.shippingName,
-              order.customer.address1,
-              order.customer.address2,
-              order.customer.city,
-              order.customer.state,
-              order.customer.postalCode,
-              order.customer.country,
-            ],
-          ],
-        },
-        {
-          range: `'${HANDLE.googleSheetTabName}'!AC${rowNumber}:AG${rowNumber}`,
-          values: [
-            [
-              formatMoney(order.totals.subtotal),
-              formatMoney(order.totals.shippingFee),
-              formatMoney(order.totals.tax),
-              formatMoney(order.totals.total),
-              order.totals.currency,
-            ],
-          ],
-        },
-      ],
-    },
-  });
-
-  return {
-    sheets,
-    rowNumber,
-    orderId: await getOrderIdFromSheet(sheets, rowNumber),
-  };
-}
-
-async function getOrderIdFromSheet(sheets, rowNumber) {
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: HANDLE.googleSheetId,
-    range: `'${HANDLE.googleSheetTabName}'!A${rowNumber}`,
-  });
-
-  return cleanText(response.data.values?.[0]?.[0], 120);
-}
-
-async function getOrderItemsFromSheet(sheets, rowNumber) {
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: HANDLE.googleSheetId,
-    range: `'${HANDLE.googleSheetTabName}'!A${rowNumber}:K${rowNumber + 49}`,
-  });
-  const rows = response.data.values || [];
-  const items = [];
-
-  for (let index = 0; index < rows.length; index += 1) {
-    const row = rows[index];
-
-    if (index > 0 && cleanText(row[0], 120)) break;
-    if (!cleanText(row[5], 160)) continue;
-
-    items.push({
-      product_name: cleanText(row[5], 160),
-      variant: cleanText(row[7], 80),
-      size: cleanText(row[8], 40),
-      qty: Number(row[9]) || 1,
-      unit_price: parseMoney(row[10]),
-    });
-  }
-
-  return items;
-}
-
-// ============================================================
-// ORDER SUCCESS EMAIL
-// ============================================================
-
-async function sendOrderSuccessEmail(order) {
-  assertOrderEmailConfig();
-
-  if (!order.orderId) {
-    throw new Error("Paid order has no order number.");
-  }
-  if (!order.customer.email) {
-    throw new Error(`Paid order ${order.orderId} has no customer email.`);
-  }
-  if (!order.items.length) {
-    throw new Error(`Paid order ${order.orderId} has no Sheet item rows.`);
-  }
-
-  const templateResponse = await fetch(HANDLE.orderEmailTemplateUrl);
-  if (!templateResponse.ok) {
-    throw new Error(`Cannot load order email template: ${templateResponse.status}`);
-  }
-
-  const html = renderOrderSuccessEmail(await templateResponse.text(), order);
-  await sendOrderEmail({
-    to: order.customer.email,
-    subject: `Order Confirmation - ${order.orderId}`,
-    html,
-    messageId: `order-success.${order.orderId}`,
-  });
-}
-
-function renderOrderSuccessEmail(template, order) {
-  const values = {
-    ORDER_NUMBER: escapeHtml(order.orderId),
-    ITEM_ROWS: order.items.map(renderOrderItemRow).join(""),
-    SUBTOTAL: formatMoney(order.totals.subtotal),
-    TAX: formatMoney(order.totals.tax),
-    SHIPPING_FEE: formatMoney(order.totals.shippingFee),
-    GRAND_TOTAL: formatMoney(order.totals.total),
-  };
-
-  return Object.entries(values).reduce((html, [name, value]) => {
-    return html.replaceAll(`{{${name}}}`, value);
-  }, template);
-}
-
-function renderOrderItemRow(item) {
-  const details = [item.variant, item.size].filter(Boolean).map(escapeHtml).join(" / ");
-  const lineTotal = formatMoney(item.unit_price * item.qty);
-
-  return `<tr>
-    <td style="padding:0 8px 18px 0;vertical-align:top;">${escapeHtml(item.product_name)}${details ? `<br>${details}` : ""}</td>
-    <td style="padding:0 8px 18px;text-align:center;vertical-align:top;white-space:nowrap;">x${item.qty}</td>
-    <td style="padding:0 0 18px 8px;text-align:right;vertical-align:top;white-space:nowrap;">${lineTotal}</td>
-  </tr>`;
-}
-
-async function getShippedOrderEmailDetails(orderId) {
-  const sheets = await getSheetsClient();
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: HANDLE.googleSheetId,
-    range: `'${HANDLE.googleSheetTabName}'!A5:A`,
-  });
-  const rows = response.data.values || [];
-  const rowIndex = rows.findIndex((row) => cleanText(row[0], 120) === orderId);
-
-  if (rowIndex < 0) throw new PublicError(404, "Order was not found.");
-
-  const rowNumber = rowIndex + 5;
-  const emailResponse = await sheets.spreadsheets.values.get({
-    spreadsheetId: HANDLE.googleSheetId,
-    range: `'${HANDLE.googleSheetTabName}'!R${rowNumber}`,
-  });
-  const email = cleanText(emailResponse.data.values?.[0]?.[0], 160);
-  if (!email) throw new Error(`Order ${orderId} has no customer email in Sheet.`);
-
-  return { orderId, email };
-}
-
-async function sendOrderShippedEmail(order) {
-  assertOrderEmailConfig();
-
-  const templateResponse = await fetch(HANDLE.shippedEmailTemplateUrl);
-  if (!templateResponse.ok) {
-    throw new Error(`Cannot load shipped email template: ${templateResponse.status}`);
-  }
-
-  const values = {
-    ORDER_NUMBER: escapeHtml(order.orderId),
-    CARRIER: escapeHtml(order.carrier),
-    TRACKING_NUMBER: escapeHtml(order.trackingNumber),
-  };
-  const html = Object.entries(values).reduce((result, [name, value]) => {
-    return result.replaceAll(`{{${name}}}`, value);
-  }, await templateResponse.text());
-  const trackingKey = crypto
-    .createHash("sha256")
-    .update(order.trackingNumber)
-    .digest("hex")
-    .slice(0, 16);
-  await sendOrderEmail({
-    to: order.email,
-    subject: `Order Shipped - ${order.orderId}`,
-    html,
-    messageId: `order-shipped.${order.orderId}.${trackingKey}`,
-  });
-}
-
-async function findOrderRowByPaymentIntentIdWithRetry(sheets, stripePaymentIntentId) {
-  const retryCount = 6;
-
-  for (let attempt = 0; attempt < retryCount; attempt += 1) {
-    const rowNumber = await findOrderRowByPaymentIntentId(sheets, stripePaymentIntentId);
-
-    if (rowNumber) return rowNumber;
-    await wait(500 * (attempt + 1));
-  }
-
-  throw new Error(`Cannot find order row for payment intent: ${stripePaymentIntentId}`);
-}
-
-async function findOrderRowByPaymentIntentId(sheets, stripePaymentIntentId) {
-  const firstDataRow = 5;
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: HANDLE.googleSheetId,
-    range: `'${HANDLE.googleSheetTabName}'!AB${firstDataRow}:AB`,
-  });
-  const values = response.data.values || [];
-
-  for (let index = 0; index < values.length; index += 1) {
-    if (String(values[index][0] || "").trim() === stripePaymentIntentId) {
-      return firstDataRow + index;
-    }
-  }
-
-  return 0;
-}
-
-async function getNextOrderRow(sheets) {
-  const firstDataRow = 5;
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: HANDLE.googleSheetId,
-    range: `'${HANDLE.googleSheetTabName}'!A:AG`,
-  });
-  const values = response.data.values || [];
-  let lastDataRow = firstDataRow - 1;
-
-  values.forEach((row, index) => {
-    const rowNumber = index + 1;
-    const hasValue = row.some((cell) => String(cell || "").trim() !== "");
-
-    if (rowNumber >= firstDataRow && hasValue) {
-      lastDataRow = rowNumber;
-    }
-  });
-
-  return lastDataRow + 1;
 }
 
 // ============================================================

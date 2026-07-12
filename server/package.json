@@ -2,7 +2,7 @@
   "name": "ydl-api",
   "version": "1.0.0",
   "private": true,
-  "main": "function.js",
+  "main": "index.js",
   "scripts": {
     "start": "functions-framework --target=api"
   },
