@@ -22,8 +22,8 @@ const HANDLE = {
 
   orderEmailApiKey: process.env.ORDER_EMAIL_API_KEY,
   orderEmailFrom: process.env.ORDER_EMAIL_FROM,
-  zohoSmtpHost: process.env.ZOHO_SMTP_HOST,
-  zohoSmtpPort: Number(process.env.ZOHO_SMTP_PORT || 465),
+  zohoSmtpHost: "smtppro.zoho.com",
+  zohoSmtpPort: 465,
   zohoSmtpUser: process.env.ZOHO_SMTP_USER,
   zohoSmtpPassword: process.env.ZOHO_SMTP_PASSWORD,
   orderEmailTemplateUrl:
@@ -1051,7 +1051,6 @@ function assertGoogleSheetConfig() {
 function assertOrderEmailConfig() {
   [
     ["ORDER_EMAIL_FROM", HANDLE.orderEmailFrom],
-    ["ZOHO_SMTP_HOST", HANDLE.zohoSmtpHost],
     ["ZOHO_SMTP_USER", HANDLE.zohoSmtpUser],
     ["ZOHO_SMTP_PASSWORD", HANDLE.zohoSmtpPassword],
   ].forEach(([name, value]) => {
