@@ -57,7 +57,7 @@
 
     activeCart = cart;
     activeCheckoutSession = checkoutSession;
-    renderTotals(checkoutSession || {});
+    renderUntaxedTotals();
     initBillingToggle();
     renderExpressSelector();
 
@@ -225,6 +225,9 @@
     });
 
     expressCheckoutElement.on('confirm', function() {
+      var shipping = getShippingDetails();
+      var billing = getBillingDetails(shipping);
+
       scheduleConfirmingStatus();
 
       ensureTaxCalculated().then(function() {
@@ -238,7 +241,13 @@
         return stripe.confirmPayment({
           elements: expressElements,
           confirmParams: {
-            return_url: getReturnUrl()
+            return_url: getReturnUrl(),
+            shipping: {
+              name: shipping.name || billing.name || '',
+              phone: shipping.phone || '',
+              address: shipping.address
+            },
+            receipt_email: shipping.email || billing.email || ''
           },
           redirect: 'if_required'
         });
@@ -598,12 +607,9 @@
 
   function renderUntaxedTotals() {
     renderTotals({
-      subtotal: activeCheckoutSession && activeCheckoutSession.subtotal,
+      subtotal: activeCheckoutSession && activeCheckoutSession.listed_subtotal,
       tax: '0.00',
-      total: activeCheckoutSession && roundMoneyValue(
-        Number(activeCheckoutSession.subtotal || 0) +
-        Number(activeCheckoutSession.shipping_fee || 0)
-      ),
+      total: activeCheckoutSession && activeCheckoutSession.listed_total,
       currency: activeCheckoutSession && activeCheckoutSession.currency
     });
   }
@@ -630,10 +636,6 @@
     clearConfirmingStatusTimer();
     setStatus('');
     setPaymentMessage(error && error.message ? error.message : 'Unable to calculate tax.');
-  }
-
-  function roundMoneyValue(value) {
-    return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
   }
 
   function formatPrice(value) {

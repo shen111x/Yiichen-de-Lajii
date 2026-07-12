@@ -47,7 +47,8 @@
       savedCheckout.cart_hash === cartHash &&
       savedCheckout.client_secret &&
       savedCheckout.subtotal != null &&
-      savedCheckout.total != null
+      savedCheckout.total != null &&
+      savedCheckout.listed_total != null
     ) {
       window.location.href = getCheckoutHref();
       return;
@@ -73,6 +74,8 @@
           shipping_fee: payload.shipping_fee,
           tax: payload.tax,
           total: payload.total,
+          listed_subtotal: payload.listed_subtotal,
+          listed_total: payload.listed_total,
           currency: payload.currency || 'usd',
           created_at: Date.now()
         });

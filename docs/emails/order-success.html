@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Order Confirmation</title>
+  <style>
+    html, body { height:100% !important; }
+    @media only screen and (max-width:699px) {
+      .email-shell { padding:12px !important; }
+      .monogram-wide { display:none !important; }
+      .monogram-mobile { display:block !important; }
+      .footer-meta { font-size:13.2px !important; }
+    }
+  </style>
+</head>
+<body style="height:100%;margin:0;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;font-size:13.2px;line-height:1.25;-webkit-text-stroke:0.02em currentColor;">
+  <table role="presentation" width="100%" height="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;height:100%;min-height:100vh;">
+    <tr>
+      <td class="email-shell" align="center" valign="middle" style="padding:24px 12px;vertical-align:middle;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:700px;margin:0 auto;">
+          <tr>
+            <td style="border:2px solid #000;padding:12px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="left" valign="top"><img src="https://yiichendelajii.com/images/brand/logob-black.svg" width="58" alt="YdL" style="display:block;width:58px;height:auto;border:0;"></td>
+                  <td align="right" valign="top" style="font-size:17.6px;white-space:nowrap;">Order Confirmation</td>
+                </tr>
+                <tr><td colspan="2" height="70" style="height:70px;font-size:0;line-height:0;">&nbsp;</td></tr>
+                <tr>
+                  <td colspan="2">
+                    <p style="margin:0 0 20px;">Thank you, we have received your payment!</p>
+                    <p style="margin:0 0 20px;">Your YdL&trade; order number is:<br><a href="https://yiichendelajii.com/pages/tracking/index.html" style="color:#000;text-decoration:underline;">{{ORDER_NUMBER}}</a></p>
+                    <p style="margin:0;">Please use this order number and email to track your order at <a href="https://yiichendelajii.com/pages/tracking/index.html" style="color:#000;text-decoration:underline;">Tracking Page</a>.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr><td height="12" style="height:12px;font-size:0;line-height:0;">&nbsp;</td></tr>
+          <tr>
+            <td style="border:2px solid #000;padding:12px;">
+              <div style="font-size:17.6px;line-height:35px;">Purchase Summary</div>
+              <div style="height:70px;font-size:0;line-height:0;">&nbsp;</div>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                {{ITEM_ROWS}}
+              </table>
+              <div style="height:70px;font-size:0;line-height:0;">&nbsp;</div>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr><td align="right">Sub Total: {{SUBTOTAL}}</td></tr>
+                <tr><td align="right">Tax: {{TAX}}</td></tr>
+                <tr><td align="right">Shipping Fee: {{SHIPPING_FEE}}</td></tr>
+              </table>
+              <div style="height:12px;font-size:0;line-height:0;">&nbsp;</div>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:17.6px;line-height:35px;">
+                <tr>
+                  <td align="left">Total:</td>
+                  <td align="right"><strong>{{GRAND_TOTAL}}</strong></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:47px 0 0;">
+              <div style="padding:0 12px;">
+                <p style="margin:0;">Please reach out to:<br><a href="mailto:Contact@YiichendeLajii.com" style="color:#000;text-decoration:underline;">Contact@YiichendeLajii.com</a><br>if you have any question or concerns regarding your purchase.</p>
+                <div style="height:47px;font-size:0;line-height:0;">&nbsp;</div>
+                <table class="footer-meta" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-bottom:2px solid #000;font-size:13.2px;">
+                  <tr>
+                    <td align="left" valign="bottom" style="padding-bottom:6px;">&copy;2026 Yiichen de Lajii, all rights reserved.</td>
+                    <td align="right" valign="bottom" style="padding-bottom:6px;"><a href="https://yiichendelajii.com" style="color:#000;text-decoration:underline;white-space:nowrap;">YiichendeLajii.com</a></td>
+                  </tr>
+                </table>
+                <div style="height:6px;font-size:0;line-height:0;">&nbsp;</div>
+              </div>
+              <img class="monogram-wide" src="https://yiichendelajii.com/images/brand/monogram-29x5.svg" width="650" alt="YdL monogram" style="display:block;width:100%;height:auto;border:0;">
+              <img class="monogram-mobile" src="https://yiichendelajii.com/images/brand/monogram-22x4.svg" width="650" alt="YdL monogram" style="display:none;width:100%;height:auto;border:0;">
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

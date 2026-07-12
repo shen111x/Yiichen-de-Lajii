@@ -3,6 +3,7 @@ const express = require("express");
 const Stripe = require("stripe");
 const { google } = require("googleapis");
 const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 const app = express();
 
@@ -18,6 +19,19 @@ const HANDLE = {
   googleSheetId: process.env.GOOGLE_SHEET_ID,
   googleSheetTabName: process.env.GOOGLE_SHEET_TAB_NAME || "Orders",
   googleServiceAccountJson: process.env.GOOGLE_SERVICE_ACCOUNT_JSON,
+
+  orderEmailApiKey: process.env.ORDER_EMAIL_API_KEY,
+  orderEmailFrom: process.env.ORDER_EMAIL_FROM,
+  zohoSmtpHost: process.env.ZOHO_SMTP_HOST,
+  zohoSmtpPort: Number(process.env.ZOHO_SMTP_PORT || 465),
+  zohoSmtpUser: process.env.ZOHO_SMTP_USER,
+  zohoSmtpPassword: process.env.ZOHO_SMTP_PASSWORD,
+  orderEmailTemplateUrl:
+    process.env.ORDER_EMAIL_TEMPLATE_URL ||
+    "https://yiichendelajii.com/emails/order-success.html",
+  shippedEmailTemplateUrl:
+    process.env.SHIPPED_EMAIL_TEMPLATE_URL ||
+    "https://yiichendelajii.com/emails/order-shipped.html",
 
   productIndexUrl:
     process.env.PRODUCT_INDEX_URL ||
@@ -41,6 +55,7 @@ const HANDLE = {
 // ============================================================
 
 let stripeClient = null;
+let emailTransport = null;
 
 app.use((req, res, next) => {
   const origin = req.get("Origin") || "";
@@ -109,11 +124,14 @@ app.post("/stripe-webhook", express.raw({
       return;
     }
 
-    await updatePaidOrderInSheetFromPaymentIntentId(event.data.object.id);
+    const paidOrder = await updatePaidOrderInSheetFromPaymentIntentId(
+      event.data.object.id
+    );
+    await sendOrderSuccessEmail(paidOrder);
 
-    console.log("Stripe webhook sheet update completed:", event.data.object.id);
+    console.log("Stripe webhook order update + email completed:", event.data.object.id);
 
-    res.json({ ok: true, sheet_updated: true });
+    res.json({ ok: true, sheet_updated: true, email_sent: true });
   } catch (error) {
     console.error("Stripe webhook failed:", error);
     res.status(error.statusCode || 400).json({
@@ -137,6 +155,31 @@ app.use((error, req, res, next) => {
   }
 
   next(error);
+});
+
+app.post("/order-shipped-email", async (req, res) => {
+  try {
+    assertOrderEmailRequestAuthorized(req);
+
+    const orderId = cleanText(req.body.order_id, 120);
+    const carrier = cleanText(req.body.carrier, 80);
+    const trackingNumber = cleanText(req.body.tracking_number, 160);
+
+    if (!orderId || !carrier || !trackingNumber) {
+      throw new PublicError(400, "order_id, carrier, and tracking_number are required.");
+    }
+
+    const order = await getShippedOrderEmailDetails(orderId);
+    await sendOrderShippedEmail({ ...order, carrier, trackingNumber });
+
+    res.json({ ok: true, email_sent: true });
+  } catch (error) {
+    console.error("Order shipped email failed:", error);
+    res.status(error.statusCode || 500).json({
+      ok: false,
+      error: error.isPublic ? error.message : "Unable to send order shipped email.",
+    });
+  }
 });
 
 // ============================================================
@@ -217,6 +260,8 @@ app.post("/create-payment-intent", async (req, res) => {
       shipping_fee: formatMoney(shippingFee),
       tax: formatMoney(tax),
       total: formatMoney(total),
+      listed_subtotal: formatMoney(subtotal),
+      listed_total: formatMoney(total),
       currency: HANDLE.currency,
     });
   } catch (error) {
@@ -269,7 +314,7 @@ app.post("/update-payment-intent-tax", async (req, res) => {
       line_items: normalizedItems.map((item, index) => ({
         amount: toStripeAmount(item.unit_price * item.qty),
         reference: `${index + 1}-${item.product_id}`.slice(0, 200),
-        tax_behavior: "exclusive",
+        tax_behavior: "inclusive",
         tax_code: item.tax_code,
       })),
       customer_details: {
@@ -281,7 +326,7 @@ app.post("/update-payment-intent-tax", async (req, res) => {
     if (shippingFee > 0) {
       calculationParams.shipping_cost = {
         amount: toStripeAmount(shippingFee),
-        tax_behavior: "exclusive",
+        tax_behavior: "inclusive",
       };
     }
 
@@ -298,6 +343,12 @@ app.post("/update-payment-intent-tax", async (req, res) => {
       Number(calculation.tax_amount_inclusive || 0)
     );
     const total = fromStripeAmount(calculation.amount_total);
+    const shippingTax = fromStripeAmount(
+      calculation.shipping_cost && calculation.shipping_cost.amount_tax
+    );
+    const productTax = roundMoney(tax - shippingTax);
+    const netSubtotal = roundMoney(subtotal - productTax);
+    const netShippingFee = roundMoney(shippingFee - shippingTax);
 
     const paymentIntentUpdate = {
       amount: calculation.amount_total,
@@ -309,8 +360,8 @@ app.post("/update-payment-intent-tax", async (req, res) => {
         },
       },
       metadata: {
-        subtotal: formatMoney(subtotal),
-        shipping_fee: formatMoney(shippingFee),
+        subtotal: formatMoney(netSubtotal),
+        shipping_fee: formatMoney(netShippingFee),
         tax: formatMoney(tax),
         total: formatMoney(total),
         currency: HANDLE.currency,
@@ -318,23 +369,12 @@ app.post("/update-payment-intent-tax", async (req, res) => {
       },
     };
 
-    if (shipping.name) {
-      paymentIntentUpdate.shipping = {
-        name: shipping.name,
-        phone: shipping.phone || undefined,
-        address: shipping.address,
-      };
-    }
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shipping.email)) {
-      paymentIntentUpdate.receipt_email = shipping.email;
-    }
-
     await getStripeClient().paymentIntents.update(paymentIntentId, paymentIntentUpdate);
 
     res.json({
       ok: true,
-      subtotal: formatMoney(subtotal),
-      shipping_fee: formatMoney(shippingFee),
+      subtotal: formatMoney(netSubtotal),
+      shipping_fee: formatMoney(netShippingFee),
       tax: formatMoney(tax),
       total: formatMoney(total),
       currency: HANDLE.currency,
@@ -453,13 +493,22 @@ async function appendFirstStepOrderToSheet(order) {
 
 async function updatePaidOrderInSheetFromPaymentIntentId(stripePaymentIntentId) {
   const paymentIntent = await getHydratedPaymentIntent(stripePaymentIntentId);
-
-  await updatePaidOrderInSheet({
+  const order = {
+    orderId: cleanText(paymentIntent.metadata.order_id, 120),
     stripePaymentIntentId: paymentIntent.id,
     orderStatus: HANDLE.paidOrderStatus,
     customer: getCustomerDetailsFromPaymentIntent(paymentIntent),
     totals: getTotalsFromPaymentIntent(paymentIntent),
-  });
+  };
+  const sheetResult = await updatePaidOrderInSheet(order);
+
+  order.items = await getOrderItemsFromSheet(
+    sheetResult.sheets,
+    sheetResult.rowNumber
+  );
+  if (!order.orderId) order.orderId = sheetResult.orderId;
+
+  return order;
 }
 
 async function updatePaidOrderInSheet(order) {
@@ -512,6 +561,179 @@ async function updatePaidOrderInSheet(order) {
         },
       ],
     },
+  });
+
+  return {
+    sheets,
+    rowNumber,
+    orderId: await getOrderIdFromSheet(sheets, rowNumber),
+  };
+}
+
+async function getOrderIdFromSheet(sheets, rowNumber) {
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: HANDLE.googleSheetId,
+    range: `'${HANDLE.googleSheetTabName}'!A${rowNumber}`,
+  });
+
+  return cleanText(response.data.values?.[0]?.[0], 120);
+}
+
+async function getOrderItemsFromSheet(sheets, rowNumber) {
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: HANDLE.googleSheetId,
+    range: `'${HANDLE.googleSheetTabName}'!A${rowNumber}:K${rowNumber + 49}`,
+  });
+  const rows = response.data.values || [];
+  const items = [];
+
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = rows[index];
+
+    if (index > 0 && cleanText(row[0], 120)) break;
+    if (!cleanText(row[5], 160)) continue;
+
+    items.push({
+      product_name: cleanText(row[5], 160),
+      variant: cleanText(row[7], 80),
+      size: cleanText(row[8], 40),
+      qty: Number(row[9]) || 1,
+      unit_price: parseMoney(row[10]),
+    });
+  }
+
+  return items;
+}
+
+// ============================================================
+// ORDER SUCCESS EMAIL
+// ============================================================
+
+async function sendOrderSuccessEmail(order) {
+  assertOrderEmailConfig();
+
+  if (!order.orderId) {
+    throw new Error("Paid order has no order number.");
+  }
+  if (!order.customer.email) {
+    throw new Error(`Paid order ${order.orderId} has no customer email.`);
+  }
+  if (!order.items.length) {
+    throw new Error(`Paid order ${order.orderId} has no Sheet item rows.`);
+  }
+
+  const templateResponse = await fetch(HANDLE.orderEmailTemplateUrl);
+  if (!templateResponse.ok) {
+    throw new Error(`Cannot load order email template: ${templateResponse.status}`);
+  }
+
+  const html = renderOrderSuccessEmail(await templateResponse.text(), order);
+  await sendOrderEmail({
+    to: order.customer.email,
+    subject: `Order Confirmation - ${order.orderId}`,
+    html,
+    messageId: `order-success.${order.orderId}`,
+  });
+}
+
+function renderOrderSuccessEmail(template, order) {
+  const values = {
+    ORDER_NUMBER: escapeHtml(order.orderId),
+    ITEM_ROWS: order.items.map(renderOrderItemRow).join(""),
+    SUBTOTAL: formatMoney(order.totals.subtotal),
+    TAX: formatMoney(order.totals.tax),
+    SHIPPING_FEE: formatMoney(order.totals.shippingFee),
+    GRAND_TOTAL: formatMoney(order.totals.total),
+  };
+
+  return Object.entries(values).reduce((html, [name, value]) => {
+    return html.replaceAll(`{{${name}}}`, value);
+  }, template);
+}
+
+function renderOrderItemRow(item) {
+  const details = [item.variant, item.size].filter(Boolean).map(escapeHtml).join(" / ");
+  const lineTotal = formatMoney(item.unit_price * item.qty);
+
+  return `<tr>
+    <td style="padding:0 8px 18px 0;vertical-align:top;">${escapeHtml(item.product_name)}${details ? `<br>${details}` : ""}</td>
+    <td style="padding:0 8px 18px;text-align:center;vertical-align:top;white-space:nowrap;">x${item.qty}</td>
+    <td style="padding:0 0 18px 8px;text-align:right;vertical-align:top;white-space:nowrap;">${lineTotal}</td>
+  </tr>`;
+}
+
+async function getShippedOrderEmailDetails(orderId) {
+  const sheets = await getSheetsClient();
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: HANDLE.googleSheetId,
+    range: `'${HANDLE.googleSheetTabName}'!A5:A`,
+  });
+  const rows = response.data.values || [];
+  const rowIndex = rows.findIndex((row) => cleanText(row[0], 120) === orderId);
+
+  if (rowIndex < 0) throw new PublicError(404, "Order was not found.");
+
+  const rowNumber = rowIndex + 5;
+  const emailResponse = await sheets.spreadsheets.values.get({
+    spreadsheetId: HANDLE.googleSheetId,
+    range: `'${HANDLE.googleSheetTabName}'!R${rowNumber}`,
+  });
+  const email = cleanText(emailResponse.data.values?.[0]?.[0], 160);
+  if (!email) throw new Error(`Order ${orderId} has no customer email in Sheet.`);
+
+  return { orderId, email };
+}
+
+async function sendOrderShippedEmail(order) {
+  assertOrderEmailConfig();
+
+  const templateResponse = await fetch(HANDLE.shippedEmailTemplateUrl);
+  if (!templateResponse.ok) {
+    throw new Error(`Cannot load shipped email template: ${templateResponse.status}`);
+  }
+
+  const values = {
+    ORDER_NUMBER: escapeHtml(order.orderId),
+    CARRIER: escapeHtml(order.carrier),
+    TRACKING_NUMBER: escapeHtml(order.trackingNumber),
+  };
+  const html = Object.entries(values).reduce((result, [name, value]) => {
+    return result.replaceAll(`{{${name}}}`, value);
+  }, await templateResponse.text());
+  const trackingKey = crypto
+    .createHash("sha256")
+    .update(order.trackingNumber)
+    .digest("hex")
+    .slice(0, 16);
+  await sendOrderEmail({
+    to: order.email,
+    subject: `Order Shipped - ${order.orderId}`,
+    html,
+    messageId: `order-shipped.${order.orderId}.${trackingKey}`,
+  });
+}
+
+async function sendOrderEmail({ to, subject, html, messageId }) {
+  assertOrderEmailConfig();
+
+  if (!emailTransport) {
+    emailTransport = nodemailer.createTransport({
+      host: HANDLE.zohoSmtpHost,
+      port: HANDLE.zohoSmtpPort,
+      secure: HANDLE.zohoSmtpPort === 465,
+      auth: {
+        user: HANDLE.zohoSmtpUser,
+        pass: HANDLE.zohoSmtpPassword,
+      },
+    });
+  }
+
+  await emailTransport.sendMail({
+    from: HANDLE.orderEmailFrom,
+    to,
+    subject,
+    html,
+    messageId: `<${messageId}@yiichendelajii.com>`,
   });
 }
 
@@ -826,6 +1048,32 @@ function assertGoogleSheetConfig() {
   });
 }
 
+function assertOrderEmailConfig() {
+  [
+    ["ORDER_EMAIL_FROM", HANDLE.orderEmailFrom],
+    ["ZOHO_SMTP_HOST", HANDLE.zohoSmtpHost],
+    ["ZOHO_SMTP_USER", HANDLE.zohoSmtpUser],
+    ["ZOHO_SMTP_PASSWORD", HANDLE.zohoSmtpPassword],
+  ].forEach(([name, value]) => {
+    if (!value) throw new Error(`Missing required env var: ${name}`);
+  });
+}
+
+function assertOrderEmailRequestAuthorized(req) {
+  if (!HANDLE.orderEmailApiKey) {
+    throw new Error("Missing required env var: ORDER_EMAIL_API_KEY");
+  }
+
+  const authorization = req.get("Authorization") || "";
+  const suppliedKey = req.get("X-API-Key") || authorization.replace(/^Bearer\s+/i, "");
+  const supplied = Buffer.from(suppliedKey);
+  const expected = Buffer.from(HANDLE.orderEmailApiKey);
+
+  if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) {
+    throw new PublicError(401, "Unauthorized.");
+  }
+}
+
 function getStripeClient() {
   if (!stripeClient) {
     stripeClient = new Stripe(HANDLE.stripeSecretKey, {
@@ -841,6 +1089,16 @@ function cleanText(value, maxLength) {
     .replace(/[\u0000-\u001F\u007F]/g, "")
     .trim()
     .slice(0, maxLength);
+}
+
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character]);
 }
 
 class PublicError extends Error {
