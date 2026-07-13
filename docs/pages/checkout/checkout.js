@@ -3,7 +3,7 @@
   var checkoutStorageKey = 'yiichen-checkout-session';
   var taxEndpoint = 'https://ydl-api-436365230181.us-central1.run.app/update-payment-intent-tax';
   var promotionEndpoint = 'https://ydl-api-436365230181.us-central1.run.app/apply-promotion-code';
-  var stripePublishableKey = 'pk_test_51TpisRE9FD00WisxNzPQrGJ3qUfRCluI6RIZIsxFX9tiRF55IotUzL7WTMREaXC52uN111odOAt1TIHIpWPoVizK00C9caDSey';
+  var stripePublishableKey = 'pk_test_51TpisICZ9f6B7AFUzBiftI8cq8GNNy1JXTK6I724gNc5nR3bTyFYxTpDHP2yq4n1cPi8xLiDjxlYOLh8FZC9rWyu0046QGVfVF';
   var expressMethodOrder = ['applePay', 'googlePay', 'link', 'amazonPay', 'paypal', 'klarna'];
   var expressMethodLabels = {
     applePay: 'ApplePay',
@@ -32,6 +32,7 @@
   var currencyNode = document.getElementById('checkout-currency');
   var totalLabelNode = document.getElementById('checkout-total-label');
   var promoCodeNode = document.getElementById('promo-code');
+  var promoCodeSpacerNode = document.getElementById('promo-code-spacer');
   var promoDescriptionNode = document.getElementById('promo-description');
   var promoApplyButton = document.getElementById('promo-apply');
   var expressSelector = document.getElementById('express-selector');
@@ -762,6 +763,7 @@
   }
 
   function renderPromotionDescription() {
+    if (promoCodeSpacerNode) promoCodeSpacerNode.textContent = promoCodeNode ? promoCodeNode.value : '';
     if (promoDescriptionNode) promoDescriptionNode.textContent = appliedPromotionDescription;
   }
 
