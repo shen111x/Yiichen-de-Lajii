@@ -35,9 +35,10 @@
       width: calc(var(--header-topbar-height) * 7.2);
       display: flex;
       align-items: center;
-      justify-content: flex-start;
-      gap: 66px;
+      justify-content: space-between;
+      gap: 0px;
       min-width: 0;
+
     }
 
     .checkout-body-topbar-left-name-wrapper,
@@ -227,7 +228,7 @@
     }
 
     .checkout-policy {
-      margin-top: var(--header-topbar-height);
+      margin-top: 0;
       color: rgba(0, 0, 0, 0.22);
       -webkit-text-stroke: 0.02em currentColor;
     }
@@ -235,6 +236,53 @@
     .checkout-policy p {
       margin: 0;
       font-size: inherit;
+    }
+
+    .checkout-promo {
+      margin-top: var(--header-topbar-height);
+    }
+
+    .checkout-promo-row {
+      min-height: var(--header-topbar-height);
+      display: flex;
+      align-items: flex-end;
+      border-bottom: var(--stroke--width) solid #000;
+      box-sizing: border-box;
+    }
+
+    .checkout-promo-row label,
+    .checkout-promo-row input,
+    .checkout-promo-row button {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      -webkit-text-stroke: inherit;
+    }
+
+    .checkout-promo-row input {
+      width: 9em;
+      min-width: 4em;
+      flex: 0 1 9em;
+      padding-left: 1em;
+      outline: 0;
+    }
+
+    .checkout-promo-description {
+      color: rgba(0, 0, 0, 0.22);
+      white-space: nowrap;
+    }
+
+    .checkout-promo-row button[disabled] {
+      cursor: default;
+      opacity: 0.35;
+    }
+
+    .checkout-promo-row button {
+      margin-left: auto;
+      cursor: pointer;
     }
 
     .checkout-billing-toggle {
@@ -457,7 +505,7 @@
 
     <div class="checkout-body-topbar-right">
       <div class="checkout-body-topbar-right-total">
-        <p class="checkout-body-topbar-total-label"><span>=</span><span>TOTAL:</span></p>
+        <p id="checkout-total-label" class="checkout-body-topbar-total-label"><span>=</span><span>TOTAL:</span></p>
         <p class="checkout-body-topbar-total-value"><span id="checkout-total">0.00</span><span id="checkout-currency">usd</span></p>
       </div>
     </div>
@@ -530,6 +578,14 @@
         <div class="checkout-policy">
           <p>Shipping Policy:</p>
           <p>Most our product ships within 7 days, trasit time depends on the destination and carrer.</p>
+        </div>
+        <div class="checkout-promo">
+          <div class="checkout-promo-row">
+            <label for="promo-code">Promo Code:</label>
+            <input id="promo-code" name="promo_code" autocomplete="off">
+            <span id="promo-description" class="checkout-promo-description"></span>
+            <button id="promo-apply" type="button">apply</button>
+          </div>
         </div>
       </section>
 

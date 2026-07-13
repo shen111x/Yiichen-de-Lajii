@@ -2,6 +2,7 @@
   var cartStorageKey = 'yiichen-cart';
   var checkoutStorageKey = 'yiichen-checkout-session';
   var taxEndpoint = 'https://ydl-api-436365230181.us-central1.run.app/update-payment-intent-tax';
+  var promotionEndpoint = 'https://ydl-api-436365230181.us-central1.run.app/apply-promotion-code';
   var stripePublishableKey = 'pk_test_51TpisICZ9f6B7AFUzBiftI8cq8GNNy1JXTK6I724gNc5nR3bTyFYxTpDHP2yq4n1cPi8xLiDjxlYOLh8FZC9rWyu0046QGVfVF';
   var expressMethodOrder = ['applePay', 'googlePay', 'link', 'amazonPay', 'paypal', 'klarna'];
   var expressMethodLabels = {
@@ -29,6 +30,10 @@
   var taxNode = document.getElementById('checkout-tax');
   var totalNode = document.getElementById('checkout-total');
   var currencyNode = document.getElementById('checkout-currency');
+  var totalLabelNode = document.getElementById('checkout-total-label');
+  var promoCodeNode = document.getElementById('promo-code');
+  var promoDescriptionNode = document.getElementById('promo-description');
+  var promoApplyButton = document.getElementById('promo-apply');
   var expressSelector = document.getElementById('express-selector');
 
   var stripe = null;
@@ -48,6 +53,9 @@
   var pendingTaxRequest = null;
   var pendingTaxRequestKey = '';
   var pendingTaxRequestRevision = -1;
+  var appliedPromotionCode = '';
+  var appliedPromotionDescription = '';
+  var promotionRequest = Promise.resolve();
 
   initCheckout();
 
@@ -57,6 +65,9 @@
 
     activeCart = cart;
     activeCheckoutSession = checkoutSession;
+    appliedPromotionCode = checkoutSession && checkoutSession.promotion_code || '';
+    appliedPromotionDescription = checkoutSession && checkoutSession.promotion_description || '';
+    initPromotionCode();
     renderUntaxedTotals();
     initBillingToggle();
     renderExpressSelector();
@@ -482,6 +493,119 @@
     if (postalCodeNode) postalCodeNode.addEventListener('input', scheduleTaxCalculation);
   }
 
+  function initPromotionCode() {
+    if (!promoCodeNode || !promoApplyButton) return;
+
+    promoCodeNode.value = appliedPromotionCode;
+    renderPromotionDescription();
+
+    promoApplyButton.addEventListener('click', function() {
+      var code = promoCodeNode.value.trim();
+
+      if (!code) {
+        setPaymentMessage('Enter a promo code.');
+        return;
+      }
+
+      queuePromotionUpdate(code, true).catch(function(error) {
+        setStatus('');
+        setPaymentMessage(error.message || 'Unable to apply promo code.');
+      });
+    });
+
+    promoCodeNode.addEventListener('input', function() {
+      var removedCode;
+      var removedDescription;
+      var removedDiscount;
+
+      if (!appliedPromotionCode) return;
+      if (promoCodeNode.value.trim().toLowerCase() === appliedPromotionCode.toLowerCase()) return;
+
+      removedCode = appliedPromotionCode;
+      removedDescription = appliedPromotionDescription;
+      removedDiscount = activeCheckoutSession && activeCheckoutSession.discount;
+      appliedPromotionCode = '';
+      appliedPromotionDescription = '';
+      renderPromotionDescription();
+      renderTotalLabel(0);
+      queuePromotionUpdate('', false).catch(function(error) {
+        appliedPromotionCode = removedCode;
+        appliedPromotionDescription = removedDescription;
+        renderPromotionDescription();
+        renderTotalLabel(removedDiscount || 0);
+        setPaymentMessage(error.message || 'Unable to remove promo code.');
+      });
+    });
+  }
+
+  function queuePromotionUpdate(code, showStatus) {
+    promotionRequest = promotionRequest.catch(function() {}).then(function() {
+      return updatePromotionCode(code, showStatus);
+    });
+    return promotionRequest;
+  }
+
+  function updatePromotionCode(code, showStatus) {
+    if (!activeCheckoutSession || !activeCheckoutSession.stripe_payment_intent_id) {
+      return Promise.reject(new Error('Checkout session missing.'));
+    }
+
+    window.clearTimeout(taxRequestTimer);
+    taxAddressRevision += 1;
+    lastTaxRequestKey = '';
+    lastTaxResult = null;
+    if (promoApplyButton) promoApplyButton.disabled = true;
+    if (showStatus) setStatus('Applying promo code...');
+    setPaymentMessage('');
+
+    return (pendingTaxRequest ? pendingTaxRequest.catch(function() {}) : Promise.resolve()).then(function() {
+      return fetch(promotionEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          stripe_payment_intent_id: activeCheckoutSession.stripe_payment_intent_id,
+          promotion_code: code,
+          items: getCheckoutItems()
+        })
+      });
+    }).then(function(response) {
+      return response.json().then(function(payload) {
+        if (!response.ok) {
+          throw new Error(payload && payload.error ? payload.error : 'Unable to apply promo code.');
+        }
+        return payload;
+      });
+    }).then(function(payload) {
+      appliedPromotionCode = payload.promotion_code || '';
+      appliedPromotionDescription = payload.promotion_description || '';
+      if (code && promoCodeNode) promoCodeNode.value = appliedPromotionCode;
+      renderPromotionDescription();
+      updateStoredTotals(payload);
+      renderTotals(payload);
+      setStatus('');
+
+      if (isTaxAddressReady(getShippingDetails().address)) {
+        return requestTaxCalculation(false, true);
+      }
+      return payload;
+    }).finally(function() {
+      if (promoApplyButton) promoApplyButton.disabled = false;
+    });
+  }
+
+  function getCheckoutItems() {
+    return activeCart.map(function(item) {
+      return {
+        product_id: item.product_id,
+        variant: item.variant || '',
+        size: item.size || '',
+        qty: item.quantity || 1
+      };
+    });
+  }
+
   function scheduleTaxCalculation() {
     var shipping;
 
@@ -519,7 +643,8 @@
     var shipping = getShippingDetails();
     var requestKey = JSON.stringify({
       cart_hash: getCartHash(activeCart),
-      shipping: shipping
+      shipping: shipping,
+      promotion_code: appliedPromotionCode
     });
     var requestRevision;
 
@@ -553,14 +678,7 @@
       },
       body: JSON.stringify({
         stripe_payment_intent_id: activeCheckoutSession.stripe_payment_intent_id,
-        items: activeCart.map(function(item) {
-          return {
-            product_id: item.product_id,
-            variant: item.variant || '',
-            size: item.size || '',
-            qty: item.quantity || 1
-          };
-        }),
+        items: getCheckoutItems(),
         shipping: shipping
       })
     }).then(function(response) {
@@ -610,6 +728,7 @@
       subtotal: activeCheckoutSession && activeCheckoutSession.listed_subtotal,
       tax: '0.00',
       total: activeCheckoutSession && activeCheckoutSession.listed_total,
+      discount: activeCheckoutSession && activeCheckoutSession.discount,
       currency: activeCheckoutSession && activeCheckoutSession.currency
     });
   }
@@ -619,16 +738,46 @@
     if (taxNode) taxNode.textContent = formatPrice(totals.tax || 0);
     if (totalNode) totalNode.textContent = formatPrice(totals.total || 0);
     if (currencyNode) currencyNode.textContent = String(totals.currency || 'usd').toLowerCase();
+    renderTotalLabel(totals.discount || 0);
+  }
+
+  function renderTotalLabel(discount) {
+    if (!totalLabelNode) return;
+
+    totalLabelNode.innerHTML = '';
+    if (Number(discount) > 0) {
+      appendTotalLabelPart('-');
+      appendTotalLabelPart(formatPrice(discount));
+      appendTotalLabelPart('=');
+      return;
+    }
+    appendTotalLabelPart('=');
+    appendTotalLabelPart('TOTAL:');
+  }
+
+  function appendTotalLabelPart(text) {
+    var span = document.createElement('span');
+    span.textContent = text;
+    totalLabelNode.appendChild(span);
+  }
+
+  function renderPromotionDescription() {
+    if (promoDescriptionNode) promoDescriptionNode.textContent = appliedPromotionDescription;
   }
 
   function updateStoredTotals(totals) {
     if (!activeCheckoutSession) return;
 
     activeCheckoutSession.subtotal = totals.subtotal;
+    if (totals.listed_subtotal !== undefined) activeCheckoutSession.listed_subtotal = totals.listed_subtotal;
+    if (totals.listed_total !== undefined) activeCheckoutSession.listed_total = totals.listed_total;
     activeCheckoutSession.shipping_fee = totals.shipping_fee;
     activeCheckoutSession.tax = totals.tax;
     activeCheckoutSession.total = totals.total;
     activeCheckoutSession.currency = totals.currency || 'usd';
+    activeCheckoutSession.discount = totals.discount || '0.00';
+    activeCheckoutSession.promotion_code = totals.promotion_code || '';
+    activeCheckoutSession.promotion_description = totals.promotion_description || '';
     sessionStorage.setItem(checkoutStorageKey, JSON.stringify(activeCheckoutSession));
   }
 

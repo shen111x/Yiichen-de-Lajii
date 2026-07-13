@@ -119,6 +119,6 @@ p{
 @media (min-width: 1000px) {
   :root {
     --gap-unit: 6px;
-    --product-info-font-size: calc(var(--base-font-size) * 0.75);
+
   }
 }

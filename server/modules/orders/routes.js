@@ -17,6 +17,7 @@ webhookRouter.post(
 
 orderRouter.post("/create-payment-intent", controller.createPaymentIntent);
 orderRouter.post("/update-payment-intent-tax", controller.updatePaymentIntentTax);
+orderRouter.post("/apply-promotion-code", controller.applyPromotionCode);
 orderRouter.post("/order-shipped-email", controller.sendShippedOrderEmail);
 
 module.exports = { webhookRouter, orderRouter };

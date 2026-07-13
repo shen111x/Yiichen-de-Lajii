@@ -69,7 +69,7 @@ async function updatePaidOrder(order) {
         },
         {
           range: `'${env.googleSheetTabName}'!P${rowNumber}`,
-          values: [[false]],
+          values: [["no"]],
         },
         {
           range: `'${env.googleSheetTabName}'!R${rowNumber}:Z${rowNumber}`,

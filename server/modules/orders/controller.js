@@ -69,6 +69,18 @@ async function updatePaymentIntentTax(req, res) {
   }
 }
 
+async function applyPromotionCode(req, res) {
+  try {
+    res.json(await orderService.applyPromotionCode(req.body));
+  } catch (error) {
+    console.error("Promotion code failed:", error);
+    res.status(error.statusCode || 500).json({
+      ok: false,
+      error: error.isPublic ? error.message : "Unable to apply promotion code.",
+    });
+  }
+}
+
 async function sendShippedOrderEmail(req, res) {
   try {
     assertOrderEmailRequestAuthorized(req);
@@ -101,5 +113,6 @@ module.exports = {
   stripeWebhook,
   createPaymentIntent,
   updatePaymentIntentTax,
+  applyPromotionCode,
   sendShippedOrderEmail,
 };
