@@ -31,6 +31,7 @@ const {
   getLatestCharge,
   getPaymentDetailsFromPaymentIntent,
   getDiscountDetailsFromPaymentIntent,
+  getTaxRateFromCalculation,
 } = require("./modules/orders/payment-intent-details");
 
 const app = express();
@@ -330,6 +331,7 @@ app.post("/update-payment-intent-tax", async (req, res) => {
       Number(calculation.tax_amount_exclusive || 0) +
       Number(calculation.tax_amount_inclusive || 0)
     );
+    const taxRate = getTaxRateFromCalculation(calculation);
     const total = fromStripeAmount(calculation.amount_total);
     const shippingTax = fromStripeAmount(
       calculation.shipping_cost && calculation.shipping_cost.amount_tax
@@ -349,8 +351,10 @@ app.post("/update-payment-intent-tax", async (req, res) => {
       },
       metadata: {
         subtotal: formatMoney(netSubtotal),
+        listed_subtotal: formatMoney(subtotal),
         shipping_fee: formatMoney(netShippingFee),
         tax: formatMoney(tax),
+        tax_rate: taxRate,
         total: formatMoney(total),
         currency: HANDLE.currency,
         tax_calculation_id: calculation.id,
@@ -362,8 +366,10 @@ app.post("/update-payment-intent-tax", async (req, res) => {
     res.json({
       ok: true,
       subtotal: formatMoney(netSubtotal),
+      listed_subtotal: formatMoney(subtotal),
       shipping_fee: formatMoney(netShippingFee),
       tax: formatMoney(tax),
+      tax_rate: taxRate,
       total: formatMoney(total),
       currency: HANDLE.currency,
     });
@@ -468,8 +474,10 @@ function getTotalsFromPaymentIntent(paymentIntent) {
 
   return {
     subtotal: parseMoney(metadata.subtotal) || subtotal,
+    listedSubtotal: parseMoney(metadata.listed_subtotal) || parseMoney(metadata.subtotal) || subtotal,
     shippingFee,
     tax,
+    taxRate: cleanText(metadata.tax_rate, 20),
     total,
     currency: cleanText(metadata.currency || paymentIntent.currency || HANDLE.currency, 20).toLowerCase(),
   };

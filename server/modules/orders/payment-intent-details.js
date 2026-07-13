@@ -34,8 +34,35 @@ function getDiscountDetailsFromPaymentIntent(paymentIntent) {
   };
 }
 
+function getTaxRateFromCalculation(calculation) {
+  const uniqueRates = new Map();
+
+  (calculation.tax_breakdown || []).forEach((breakdown) => {
+    const details = breakdown.tax_rate_details || {};
+    const rate = Number(details.percentage_decimal);
+    if (!Number.isFinite(rate) || rate <= 0) return;
+
+    const key = [
+      details.country,
+      details.state,
+      details.tax_type,
+      details.percentage_decimal,
+    ].join("|");
+    uniqueRates.set(key, rate);
+  });
+
+  const totalRate = Array.from(uniqueRates.values())
+    .reduce((sum, rate) => sum + rate, 0);
+  return totalRate > 0 ? formatPercentage(totalRate) : "";
+}
+
+function formatPercentage(value) {
+  return String(Number(Number(value).toFixed(2)));
+}
+
 module.exports = {
   getLatestCharge,
   getPaymentDetailsFromPaymentIntent,
   getDiscountDetailsFromPaymentIntent,
+  getTaxRateFromCalculation,
 };

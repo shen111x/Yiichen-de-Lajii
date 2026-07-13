@@ -48,8 +48,10 @@
               <div style="height:70px;font-size:0;line-height:0;">&nbsp;</div>
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr><td align="right">Sub Total: {{SUBTOTAL}}</td></tr>
-                <tr><td align="right">Tax: {{TAX}}</td></tr>
+                <tr><td align="right">Discount: {{DISCOUNT}}</td></tr>
+                <tr><td align="right">Tax ({{TAX_RATE}}%): {{TAX}}</td></tr>
                 <tr><td align="right">Shipping Fee: {{SHIPPING_FEE}}</td></tr>
+                <tr><td align="right">{{PAYMENT_DETAILS}}</td></tr>
               </table>
               <div style="height:12px;font-size:0;line-height:0;">&nbsp;</div>
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size:17.6px;line-height:35px;">
@@ -58,6 +60,18 @@
                   <td align="right"><strong>{{GRAND_TOTAL}}</strong></td>
                 </tr>
               </table>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="subbody abovefooter" style="padding:0 12px;">
+                <div style="height:35px;font-size:0;line-height:0;">&nbsp;</div>
+                <div style="font-size:17.6px;font-weight:bold;line-height:35px;">Shipping Address</div>
+                <div style="height:35px;font-size:0;line-height:0;">&nbsp;</div>
+                <div style="line-height:1.25;">{{SHIPPING_ADDRESS}}</div>
+                <div style="height:35px;font-size:0;line-height:0;">&nbsp;</div>
+                <div style="border-top:2px solid #000;font-size:0;line-height:0;">&nbsp;</div>
+              </div>
             </td>
           </tr>
           <tr>

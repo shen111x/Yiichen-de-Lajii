@@ -29,6 +29,7 @@ const {
   getLatestCharge,
   getPaymentDetailsFromPaymentIntent,
   getDiscountDetailsFromPaymentIntent,
+  getTaxRateFromCalculation,
 } = require("./payment-intent-details");
 
 let cachedProductIndex = null;
@@ -185,6 +186,7 @@ async function updatePaymentIntentTax({ stripe_payment_intent_id, items = [], sh
     Number(calculation.tax_amount_exclusive || 0) +
     Number(calculation.tax_amount_inclusive || 0)
   );
+  const taxRate = getTaxRateFromCalculation(calculation);
   const total = fromStripeAmount(calculation.amount_total);
   const shippingTax = fromStripeAmount(
     calculation.shipping_cost && calculation.shipping_cost.amount_tax
@@ -201,6 +203,7 @@ async function updatePaymentIntentTax({ stripe_payment_intent_id, items = [], sh
       listed_subtotal: formatMoney(subtotal),
       shipping_fee: formatMoney(netShippingFee),
       tax: formatMoney(tax),
+      tax_rate: taxRate,
       total: formatMoney(total),
       currency: constants.currency,
       tax_calculation_id: calculation.id,
@@ -215,6 +218,7 @@ async function updatePaymentIntentTax({ stripe_payment_intent_id, items = [], sh
     listed_total: formatMoney(subtotal - discount + shippingFee),
     shipping_fee: formatMoney(netShippingFee),
     tax: formatMoney(tax),
+    tax_rate: taxRate,
     total: formatMoney(total),
     discount: formatMoney(discount),
     promotion_code: promotion.code,
@@ -265,6 +269,7 @@ async function applyPromotionCode({ stripe_payment_intent_id, items = [], promot
       total: formatMoney(total),
       currency: constants.currency,
       tax_calculation_id: "",
+      tax_rate: "",
       promotion_code: promotion.code,
       promotion_code_id: promotion.id,
       promotion_description: promotion.description,
@@ -352,8 +357,10 @@ function getTotalsFromPaymentIntent(paymentIntent) {
 
   return {
     subtotal: parseMoney(metadata.subtotal) || subtotal,
+    listedSubtotal: parseMoney(metadata.listed_subtotal) || parseMoney(metadata.subtotal) || subtotal,
     shippingFee,
     tax,
+    taxRate: cleanText(metadata.tax_rate, 20),
     total,
     currency: cleanText(metadata.currency || paymentIntent.currency || constants.currency, 20).toLowerCase(),
   };

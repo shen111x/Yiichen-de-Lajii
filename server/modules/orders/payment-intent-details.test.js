@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const {
   getPaymentDetailsFromPaymentIntent,
   getDiscountDetailsFromPaymentIntent,
+  getTaxRateFromCalculation,
 } = require("./payment-intent-details");
 
 test("extracts wallet, card, charge, and promotion details", () => {
@@ -64,4 +65,16 @@ test("returns card with empty promotion details when no discount was applied", (
     code: "",
     id: "",
   });
+});
+
+test("combines unique Stripe Tax breakdown rates", () => {
+  const calculation = {
+    tax_breakdown: [
+      { tax_rate_details: { country: "US", state: "CA", tax_type: "sales_tax", percentage_decimal: "7.25" } },
+      { tax_rate_details: { country: "US", state: "CA", tax_type: "sales_tax", percentage_decimal: "3.75" } },
+      { tax_rate_details: { country: "US", state: "CA", tax_type: "sales_tax", percentage_decimal: "7.25" } },
+    ],
+  };
+
+  assert.equal(getTaxRateFromCalculation(calculation), "11");
 });

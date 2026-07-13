@@ -27,7 +27,9 @@
   var billingSameCheckbox = document.getElementById('billing-same-as-shipping');
   var billingAddressFields = document.getElementById('billing-address-fields');
   var subtotalNode = document.getElementById('checkout-subtotal');
-  var taxNode = document.getElementById('checkout-tax');
+  var adjustmentSignNode = document.getElementById('checkout-adjustment-sign');
+  var adjustmentAmountNode = document.getElementById('checkout-adjustment-amount');
+  var adjustmentLabelNode = document.getElementById('checkout-adjustment-label');
   var totalNode = document.getElementById('checkout-total');
   var currencyNode = document.getElementById('checkout-currency');
   var totalLabelNode = document.getElementById('checkout-total-label');
@@ -528,12 +530,12 @@
       appliedPromotionCode = '';
       appliedPromotionDescription = '';
       renderPromotionDescription();
-      renderTotalLabel(0);
+      renderTopbarEquation(0, activeCheckoutSession && activeCheckoutSession.tax);
       queuePromotionUpdate('', false).catch(function(error) {
         appliedPromotionCode = removedCode;
         appliedPromotionDescription = removedDescription;
         renderPromotionDescription();
-        renderTotalLabel(removedDiscount || 0);
+        renderTopbarEquation(removedDiscount || 0, activeCheckoutSession && activeCheckoutSession.tax);
         setPaymentMessage(error.message || 'Unable to remove promo code.');
       });
     });
@@ -727,6 +729,7 @@
   function renderUntaxedTotals() {
     renderTotals({
       subtotal: activeCheckoutSession && activeCheckoutSession.listed_subtotal,
+      listed_subtotal: activeCheckoutSession && activeCheckoutSession.listed_subtotal,
       tax: '0.00',
       total: activeCheckoutSession && activeCheckoutSession.listed_total,
       discount: activeCheckoutSession && activeCheckoutSession.discount,
@@ -735,20 +738,38 @@
   }
 
   function renderTotals(totals) {
-    if (subtotalNode) subtotalNode.textContent = formatPrice(totals.subtotal || 0);
-    if (taxNode) taxNode.textContent = formatPrice(totals.tax || 0);
+    var discount = Number(totals.discount) || 0;
+    var tax = Number(totals.tax) || 0;
+    var subtotal = discount > 0 && totals.listed_subtotal != null
+      ? totals.listed_subtotal
+      : totals.subtotal;
+
+    if (subtotalNode) subtotalNode.textContent = formatPrice(subtotal || 0);
     if (totalNode) totalNode.textContent = formatPrice(totals.total || 0);
     if (currencyNode) currencyNode.textContent = String(totals.currency || 'usd').toLowerCase();
-    renderTotalLabel(totals.discount || 0);
+    renderTopbarEquation(discount, tax);
   }
 
-  function renderTotalLabel(discount) {
+  function renderTopbarEquation(discount, tax) {
+    var hasDiscount = Number(discount) > 0;
+
+    if (adjustmentSignNode) adjustmentSignNode.textContent = hasDiscount ? '-' : '+';
+    if (adjustmentAmountNode) {
+      adjustmentAmountNode.textContent = formatPrice(hasDiscount ? discount : tax || 0);
+    }
+    if (adjustmentLabelNode) adjustmentLabelNode.textContent = hasDiscount ? 'promo' : 'tax';
+
+    renderTotalLabel(discount, tax);
+  }
+
+  function renderTotalLabel(discount, tax) {
     if (!totalLabelNode) return;
 
     totalLabelNode.innerHTML = '';
     if (Number(discount) > 0) {
-      appendTotalLabelPart('-');
-      appendTotalLabelPart(formatPrice(discount));
+      appendTotalLabelPart('+');
+      appendTotalLabelPart(formatPrice(tax || 0));
+      appendTotalLabelPart('tax');
       appendTotalLabelPart('=');
       return;
     }

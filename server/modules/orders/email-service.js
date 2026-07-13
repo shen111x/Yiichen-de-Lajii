@@ -51,14 +51,71 @@ async function sendOrderShippedEmail(order) {
 }
 
 function renderOrderSuccessEmail(template, order) {
+  const discountAmount = Math.max(0, Number(order.discount && order.discount.amount) || 0);
+  const subtotal = order.totals.listedSubtotal || order.totals.subtotal;
+
   return replaceTemplateValues(template, {
     ORDER_NUMBER: escapeHtml(order.orderId),
     ITEM_ROWS: order.items.map(renderOrderItemRow).join(""),
-    SUBTOTAL: formatMoney(order.totals.subtotal),
+    SUBTOTAL: formatMoney(subtotal),
+    DISCOUNT: discountAmount > 0 ? `-${formatMoney(discountAmount)}` : formatMoney(0),
+    TAX_RATE: escapeHtml(getDisplayedTaxRate(order)),
     TAX: formatMoney(order.totals.tax),
     SHIPPING_FEE: formatMoney(order.totals.shippingFee),
+    PAYMENT_DETAILS: renderPaymentDetails(order.payment),
     GRAND_TOTAL: formatMoney(order.totals.total),
+    SHIPPING_ADDRESS: renderShippingAddress(order.customer),
   });
+}
+
+function getDisplayedTaxRate(order) {
+  const storedRate = Number(order.totals.taxRate);
+  if (Number.isFinite(storedRate) && storedRate > 0) {
+    return formatPercentage(storedRate);
+  }
+
+  const taxableAmount = Number(order.totals.subtotal) + Number(order.totals.shippingFee);
+  const tax = Number(order.totals.tax);
+  if (!Number.isFinite(taxableAmount) || taxableAmount <= 0 || !Number.isFinite(tax) || tax <= 0) {
+    return "0";
+  }
+  return formatPercentage(tax / taxableAmount * 100);
+}
+
+function renderPaymentDetails(payment = {}) {
+  return [payment.method, payment.cardBrand, payment.cardLast4]
+    .filter(Boolean)
+    .map((value) => escapeHtml(capitalize(value)))
+    .join(" ");
+}
+
+function renderShippingAddress(customer = {}) {
+  const lines = [
+    customer.shippingName,
+    joinAddressParts(customer.address1, customer.address2),
+    joinAddressParts(customer.city, customer.state),
+    joinAddressParts(customer.postalCode, formatCountry(customer.country)),
+  ];
+
+  return lines.map((line) => `<div>${escapeHtml(line)}</div>`).join("");
+}
+
+function joinAddressParts(...parts) {
+  return parts.filter(Boolean).join(", ");
+}
+
+function formatCountry(value) {
+  const country = String(value || "").toUpperCase();
+  return country === "US" ? "USA" : country;
+}
+
+function capitalize(value) {
+  const text = String(value || "");
+  return text ? text[0].toUpperCase() + text.slice(1).toLowerCase() : "";
+}
+
+function formatPercentage(value) {
+  return String(Number(Number(value).toFixed(2)));
 }
 
 function renderOrderItemRow(item) {
@@ -89,4 +146,8 @@ async function loadTemplate(url, templateName) {
   return response.text();
 }
 
-module.exports = { sendOrderSuccessEmail, sendOrderShippedEmail };
+module.exports = {
+  sendOrderSuccessEmail,
+  sendOrderShippedEmail,
+  renderOrderSuccessEmail,
+};
