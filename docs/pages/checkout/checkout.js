@@ -3,7 +3,7 @@
   var checkoutStorageKey = 'yiichen-checkout-session';
   var taxEndpoint = 'https://ydl-api-436365230181.us-central1.run.app/update-payment-intent-tax';
   var promotionEndpoint = 'https://ydl-api-436365230181.us-central1.run.app/apply-promotion-code';
-  var stripePublishableKey = 'pk_test_51TpisRE9FD00WisxNzPQrGJ3qUfRCluI6RIZIsxFX9tiRF55IotUzL7WTMREaXC52uN111odOAt1TIHIpWPoVizK00C9caDSey';
+  var stripePublishableKey = 'pk_test_51TpisICZ9f6B7AFUzBiftI8cq8GNNy1JXTK6I724gNc5nR3bTyFYxTpDHP2yq4n1cPi8xLiDjxlYOLh8FZC9rWyu0046QGVfVF';
   var expressMethodOrder = ['applePay', 'googlePay', 'link', 'amazonPay', 'paypal', 'klarna'];
   var expressMethodLabels = {
     applePay: 'ApplePay',
