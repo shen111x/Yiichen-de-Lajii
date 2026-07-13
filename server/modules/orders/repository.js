@@ -12,19 +12,6 @@ const {
 const FIRST_DATA_ROW = 5;
 const LAST_ORDER_COLUMN = "AO";
 const ORDER_COLUMN_COUNT = 41;
-const ORDER_COLUMNS = Object.freeze({
-  orderId: 0,
-  timeOrdered: 1,
-  notes: 2,
-  orderStatus: 4,
-  productName: 5,
-  productId: 6,
-  variant: 7,
-  size: 8,
-  quantity: 9,
-  unitPrice: 10,
-  stripePaymentIntentId: 27,
-});
 
 async function appendFirstStepOrder(order) {
   const sheets = await getSheetsClient();
@@ -34,18 +21,18 @@ async function appendFirstStepOrder(order) {
     const row = Array(ORDER_COLUMN_COUNT).fill("");
 
     if (isFirstItemRow) {
-      row[ORDER_COLUMNS.orderId] = order.orderId;
-      row[ORDER_COLUMNS.timeOrdered] = order.timeOrdered;
-      row[ORDER_COLUMNS.notes] = order.notes || "";
-      row[ORDER_COLUMNS.orderStatus] = order.orderStatus;
-      row[ORDER_COLUMNS.stripePaymentIntentId] = order.stripePaymentIntentId;
+      row[0] = order.orderId;
+      row[1] = order.timeOrdered;
+      row[2] = order.notes || "";
+      row[4] = order.orderStatus;
+      row[27] = order.stripePaymentIntentId;
     }
-    row[ORDER_COLUMNS.productName] = item.product_name;
-    row[ORDER_COLUMNS.productId] = item.product_id;
-    row[ORDER_COLUMNS.variant] = item.variant;
-    row[ORDER_COLUMNS.size] = item.size;
-    row[ORDER_COLUMNS.quantity] = item.qty;
-    row[ORDER_COLUMNS.unitPrice] = formatMoney(item.unit_price);
+    row[5] = item.product_name;
+    row[6] = item.product_id;
+    row[7] = item.variant;
+    row[8] = item.size;
+    row[9] = item.qty;
+    row[10] = formatMoney(item.unit_price);
 
     return row;
   });
