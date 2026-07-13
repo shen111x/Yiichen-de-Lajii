@@ -32,7 +32,6 @@
   var currencyNode = document.getElementById('checkout-currency');
   var totalLabelNode = document.getElementById('checkout-total-label');
   var promoCodeNode = document.getElementById('promo-code');
-  var promoCodeSpacerNode = document.getElementById('promo-code-spacer');
   var promoDescriptionNode = document.getElementById('promo-description');
   var promoApplyButton = document.getElementById('promo-apply');
   var expressSelector = document.getElementById('express-selector');
@@ -763,7 +762,6 @@
   }
 
   function renderPromotionDescription() {
-    if (promoCodeSpacerNode) promoCodeSpacerNode.textContent = promoCodeNode ? promoCodeNode.value : '';
     if (promoDescriptionNode) promoDescriptionNode.textContent = appliedPromotionDescription;
   }
 

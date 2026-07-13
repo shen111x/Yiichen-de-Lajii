@@ -307,8 +307,6 @@ async function updatePaidOrderFromPaymentIntentId(paymentIntentId) {
     stripePaymentIntentId: paymentIntent.id,
     orderStatus: constants.paidOrderStatus,
     customer: getCustomerDetailsFromPaymentIntent(paymentIntent),
-    payment: getPaymentDetailsFromPaymentIntent(paymentIntent),
-    discount: getDiscountDetailsFromPaymentIntent(paymentIntent),
     totals: getTotalsFromPaymentIntent(paymentIntent),
   };
   const storedOrder = await updatePaidOrder(order);
@@ -317,14 +315,10 @@ async function updatePaidOrderFromPaymentIntentId(paymentIntentId) {
   return order;
 }
 
-function getLatestCharge(paymentIntent) {
-  return paymentIntent.latest_charge && typeof paymentIntent.latest_charge === "object"
+function getCustomerDetailsFromPaymentIntent(paymentIntent) {
+  const charge = paymentIntent.latest_charge && typeof paymentIntent.latest_charge === "object"
     ? paymentIntent.latest_charge
     : {};
-}
-
-function getCustomerDetailsFromPaymentIntent(paymentIntent) {
-  const charge = getLatestCharge(paymentIntent);
   const billing = charge.billing_details || {};
   const shipping = paymentIntent.shipping || {};
   const shippingAddress = shipping.address || {};
@@ -341,34 +335,6 @@ function getCustomerDetailsFromPaymentIntent(paymentIntent) {
     state: cleanText(address.state, 100),
     postalCode: cleanText(address.postal_code, 40),
     country: cleanText(address.country, 80),
-  };
-}
-
-function getPaymentDetailsFromPaymentIntent(paymentIntent) {
-  const charge = getLatestCharge(paymentIntent);
-  const methodDetails = charge.payment_method_details || {};
-  const card = methodDetails.card || methodDetails.card_present || methodDetails.interac_present || {};
-  const wallet = card.wallet || {};
-  const method = cleanText(wallet.type || methodDetails.type, 80).replace(/_/g, "");
-
-  return {
-    method,
-    cardBrand: cleanText(card.brand, 40).toLowerCase(),
-    cardLast4: cleanText(card.last4, 4),
-    chargeId: cleanText(charge.id || paymentIntent.latest_charge, 120),
-  };
-}
-
-function getDiscountDetailsFromPaymentIntent(paymentIntent) {
-  const metadata = paymentIntent.metadata || {};
-  const amount = parseMoney(metadata.discount_amount);
-  const rate = cleanText(metadata.promotion_description, 120).replace(/\s+/g, "");
-
-  return {
-    amount,
-    rate: amount > 0 ? rate : "",
-    code: amount > 0 ? cleanText(metadata.promotion_code, 80) : "",
-    id: amount > 0 ? cleanText(metadata.promotion_code_id, 120) : "",
   };
 }
 

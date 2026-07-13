@@ -10,36 +10,38 @@ const {
 } = require("../../shared/utils");
 
 const FIRST_DATA_ROW = 5;
-const LAST_ORDER_COLUMN = "AO";
-const ORDER_COLUMN_COUNT = 41;
 
 async function appendFirstStepOrder(order) {
   const sheets = await getSheetsClient();
   const startRow = await getNextOrderRow(sheets);
   const rows = order.items.map((item, index) => {
     const isFirstItemRow = index === 0;
-    const row = Array(ORDER_COLUMN_COUNT).fill("");
 
-    if (isFirstItemRow) {
-      row[0] = order.orderId;
-      row[1] = order.timeOrdered;
-      row[2] = order.notes || "";
-      row[4] = order.orderStatus;
-      row[27] = order.stripePaymentIntentId;
-    }
-    row[5] = item.product_name;
-    row[6] = item.product_id;
-    row[7] = item.variant;
-    row[8] = item.size;
-    row[9] = item.qty;
-    row[10] = formatMoney(item.unit_price);
-
-    return row;
+    return [
+      isFirstItemRow ? order.orderId : "",
+      isFirstItemRow ? order.timeOrdered : "",
+      isFirstItemRow ? order.notes || "" : "",
+      "",
+      isFirstItemRow ? order.orderStatus : "",
+      item.product_name,
+      item.product_id,
+      item.variant,
+      item.size,
+      item.qty,
+      formatMoney(item.unit_price),
+      "",
+      "", "", "", "",
+      "",
+      "", "", "", "", "", "", "", "", "",
+      "",
+      isFirstItemRow ? order.stripePaymentIntentId : "",
+      "", "", "", "", "",
+    ];
   });
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: env.googleSheetId,
-    range: `'${env.googleSheetTabName}'!A${startRow}:${LAST_ORDER_COLUMN}${startRow + rows.length - 1}`,
+    range: `'${env.googleSheetTabName}'!A${startRow}:AG${startRow + rows.length - 1}`,
     valueInputOption: "USER_ENTERED",
     requestBody: { values: rows },
   });
@@ -84,17 +86,9 @@ async function updatePaidOrder(order) {
           ]],
         },
         {
-          range: `'${env.googleSheetTabName}'!AC${rowNumber}:AO${rowNumber}`,
+          range: `'${env.googleSheetTabName}'!AC${rowNumber}:AG${rowNumber}`,
           values: [[
-            order.payment.method,
-            order.payment.cardBrand,
-            order.payment.cardLast4 ? `'${order.payment.cardLast4}` : "",
-            order.payment.chargeId,
             formatMoney(order.totals.subtotal),
-            order.discount.amount > 0 ? formatMoney(-order.discount.amount) : formatMoney(0),
-            order.discount.rate,
-            order.discount.code,
-            order.discount.id,
             formatMoney(order.totals.shippingFee),
             formatMoney(order.totals.tax),
             formatMoney(order.totals.total),
@@ -198,7 +192,7 @@ async function findOrderRowByPaymentIntentId(sheets, paymentIntentId) {
 async function getNextOrderRow(sheets) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: env.googleSheetId,
-    range: `'${env.googleSheetTabName}'!A:${LAST_ORDER_COLUMN}`,
+    range: `'${env.googleSheetTabName}'!A:AG`,
   });
   const values = response.data.values || [];
   let lastDataRow = FIRST_DATA_ROW - 1;

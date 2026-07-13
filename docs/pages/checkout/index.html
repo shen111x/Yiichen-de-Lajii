@@ -179,22 +179,15 @@
       box-sizing: border-box;
     }
 
-    .checkout-field-inner,
-    .checkout-promo-row-inner {
+    .checkout-field-inner {
       width: 100%;
       display: grid;
       grid-template-columns: max-content minmax(0, 1fr);
       align-items: center;
     }
 
-    .checkout-promo-row-inner {
-      grid-template-columns: max-content minmax(0, 1fr) max-content;
-    }
-
     .checkout-field label,
-    .checkout-field input,
-    .checkout-promo-row label,
-    .checkout-promo-row input {
+    .checkout-field input {
       display: block;
       margin: 0;
       padding-top: 0;
@@ -204,8 +197,7 @@
       -webkit-text-stroke: inherit;
     }
 
-    .checkout-field input,
-    .checkout-promo-row input {
+    .checkout-field input {
       width: calc(100% / 0.75);
       min-width: 0;
       height: auto;
@@ -225,8 +217,7 @@
     }
 
 
-    .checkout-field label,
-    .checkout-promo-row label {
+    .checkout-field label {
       flex: none;
     }
 
@@ -259,6 +250,8 @@
       box-sizing: border-box;
     }
 
+    .checkout-promo-row label,
+    .checkout-promo-row input,
     .checkout-promo-row button {
       margin: 0;
       padding: 0;
@@ -269,30 +262,12 @@
       -webkit-text-stroke: inherit;
     }
 
-    .checkout-promo-control {
-      min-width: 0;
-      display: grid;
-    }
-
-    .checkout-promo-control > * {
-      grid-area: 1 / 1;
-    }
-
-    .checkout-promo-description-line {
-      box-sizing: border-box;
-      min-width: 0;
+    .checkout-promo-row input {
+      width: 9em;
+      min-width: 4em;
+      flex: 0 1 9em;
       padding-left: 1em;
-      display: flex;
-      align-items: center;
-      gap: 1em;
-      overflow: hidden;
-      white-space: nowrap;
-      pointer-events: none;
-    }
-
-    .checkout-promo-code-spacer {
-      flex: none;
-      visibility: hidden;
+      outline: 0;
     }
 
     .checkout-promo-description {
@@ -306,7 +281,7 @@
     }
 
     .checkout-promo-row button {
-      justify-self: end;
+      margin-left: auto;
       cursor: pointer;
     }
 
@@ -606,17 +581,10 @@
         </div>
         <div class="checkout-promo">
           <div class="checkout-promo-row">
-            <div class="checkout-promo-row-inner">
-              <label for="promo-code">Promo Code:</label>
-              <div class="checkout-promo-control">
-                <input id="promo-code" name="promo_code" autocomplete="off">
-                <span class="checkout-promo-description-line">
-                  <span id="promo-code-spacer" class="checkout-promo-code-spacer" aria-hidden="true"></span>
-                  <span id="promo-description" class="checkout-promo-description" aria-live="polite"></span>
-                </span>
-              </div>
-              <button id="promo-apply" type="button">apply</button>
-            </div>
+            <label for="promo-code">Promo Code:</label>
+            <input id="promo-code" name="promo_code" autocomplete="off">
+            <span id="promo-description" class="checkout-promo-description"></span>
+            <button id="promo-apply" type="button">apply</button>
           </div>
         </div>
       </section>
