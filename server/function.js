@@ -27,6 +27,11 @@ const {
   sendOrderSuccessEmail,
   sendOrderShippedEmail,
 } = require("./modules/orders/email-service");
+const {
+  getLatestCharge,
+  getPaymentDetailsFromPaymentIntent,
+  getDiscountDetailsFromPaymentIntent,
+} = require("./modules/orders/payment-intent-details");
 
 const app = express();
 
@@ -401,7 +406,8 @@ function writeFirstStepOrderInBackground(order) {
 // On payment success, update only the first row of the order:
 // E       order_status
 // R-Z     customer + shipping details (blue area)
-// AC-AG   totals after stripe_payment_intent_id (green area)
+// AC-AF   payment details
+// AG-AO   totals + discount details
 
 async function updatePaidOrderInSheetFromPaymentIntentId(stripePaymentIntentId) {
   const paymentIntent = await getHydratedPaymentIntent(stripePaymentIntentId);
@@ -410,6 +416,8 @@ async function updatePaidOrderInSheetFromPaymentIntentId(stripePaymentIntentId) 
     stripePaymentIntentId: paymentIntent.id,
     orderStatus: HANDLE.paidOrderStatus,
     customer: getCustomerDetailsFromPaymentIntent(paymentIntent),
+    payment: getPaymentDetailsFromPaymentIntent(paymentIntent),
+    discount: getDiscountDetailsFromPaymentIntent(paymentIntent),
     totals: getTotalsFromPaymentIntent(paymentIntent),
   };
   const storedOrder = await updatePaidOrder(order);
@@ -431,9 +439,7 @@ async function getHydratedPaymentIntent(paymentIntentId) {
 }
 
 function getCustomerDetailsFromPaymentIntent(paymentIntent) {
-  const charge = paymentIntent.latest_charge && typeof paymentIntent.latest_charge === "object"
-    ? paymentIntent.latest_charge
-    : {};
+  const charge = getLatestCharge(paymentIntent);
   const billing = charge.billing_details || {};
   const shipping = paymentIntent.shipping || {};
   const shippingAddress = shipping.address || {};

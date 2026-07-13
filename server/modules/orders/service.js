@@ -25,6 +25,11 @@ const {
   sendOrderSuccessEmail,
   sendOrderShippedEmail,
 } = require("./email-service");
+const {
+  getLatestCharge,
+  getPaymentDetailsFromPaymentIntent,
+  getDiscountDetailsFromPaymentIntent,
+} = require("./payment-intent-details");
 
 let cachedProductIndex = null;
 let cachedProductAt = 0;
@@ -307,6 +312,8 @@ async function updatePaidOrderFromPaymentIntentId(paymentIntentId) {
     stripePaymentIntentId: paymentIntent.id,
     orderStatus: constants.paidOrderStatus,
     customer: getCustomerDetailsFromPaymentIntent(paymentIntent),
+    payment: getPaymentDetailsFromPaymentIntent(paymentIntent),
+    discount: getDiscountDetailsFromPaymentIntent(paymentIntent),
     totals: getTotalsFromPaymentIntent(paymentIntent),
   };
   const storedOrder = await updatePaidOrder(order);
@@ -316,9 +323,7 @@ async function updatePaidOrderFromPaymentIntentId(paymentIntentId) {
 }
 
 function getCustomerDetailsFromPaymentIntent(paymentIntent) {
-  const charge = paymentIntent.latest_charge && typeof paymentIntent.latest_charge === "object"
-    ? paymentIntent.latest_charge
-    : {};
+  const charge = getLatestCharge(paymentIntent);
   const billing = charge.billing_details || {};
   const shipping = paymentIntent.shipping || {};
   const shippingAddress = shipping.address || {};
