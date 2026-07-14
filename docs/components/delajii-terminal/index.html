@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DeLajii Terminal</title>
+  <link rel="stylesheet" href="../../css/universal.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="desktop">
+    <section id="game-window" aria-label="Game window">
+      <div id="game"></div>
+      <div class="map" aria-label="Loaded area map"><canvas id="map-view" width="128" height="128"></canvas></div>
+
+      <form id="chat-panel" class="chat-panel" hidden onsubmit="return false">
+        <div class="chat-placeholder" aria-hidden="true"></div>
+        <footer class="chat-controls">
+          <button type="button">Universe&nbsp; ▷</button>
+          <input aria-label="Chat message" autocomplete="off">
+          <button type="button" data-expand-chat>Expand</button>
+          <button type="submit">Send</button>
+        </footer>
+      </form>
+
+      <aside id="pocket-panel" class="pocket-panel" hidden aria-label="Pocket placeholder">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </aside>
+    </section>
+
+    <footer class="control-panel" aria-label="Control Panel">
+      <section class="control-upper">
+        <div class="upper-left">
+          <section class="identity">
+            <div class="avatar">AV</div>
+            <span>yiichen</span>
+          </section>
+
+          <section class="action-pad" aria-label="Action placeholders">
+            <button type="button" class="action-large">＊</button>
+            <button type="button" class="action-large">#</button>
+            <div class="action-small-pair">
+              <button type="button" data-jump>jump</button>
+              <button type="button">throw</button>
+            </div>
+          </section>
+        </div>
+
+        <section class="movement-pad" aria-label="Movement controls">
+          <button type="button" data-move="up" aria-label="Move up">↑</button>
+          <button type="button" data-move="left" aria-label="Move left">←</button>
+          <button type="button" data-move="down" aria-label="Move down">↓</button>
+          <button type="button" data-move="right" aria-label="Move right">→</button>
+        </section>
+      </section>
+
+      <section class="control-lower">
+        <div class="navigation-readout">
+          <div class="compass" aria-hidden="true">
+            <i id="compass-arrow"></i><b id="heading">N</b>
+          </div>
+          <span class="location">Location X 0.0 / Z 0.0</span>
+        </div>
+
+        <nav class="panel-toggles" aria-label="Panel toggles">
+          <button type="button" data-toggle-panel="chat-panel">Chat</button>
+          <button type="button" data-toggle-panel="pocket-panel">Pocket</button>
+        </nav>
+      </section>
+    </footer>
+  </main>
+
+  <script src="../../js/universal.js"></script>
+  <script type="module" src="game.js?v=map-100-platforms"></script>
+</body>
+</html>
