@@ -14,8 +14,8 @@ export function createOrbitCamera(
   let desiredPitch = pitch;
   const minPitch = THREE.MathUtils.degToRad(-5);
   const maxPitch = THREE.MathUtils.degToRad(80);
-  const focusHeight = 3.2;
-  const defaultDistance = 11;
+  const focusHeight = 3.3;
+  const defaultDistance = 8;
   const firstPersonDistance = 0.12;
   const obstacleClearance = 0.05;
   const yawEase = 5.6;

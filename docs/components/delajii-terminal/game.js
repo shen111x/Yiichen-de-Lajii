@@ -1,3 +1,3 @@
-import { startGame } from "./core/game.js?v=spawn-view";
+import { startGame } from "./core/game.js?v=responsive-fov";
 
 startGame();

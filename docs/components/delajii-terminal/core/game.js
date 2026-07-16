@@ -1,5 +1,5 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js";
-import { createRuntime } from "./base/runtime.js";
+import { createRuntime } from "./base/runtime.js?v=responsive-fov";
 import { createOrbitCamera } from "./camera/orbit-camera.js?v=spawn-view";
 import { createKeyboard } from "./input/keyboard.js";
 import { createGameInteractionGuard } from "./input/game-interaction-guard.js";
@@ -8,7 +8,7 @@ import { landingHeight, moveWithCollisions, supportHeightAt } from "./physics/co
 import { createHud } from "./ui/hud.js";
 import { createMinimap } from "./ui/minimap.js?v=map-100";
 import { createPanels } from "./ui/panels.js?v=map-toggle-exact";
-import { createCharacter } from "../asset/character/yiichen/create-character.js";
+import { createCharacter } from "../asset/character/yiichen/create-character.js?v=head-fade-range";
 import { renderMap } from "./world/render-map.js?v=phantom-chair";
 
 export async function startGame() {
@@ -119,6 +119,7 @@ export async function startGame() {
 
     character.update(now, moving, input.sprinting);
     orbit.update(character.object.position, dt);
+    character.updateCameraProximity(camera.position);
     hud.update(character.object.position, orbit.yaw);
     minimap.update(character.object.position, orbit.yaw, now);
     renderer.render(scene, camera);

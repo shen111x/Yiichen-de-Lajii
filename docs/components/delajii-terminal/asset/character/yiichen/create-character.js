@@ -1,5 +1,8 @@
 const ATLAS_WIDTH = 1185;
 const ATLAS_HEIGHT = 1327;
+const HEAD_FADE_START_DISTANCE = 7;
+const HEAD_FADE_END_DISTANCE = 5;
+const HEAD_NEAR_OPACITY = 0.1;
 
 const REGIONS = {
   head: {
@@ -63,6 +66,24 @@ export async function createCharacter(THREE, loader) {
     material(REGIONS.head.right), material(REGIONS.head.left), material(REGIONS.head.top), material(REGIONS.head.top),
     material(REGIONS.head.front), material(REGIONS.head.back)
   ]);
+  const headOutline = head.children.find(child => child.isLineSegments);
+  headOutline.material = outline.clone();
+  const headMaterials = [...head.material, headOutline.material];
+  const headWorldPosition = new THREE.Vector3();
+  let headOpacity = 1;
+
+  function setHeadOpacity(opacity) {
+    if (opacity === headOpacity) return;
+    headOpacity = opacity;
+    const transparent = opacity < 1;
+    headMaterials.forEach(headMaterial => {
+      const transparencyChanged = headMaterial.transparent !== transparent;
+      headMaterial.opacity = opacity;
+      headMaterial.transparent = transparent;
+      headMaterial.depthWrite = !transparent;
+      if (transparencyChanged) headMaterial.needsUpdate = true;
+    });
+  }
   box([0.9, 1.2, 0.45], [0, 1.8, 0], [
     material(REGIONS.torso.right), material(REGIONS.torso.left), material(REGIONS.torso.top), material(REGIONS.torso.top),
     material(REGIONS.torso.front), material(REGIONS.torso.back)
@@ -74,6 +95,17 @@ export async function createCharacter(THREE, loader) {
 
   return {
     object,
+    updateCameraProximity(cameraPosition) {
+      head.getWorldPosition(headWorldPosition);
+      const distance = headWorldPosition.distanceTo(cameraPosition);
+      const fadeProgress = THREE.MathUtils.clamp(
+        (HEAD_FADE_START_DISTANCE - distance)
+          / (HEAD_FADE_START_DISTANCE - HEAD_FADE_END_DISTANCE),
+        0,
+        1
+      );
+      setHeadOpacity(THREE.MathUtils.lerp(1, HEAD_NEAR_OPACITY, fadeProgress));
+    },
     update(now, moving, sprinting) {
       const step = moving ? Math.sin(now * (sprinting ? 0.021 : 0.012)) * (sprinting ? 0.9 : 0.6) : 0;
       leftArm.rotation.x = step;
