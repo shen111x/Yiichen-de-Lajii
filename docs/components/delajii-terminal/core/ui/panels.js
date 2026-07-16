@@ -6,13 +6,20 @@ export function createPanels() {
 
   function sizeCompactMap() {
     if (!map.classList.contains("compact")) return;
-    map.style.setProperty("--map-scale", movementButton.getBoundingClientRect().width / map.offsetWidth);
+    const currentScale = Number(map.style.getPropertyValue("--map-scale")) || 1;
+    const unscaledWidth = map.getBoundingClientRect().width / currentScale;
+    map.style.setProperty("--map-scale", movementButton.getBoundingClientRect().width / unscaledWidth);
   }
 
   map.addEventListener("click", () => {
-    map.classList.toggle("compact");
-    map.setAttribute("aria-pressed", String(map.classList.contains("compact")));
-    sizeCompactMap();
+    const compact = !map.classList.contains("compact");
+    if (compact) {
+      map.style.setProperty("--map-scale", movementButton.getBoundingClientRect().width / map.getBoundingClientRect().width);
+      map.classList.add("compact");
+    } else {
+      map.classList.remove("compact");
+    }
+    map.setAttribute("aria-pressed", String(compact));
   });
   addEventListener("resize", sizeCompactMap);
 

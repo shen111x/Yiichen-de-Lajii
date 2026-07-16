@@ -1,0 +1,36 @@
+.admin-asset-browser {
+  height: 100%;
+  overflow: auto;
+  padding: 14px;
+  font-size: var(--product-info-font-size);
+}
+
+.admin-asset-browser header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: var(--terminal-stroke) solid #111;
+}
+
+.admin-asset-browser header span:last-child { text-align: right; }
+.admin-asset-browser details { border-bottom: var(--terminal-stroke) solid #111; }
+.admin-asset-browser summary { padding: 9px 0; cursor: pointer; }
+
+.admin-asset-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  padding: 0 0 10px 16px;
+}
+
+.admin-asset-items button {
+  min-height: 34px;
+  padding: 6px 8px;
+  border: var(--terminal-stroke) solid #111;
+  text-align: left;
+}
+
+.admin-asset-items button.selected { color: #fff; background: #000; }
+.admin-active .identity span::after { content: " / ADMIN"; }

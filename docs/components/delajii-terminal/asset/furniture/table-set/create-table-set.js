@@ -1,4 +1,4 @@
-export function createFurniture(THREE, placements = [{ x: 5, z: 0, rotation: 0 }]) {
+export function createTableSet(THREE, placements) {
   const object = new THREE.Group();
   const tableMaterial = new THREE.MeshBasicMaterial({
     color: 0x000000,
@@ -25,16 +25,5 @@ export function createFurniture(THREE, placements = [{ x: 5, z: 0, rotation: 0 }
 
   placements.forEach(point => table(point.x, point.z, point.rotation || 0));
 
-  const collider = (x, z, width, depth, top) => ({
-    minX: x - width / 2,
-    maxX: x + width / 2,
-    minZ: z - depth / 2,
-    maxZ: z + depth / 2,
-    top
-  });
-
-  return {
-    object,
-    colliders: placements.map(point => collider(point.x, point.z, 3.2, 1.6, 1.54))
-  };
+  return object;
 }

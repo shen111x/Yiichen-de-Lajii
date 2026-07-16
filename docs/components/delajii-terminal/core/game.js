@@ -1,40 +1,57 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js";
 import { createRuntime } from "./base/runtime.js";
-import { createOrbitCamera } from "./camera/orbit-camera.js";
+import { createOrbitCamera } from "./camera/orbit-camera.js?v=free-pitch";
 import { createKeyboard } from "./input/keyboard.js";
-import { landingHeight, moveWithCollisions, supportHeightAt } from "./physics/collision.js?v=platforms";
+import { createGameInteractionGuard } from "./input/game-interaction-guard.js";
+import { landingHeight, moveWithCollisions, supportHeightAt } from "./physics/collision.js?v=boundary-1";
 import { createHud } from "./ui/hud.js";
 import { createMinimap } from "./ui/minimap.js?v=map-100";
-import { createPanels } from "./ui/panels.js";
+import { createPanels } from "./ui/panels.js?v=map-toggle-exact";
 import { createCharacter } from "../asset/character/yiichen/create-character.js";
-import { createFurniture } from "../asset/furniture/table-set.js?v=black-90";
-import { createGround, createBoundaryWalls } from "../asset/surface/ground/create-ground.js";
-
-const WORLD_SIZE = 500;
-const TABLES = [{ x: 5, z: 0, rotation: 0 }];
+import { renderMap } from "./world/render-map.js?v=wall-boundary-1";
 
 export async function startGame() {
+  createGameInteractionGuard();
   const runtime = createRuntime(THREE, document.querySelector("#game"));
   const { scene, camera, renderer, loader, resize } = runtime;
+  const mapData = await fetch(new URL("../data/maps/current-map.json", import.meta.url)).then(response => {
+    if (!response.ok) throw new Error(`Unable to load map: ${response.status}`);
+    return response.json();
+  });
   const character = await createCharacter(THREE, loader);
-  const furniture = createFurniture(THREE, TABLES);
-  const boundary = createBoundaryWalls(THREE, WORLD_SIZE);
+  const world = await renderMap(THREE, loader, mapData);
   const keyboard = createKeyboard(document.querySelector(".control-panel"));
-  const orbit = createOrbitCamera(THREE, renderer.domElement, camera);
+  const orbit = createOrbitCamera(THREE, renderer.domElement, camera, {
+    collisionRoot: world.object
+  });
   const hud = createHud();
   createPanels();
 
-  scene.add(createGround(THREE, loader, WORLD_SIZE), boundary.object, furniture.object, character.object);
+  scene.add(world.object, character.object);
   const minimap = createMinimap(
     THREE,
     document.querySelector("#map-view"),
-    WORLD_SIZE,
+    mapData.size,
     renderer,
     scene,
     character.object
   );
-  const colliders = [...furniture.colliders, ...boundary.colliders];
-  character.object.position.set(0, 0, 0);
+  const colliders = world.colliders;
+  character.object.position.set(mapData.spawn.x, mapData.spawn.y, mapData.spawn.z);
+  const gameAdmin = new URLSearchParams(location.search).get("game-admin") === "1"
+    && (location.hostname === "127.0.0.1" || location.hostname === "localhost");
+  if (gameAdmin) {
+    const { createAdminMode } = await import("../admin/admin.js?v=admin-file-3");
+    createAdminMode({
+      THREE,
+      worldObject: world.object,
+      worldEntities: world.entities,
+      textureLoader: loader,
+      character: character.object,
+      colliders,
+      mapData
+    });
+  }
   addEventListener("resize", resize);
   resize();
 
@@ -46,18 +63,23 @@ export async function startGame() {
     const dt = Math.min((now - previousTime) / 1000, 0.05);
     previousTime = now;
     const input = keyboard.movement();
-    const moving = Boolean(input.x || input.z);
+    const movingForward = input.z < 0;
+    const moveX = movingForward ? input.x : 0;
+    const moveZ = input.z;
+    const moving = Boolean(moveX || moveZ);
 
-    if (keyboard.consumeJump() && jumpsUsed < 2) {
+    if (input.x) orbit.turn(input.x, dt);
+
+    if (keyboard.consumeJump() && (gameAdmin || jumpsUsed < 2)) {
       verticalVelocity = 8.5;
-      jumpsUsed += 1;
+      if (!gameAdmin) jumpsUsed += 1;
       grounded = false;
     }
 
     if (moving) {
-      const length = Math.hypot(input.x, input.z);
-      const worldX = (input.x * Math.cos(orbit.yaw) + input.z * Math.sin(orbit.yaw)) / length;
-      const worldZ = (-input.x * Math.sin(orbit.yaw) + input.z * Math.cos(orbit.yaw)) / length;
+      const length = Math.hypot(moveX, moveZ);
+      const worldX = (moveX * Math.cos(orbit.yaw) + moveZ * Math.sin(orbit.yaw)) / length;
+      const worldZ = (-moveX * Math.sin(orbit.yaw) + moveZ * Math.cos(orbit.yaw)) / length;
       const speed = 4 * (input.sprinting ? 3 : 1);
       moveWithCollisions(
         character.object.position,
@@ -69,7 +91,7 @@ export async function startGame() {
     }
 
     if (grounded) {
-      const support = supportHeightAt(character.object.position, colliders);
+      const support = supportHeightAt(character.object.position, colliders, mapData.floorHeight);
       if (Math.abs(character.object.position.y - support) > 0.06) grounded = false;
       else character.object.position.y = support;
     }
@@ -79,7 +101,7 @@ export async function startGame() {
       verticalVelocity -= 20 * dt;
       const toY = fromY + verticalVelocity * dt;
       const landing = verticalVelocity <= 0
-        ? landingHeight(character.object.position, fromY, toY, colliders)
+        ? landingHeight(character.object.position, fromY, toY, colliders, mapData.floorHeight)
         : null;
       if (landing !== null) {
         character.object.position.y = landing;
@@ -92,7 +114,7 @@ export async function startGame() {
     }
 
     character.update(now, moving, input.sprinting);
-    orbit.update(character.object.position);
+    orbit.update(character.object.position, dt);
     hud.update(character.object.position, orbit.yaw);
     minimap.update(character.object.position, orbit.yaw, now);
     renderer.render(scene, camera);

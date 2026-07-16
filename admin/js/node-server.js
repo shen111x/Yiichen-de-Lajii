@@ -5,6 +5,8 @@ const { generateProductJson } = require('./generate-product-json');
 
 const repoRoot = path.resolve(__dirname, '../..');
 const adminRoot = path.resolve(__dirname, '..');
+const docsRoot = path.join(repoRoot, 'docs');
+const terminalMapPath = path.join(docsRoot, 'components/delajii-terminal/data/maps/current-map.json');
 const port = Number(process.env.PORT || 8790);
 const host = process.env.HOST || '127.0.0.1';
 
@@ -17,7 +19,12 @@ const mimeTypes = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
-  '.svg': 'image/svg+xml'
+  '.svg': 'image/svg+xml',
+  '.glb': 'model/gltf-binary',
+  '.mp4': 'video/mp4',
+  '.otf': 'font/otf',
+  '.ttf': 'font/ttf',
+  '.wav': 'audio/wav'
 };
 
 const server = http.createServer(async (request, response) => {
@@ -56,6 +63,21 @@ const server = http.createServer(async (request, response) => {
       return;
     }
 
+    if (request.method === 'POST' && requestUrl.pathname === '/api/launch-delajii-terminal') {
+      sendJson(response, 200, {
+        ok: true,
+        url: `http://127.0.0.1:${port}/docs/components/delajii-terminal/?game-admin=1`
+      });
+      return;
+    }
+
+    if (request.method === 'POST' && requestUrl.pathname === '/api/delajii-terminal/map') {
+      const map = normalizeTerminalMap(await readJsonBody(request));
+      await writeJsonAtomic(terminalMapPath, map);
+      sendJson(response, 200, { ok: true, map });
+      return;
+    }
+
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       sendText(response, 405, 'Method not allowed');
       return;
@@ -81,32 +103,87 @@ server.listen(port, host, () => {
 function serveStatic(request, response) {
   const url = new URL(request.url, `http://localhost:${port}`);
   const pathname = decodeURIComponent(url.pathname);
-  const relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
-  const filePath = path.resolve(adminRoot, relativePath);
+  const servingDocs = pathname === '/docs' || pathname.startsWith('/docs/');
+  const root = servingDocs ? docsRoot : adminRoot;
+  let relativePath = servingDocs ? pathname.replace(/^\/docs\/?/, '') : pathname.replace(/^\/+/, '');
+  if (!relativePath || relativePath.endsWith('/')) relativePath += 'index.html';
+  const filePath = path.resolve(root, relativePath);
 
-  if (!filePath.startsWith(adminRoot + path.sep) && filePath !== adminRoot) {
+  if (!filePath.startsWith(root + path.sep) && filePath !== root) {
     sendText(response, 403, 'Forbidden');
     return;
   }
 
-  fs.readFile(filePath, (error, content) => {
+  fs.stat(filePath, (error, stats) => {
     if (error) {
       sendText(response, error.code === 'ENOENT' ? 404 : 500, error.code === 'ENOENT' ? 'Not found' : 'Server error');
       return;
     }
 
-    response.writeHead(200, {
-      'Content-Type': mimeTypes[path.extname(filePath).toLowerCase()] || 'application/octet-stream',
+    if (!stats.isFile()) {
+      sendText(response, 404, 'Not found');
+      return;
+    }
+
+    const contentType = mimeTypes[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
+    const range = parseByteRange(request.headers.range, stats.size);
+
+    if (request.headers.range && !range) {
+      response.writeHead(416, {
+        'Content-Range': `bytes */${stats.size}`,
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': 'no-store'
+      });
+      response.end();
+      return;
+    }
+
+    const start = range ? range.start : 0;
+    const end = range ? range.end : stats.size - 1;
+    const headers = {
+      'Content-Type': contentType,
+      'Content-Length': Math.max(0, end - start + 1),
+      'Accept-Ranges': 'bytes',
       'Cache-Control': 'no-store'
-    });
+    };
+
+    if (range) headers['Content-Range'] = `bytes ${start}-${end}/${stats.size}`;
+
+    response.writeHead(range ? 206 : 200, headers);
 
     if (request.method === 'HEAD') {
       response.end();
       return;
     }
 
-    response.end(content);
+    const stream = fs.createReadStream(filePath, range ? { start, end } : undefined);
+    stream.on('error', () => response.destroy());
+    stream.pipe(response);
   });
+}
+
+function parseByteRange(header, size) {
+  if (!header) return null;
+  const match = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (!match || size <= 0 || (!match[1] && !match[2])) return null;
+
+  let start;
+  let end;
+  if (!match[1]) {
+    const suffixLength = Number(match[2]);
+    if (!Number.isSafeInteger(suffixLength) || suffixLength <= 0) return null;
+    start = Math.max(0, size - suffixLength);
+    end = size - 1;
+  } else {
+    start = Number(match[1]);
+    end = match[2] ? Number(match[2]) : size - 1;
+  }
+
+  if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || start >= size || end < start) {
+    return null;
+  }
+
+  return { start, end: Math.min(end, size - 1) };
 }
 
 function sendJson(response, statusCode, payload) {
@@ -131,4 +208,101 @@ function setCorsHeaders(response) {
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+function readJsonBody(request) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+
+    request.on('data', chunk => {
+      size += chunk.length;
+      if (size > 1024 * 1024) {
+        reject(new Error('Request body is too large'));
+        request.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    request.on('end', () => {
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+      } catch (error) {
+        reject(new Error('Invalid map JSON'));
+      }
+    });
+    request.on('error', reject);
+  });
+}
+
+function normalizeTerminalMap(input) {
+  if (!input || input.id !== 'current-map' || !Array.isArray(input.entities)) {
+    throw new Error('Invalid deLajii Terminal map');
+  }
+
+  return {
+    id: 'current-map',
+    name: String(input.name || 'Current Map'),
+    size: finiteNumber(input.size, 'map size'),
+    floorHeight: finiteNumber(input.floorHeight, 'floor height'),
+    spawn: normalizePosition(input.spawn, 'spawn'),
+    ground: {
+      width: finiteNumber(input.ground && input.ground.width, 'ground width'),
+      depth: finiteNumber(input.ground && input.ground.depth, 'ground depth'),
+      textureRepeat: {
+        x: finiteNumber(input.ground && input.ground.textureRepeat && input.ground.textureRepeat.x, 'ground repeat x'),
+        y: finiteNumber(input.ground && input.ground.textureRepeat && input.ground.textureRepeat.y, 'ground repeat y')
+      }
+    },
+    entities: input.entities.map(normalizeMapEntity)
+  };
+}
+
+function normalizeMapEntity(entity, index) {
+  if (!entity || typeof entity.id !== 'string' || typeof entity.asset !== 'string') {
+    throw new Error(`Invalid map entity at index ${index}`);
+  }
+
+  const normalized = {
+    id: entity.id,
+    asset: entity.asset,
+    position: normalizePosition(entity.position, `${entity.id} position`),
+    rotation: finiteNumber(entity.rotation || 0, `${entity.id} rotation`),
+    collider: {
+      minX: finiteNumber(entity.collider && entity.collider.minX, `${entity.id} collider minX`),
+      maxX: finiteNumber(entity.collider && entity.collider.maxX, `${entity.id} collider maxX`),
+      minZ: finiteNumber(entity.collider && entity.collider.minZ, `${entity.id} collider minZ`),
+      maxZ: finiteNumber(entity.collider && entity.collider.maxZ, `${entity.id} collider maxZ`),
+      top: finiteNumber(entity.collider && entity.collider.top, `${entity.id} collider top`)
+    }
+  };
+
+  if (typeof entity.category === 'string') normalized.category = entity.category;
+  if (entity.size) {
+    normalized.size = {
+      width: finiteNumber(entity.size.width, `${entity.id} width`),
+      height: finiteNumber(entity.size.height, `${entity.id} height`),
+      depth: finiteNumber(entity.size.depth, `${entity.id} depth`)
+    };
+  }
+  return normalized;
+}
+
+function normalizePosition(position, label) {
+  return {
+    x: finiteNumber(position && position.x, `${label} x`),
+    y: finiteNumber(position && position.y, `${label} y`),
+    z: finiteNumber(position && position.z, `${label} z`)
+  };
+}
+
+function finiteNumber(value, label) {
+  if (!Number.isFinite(value)) throw new Error(`Invalid ${label}`);
+  return value;
+}
+
+async function writeJsonAtomic(filePath, value) {
+  const temporaryPath = `${filePath}.tmp`;
+  await fs.promises.writeFile(temporaryPath, JSON.stringify(value, null, 2) + '\n', 'utf8');
+  await fs.promises.rename(temporaryPath, filePath);
 }

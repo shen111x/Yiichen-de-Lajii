@@ -11,6 +11,15 @@ html, body {
   overflow: hidden;
   background: #fff;
   color: #000;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#chat-panel, #chat-panel * {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 button, input { color: inherit; font: inherit; background: #fff; }
@@ -150,7 +159,7 @@ button { cursor: pointer; }
 
 .action-pad button { padding: 0; border: var(--terminal-stroke) solid #111; }
 .action-pad button.active { color: #fff; background: #000; }
-.action-large { width: 58px; height: 58px; font-size: 22px; }
+.action-large { width: 58px; height: 58px; font-size: 22px; touch-action: manipulation; }
 
 .action-small-pair {
   display: grid;

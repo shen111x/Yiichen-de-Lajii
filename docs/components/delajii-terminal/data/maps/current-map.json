@@ -1,0 +1,181 @@
+{
+  "id": "current-map",
+  "name": "Current Map",
+  "size": 500,
+  "floorHeight": 0,
+  "spawn": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "ground": {
+    "width": 500,
+    "depth": 500,
+    "textureRepeat": {
+      "x": 119.904,
+      "y": 119.904
+    }
+  },
+  "entities": [
+    {
+      "id": "north-wall",
+      "asset": "wall",
+      "position": {
+        "x": 0,
+        "y": 2,
+        "z": -250
+      },
+      "rotation": 0,
+      "collider": {
+        "minX": -250,
+        "maxX": 250,
+        "minZ": -250.5,
+        "maxZ": -249.5,
+        "top": 4
+      },
+      "size": {
+        "width": 500,
+        "height": 4,
+        "depth": 1
+      }
+    },
+    {
+      "id": "south-wall",
+      "asset": "wall",
+      "position": {
+        "x": 0,
+        "y": 2,
+        "z": 250
+      },
+      "rotation": 0,
+      "collider": {
+        "minX": -250,
+        "maxX": 250,
+        "minZ": 249.5,
+        "maxZ": 250.5,
+        "top": 4
+      },
+      "size": {
+        "width": 500,
+        "height": 4,
+        "depth": 1
+      }
+    },
+    {
+      "id": "west-wall",
+      "asset": "wall",
+      "position": {
+        "x": -250,
+        "y": 2,
+        "z": 0
+      },
+      "rotation": 0,
+      "collider": {
+        "minX": -250.5,
+        "maxX": -249.5,
+        "minZ": -250,
+        "maxZ": 250,
+        "top": 4
+      },
+      "size": {
+        "width": 1,
+        "height": 4,
+        "depth": 500
+      }
+    },
+    {
+      "id": "east-wall",
+      "asset": "wall",
+      "position": {
+        "x": 250,
+        "y": 2,
+        "z": 0
+      },
+      "rotation": 0,
+      "collider": {
+        "minX": 249.5,
+        "maxX": 250.5,
+        "minZ": -250,
+        "maxZ": 250,
+        "top": 4
+      },
+      "size": {
+        "width": 1,
+        "height": 4,
+        "depth": 500
+      }
+    },
+    {
+      "id": "admin-mrmypcpm-2",
+      "asset": "lounge",
+      "position": {
+        "x": 0.9663288464715011,
+        "y": 0,
+        "z": 1.4676932649399592
+      },
+      "rotation": 0.5404195002705842,
+      "collider": {
+        "minX": -14.57125622195931,
+        "maxX": 17.418532876603443,
+        "minZ": -21.9929067124063,
+        "maxZ": 25.561339879786715,
+        "top": 5.974819777233834
+      },
+      "category": "rooms"
+    },
+    {
+      "id": "admin-mrn4xsm0-1",
+      "asset": "table-set",
+      "position": {
+        "x": -8.480332425885805,
+        "y": 0,
+        "z": -14.70029273439205
+      },
+      "rotation": -2.585494407408863,
+      "collider": {
+        "minX": -10.261547501131165,
+        "maxX": -6.699117350640446,
+        "minZ": -16.224351940026057,
+        "maxZ": -13.176233528758045,
+        "top": 1.5400000035762786
+      },
+      "category": "furniture"
+    },
+    {
+      "id": "admin-mrn4y7kl-3",
+      "asset": "table-set",
+      "position": {
+        "x": 11.903019886706458,
+        "y": 0,
+        "z": 19.207292131953924
+      },
+      "rotation": 0.522354464748244,
+      "collider": {
+        "minX": 10.117247231602725,
+        "maxX": 13.68879254181019,
+        "minZ": 17.715699385407355,
+        "maxZ": 20.698884878500493,
+        "top": 1.5400000035762786
+      },
+      "category": "furniture"
+    },
+    {
+      "id": "admin-mrn55hvy-2",
+      "asset": "lounge-tv",
+      "position": {
+        "x": 11.954943990046742,
+        "y": 1.5400000035762786,
+        "z": 19.246676280925442
+      },
+      "rotation": -2.6275346753712063,
+      "collider": {
+        "minX": 10.497787243686627,
+        "maxX": 13.42723133879268,
+        "minZ": 17.965905017562996,
+        "maxZ": 20.554241669014367,
+        "top": 3.3400000035762787
+      },
+      "category": "furniture"
+    }
+  ]
+}
