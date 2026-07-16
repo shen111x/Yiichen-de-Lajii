@@ -245,7 +245,7 @@ function normalizeTerminalMap(input) {
     name: String(input.name || 'Current Map'),
     size: finiteNumber(input.size, 'map size'),
     floorHeight: finiteNumber(input.floorHeight, 'floor height'),
-    spawn: normalizePosition(input.spawn, 'spawn'),
+    spawn: normalizeSpawn(input.spawn),
     ground: {
       width: finiteNumber(input.ground && input.ground.width, 'ground width'),
       depth: finiteNumber(input.ground && input.ground.depth, 'ground depth'),
@@ -294,6 +294,13 @@ function normalizePosition(position, label) {
     y: finiteNumber(position && position.y, `${label} y`),
     z: finiteNumber(position && position.z, `${label} z`)
   };
+}
+
+function normalizeSpawn(spawn) {
+  const normalized = normalizePosition(spawn, 'spawn');
+  if (Number.isFinite(spawn && spawn.yaw)) normalized.yaw = spawn.yaw;
+  if (Number.isFinite(spawn && spawn.pitch)) normalized.pitch = spawn.pitch;
+  return normalized;
 }
 
 function finiteNumber(value, label) {

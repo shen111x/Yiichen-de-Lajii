@@ -22,8 +22,12 @@ function useUnlitMaterials(THREE, object) {
 }
 
 export async function createLoungeTv(THREE) {
-  const gltf = await new GLTFLoader().loadAsync(new URL("./source/TV.glb", import.meta.url).href);
+  const gltf = await new GLTFLoader().loadAsync(new URL("./lounge-tv-v2.glb", import.meta.url).href);
   const object = gltf.scene;
+  object.traverse(child => {
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+    if (materials.some(material => material?.name === "Screen.001")) child.name = "screen_reference";
+  });
   useUnlitMaterials(THREE, object);
   const bounds = new THREE.Box3().setFromObject(object);
   const size = bounds.getSize(new THREE.Vector3());

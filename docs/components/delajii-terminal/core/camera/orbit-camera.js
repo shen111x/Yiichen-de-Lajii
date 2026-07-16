@@ -17,7 +17,7 @@ export function createOrbitCamera(
   const focusHeight = 3.2;
   const defaultDistance = 11;
   const firstPersonDistance = 0.12;
-  const obstacleClearance = 0.35;
+  const obstacleClearance = 0.05;
   const yawEase = 5.6;
   const turnSpeed = Math.PI * 0.75;
   let cameraDistance = defaultDistance;
@@ -72,6 +72,17 @@ export function createOrbitCamera(
 
   return {
     get yaw() { return yaw; },
+    get pitch() { return pitch; },
+    setOrientation(nextYaw, nextPitch = pitch) {
+      if (Number.isFinite(nextYaw)) {
+        yaw = nextYaw;
+        desiredYaw = nextYaw;
+      }
+      if (Number.isFinite(nextPitch)) {
+        pitch = THREE.MathUtils.clamp(nextPitch, minPitch, maxPitch);
+        desiredPitch = pitch;
+      }
+    },
     turn(direction, dt) {
       desiredYaw -= direction * turnSpeed * dt;
     },

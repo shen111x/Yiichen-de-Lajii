@@ -1,4 +1,4 @@
-import { ASSET_CATALOG, findAsset } from "./asset-catalog.js?v=admin-5";
+import { ASSET_CATALOG, findAsset } from "./asset-catalog.js?v=phantom-chair";
 import { saveMap } from "./map-persistence.js?v=1";
 import { colliderForObject } from "../core/physics/asset-collider.js?v=boundary-1";
 import { colliderDistanceSquared } from "../core/physics/collision.js?v=boundary-1";
@@ -11,10 +11,12 @@ export function createAdminMode({
   worldEntities,
   textureLoader,
   character,
+  orbit,
   colliders,
   mapData
 }) {
   const chat = document.querySelector("#chat-panel");
+  const chatInput = chat.querySelector('input[aria-label="Chat message"]');
   const expandButton = chat.querySelector("[data-expand-chat]");
   const browserHost = chat.querySelector(".chat-placeholder");
   const actionButtons = [...document.querySelectorAll(".action-large")];
@@ -23,6 +25,7 @@ export function createAdminMode({
   let selected = { category: "food", name: "ramen" };
   let placing = false;
   let deleting = false;
+  let settingSpawn = false;
   let lastDeleteKey = 0;
   let lastDeletePointer = 0;
   let nextObjectId = 1;
@@ -77,6 +80,16 @@ export function createAdminMode({
   function foldChat() {
     chat.classList.remove("expanded");
     expandButton.textContent = "Expand";
+  }
+
+  function toggleAdminChat() {
+    if (chat.hidden) {
+      chat.hidden = false;
+      const chatButton = document.querySelector('[data-toggle-panel="chat-panel"]');
+      chatButton?.classList.add("active");
+      chatButton?.setAttribute("aria-expanded", "true");
+    }
+    expandButton.click();
   }
 
   function colliderFor(object, id) {
@@ -154,6 +167,32 @@ export function createAdminMode({
     );
   }
 
+  async function setSpawnAtCharacter() {
+    if (settingSpawn) return;
+    settingSpawn = true;
+    const previousSpawn = { ...mapData.spawn };
+    const nextSpawn = {
+      x: character.position.x,
+      y: character.position.y,
+      z: character.position.z,
+      yaw: orbit.yaw,
+      pitch: orbit.pitch
+    };
+    mapData.spawn = nextSpawn;
+    setStatus("Saving spawn…");
+    try {
+      await saveMap(mapData);
+      chatInput.value = "";
+      setStatus(`Spawn saved at ${nextSpawn.x.toFixed(1)}, ${nextSpawn.y.toFixed(1)}, ${nextSpawn.z.toFixed(1)}`);
+    } catch (error) {
+      mapData.spawn = previousSpawn;
+      console.error("Unable to save spawn", error);
+      setStatus("Unable to save spawn");
+    } finally {
+      settingSpawn = false;
+    }
+  }
+
   function playerContactDistanceSquared(collider) {
     return colliderDistanceSquared(character.position.x, character.position.z, collider);
   }
@@ -220,6 +259,13 @@ export function createAdminMode({
     foldChat();
   });
 
+  chat.addEventListener("submit", event => {
+    if (chatInput.value.trim().toLowerCase() !== "ydl-set-spawn") return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setSpawnAtCharacter();
+  });
+
   placeButton?.addEventListener("click", placeSelected);
   deleteButton?.addEventListener("pointerdown", event => {
     event.preventDefault();
@@ -232,6 +278,12 @@ export function createAdminMode({
     if (event.repeat) return;
     if (event.target instanceof Element && event.target.matches("input, textarea, [contenteditable='true']")) return;
     const key = event.key.toLowerCase();
+    if (key === "c") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      toggleAdminChat();
+      return;
+    }
     if (key === "z") {
       event.preventDefault();
       event.stopImmediatePropagation();

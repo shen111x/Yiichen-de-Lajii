@@ -1,19 +1,21 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js";
 import { createRuntime } from "./base/runtime.js";
-import { createOrbitCamera } from "./camera/orbit-camera.js?v=free-pitch";
+import { createOrbitCamera } from "./camera/orbit-camera.js?v=spawn-view";
 import { createKeyboard } from "./input/keyboard.js";
 import { createGameInteractionGuard } from "./input/game-interaction-guard.js";
+import { createLighting } from "./lighting.js?v=studio-rig";
 import { landingHeight, moveWithCollisions, supportHeightAt } from "./physics/collision.js?v=boundary-1";
 import { createHud } from "./ui/hud.js";
 import { createMinimap } from "./ui/minimap.js?v=map-100";
 import { createPanels } from "./ui/panels.js?v=map-toggle-exact";
 import { createCharacter } from "../asset/character/yiichen/create-character.js";
-import { renderMap } from "./world/render-map.js?v=wall-boundary-1";
+import { renderMap } from "./world/render-map.js?v=phantom-chair";
 
 export async function startGame() {
   createGameInteractionGuard();
   const runtime = createRuntime(THREE, document.querySelector("#game"));
   const { scene, camera, renderer, loader, resize } = runtime;
+  createLighting(THREE, scene);
   const mapData = await fetch(new URL("../data/maps/current-map.json", import.meta.url)).then(response => {
     if (!response.ok) throw new Error(`Unable to load map: ${response.status}`);
     return response.json();
@@ -38,16 +40,18 @@ export async function startGame() {
   );
   const colliders = world.colliders;
   character.object.position.set(mapData.spawn.x, mapData.spawn.y, mapData.spawn.z);
+  orbit.setOrientation(mapData.spawn.yaw, mapData.spawn.pitch);
   const gameAdmin = new URLSearchParams(location.search).get("game-admin") === "1"
     && (location.hostname === "127.0.0.1" || location.hostname === "localhost");
   if (gameAdmin) {
-    const { createAdminMode } = await import("../admin/admin.js?v=admin-file-3");
+    const { createAdminMode } = await import("../admin/admin.js?v=spawn-view");
     createAdminMode({
       THREE,
       worldObject: world.object,
       worldEntities: world.entities,
       textureLoader: loader,
       character: character.object,
+      orbit,
       colliders,
       mapData
     });

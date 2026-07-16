@@ -1,7 +1,7 @@
 import { createTableSet } from "../../asset/furniture/table-set/create-table-set.js?v=static-map-2";
 import { createGround } from "../../asset/surface/ground/create-ground.js?v=static-map-1";
 import { createWall } from "../../asset/structure/wall/create-wall.js?v=static-map-2";
-import { findAsset } from "../../admin/asset-catalog.js?v=admin-5";
+import { findAsset } from "../../admin/asset-catalog.js?v=phantom-chair";
 import { boundaryColliderForObject } from "../physics/asset-collider.js?v=boundary-1";
 
 async function renderEntity(THREE, loader, entity) {

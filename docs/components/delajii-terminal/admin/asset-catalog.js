@@ -1,6 +1,7 @@
 import { createCharacter } from "../asset/character/yiichen/create-character.js";
 import { createRamen } from "../asset/food/ramen/create-ramen.js?v=size-3x";
-import { createLoungeTv } from "../asset/furniture/lounge-tv/create-lounge-tv.js?v=video-4";
+import { createLoungeTv } from "../asset/furniture/lounge-tv/create-lounge-tv.js?v=single-glb";
+import { createPhantomChair } from "../asset/furniture/phantom-chair/create-phantom-chair.js";
 import { createTableSet } from "../asset/furniture/table-set/create-table-set.js";
 import { createLounge } from "../asset/rooms/lounge/create-lounge.js?v=wall-boundary-1";
 import { createWall } from "../asset/structure/wall/create-wall.js";
@@ -22,6 +23,7 @@ export const ASSET_CATALOG = [
     category: "furniture",
     items: [
       { name: "lounge-tv", create: ({ THREE }) => createLoungeTv(THREE) },
+      { name: "phantom-chair", create: ({ THREE }) => createPhantomChair(THREE) },
       {
         name: "table-set",
         create: async ({ THREE }) => createTableSet(THREE, [{ x: 0, z: 0, rotation: 0 }])
