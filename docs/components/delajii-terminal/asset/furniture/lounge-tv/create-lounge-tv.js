@@ -1,5 +1,5 @@
 import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/GLTFLoader.js/+esm";
-import { attachTvVideo } from "./video/create-tv-video.js?v=4";
+import { attachTvVideo } from "./video/create-tv-video.js?v=dim-screen-frame";
 
 const WORLD_HEIGHT = 1.8;
 

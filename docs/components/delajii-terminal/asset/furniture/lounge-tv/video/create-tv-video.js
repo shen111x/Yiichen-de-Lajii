@@ -1,3 +1,11 @@
+const SCREEN_SAFE_PADDING = Object.freeze({
+  left: 13 / 256,
+  right: 13 / 256,
+  top: 19 / 256,
+  bottom: 19 / 256
+});
+const SCREEN_BACKGROUND_DIM_AMOUNT = 0.9;
+
 export function attachTvVideo(THREE, television) {
   const video = document.createElement("video");
   video.muted = true;
@@ -59,16 +67,18 @@ export function attachTvVideo(THREE, television) {
 
   if (!screens.length) throw new Error("Lounge TV screen mesh was not found");
 
-  screens[0].geometry.computeBoundingBox();
-  const screenSize = screens[0].geometry.boundingBox.getSize(new THREE.Vector3());
-  const screenDimensions = [screenSize.x, screenSize.y, screenSize.z].sort((a, b) => b - a);
-  const screenAspect = screenDimensions[0] / screenDimensions[1];
+  const screenBackground = screens[0].material?.map?.image || null;
   const canvas = document.createElement("canvas");
   canvas.width = 1024;
-  canvas.height = Math.max(1, Math.round(canvas.width / screenAspect));
+  canvas.height = 1024;
   const context = canvas.getContext("2d");
   context.fillStyle = "#000";
   context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const safeX = canvas.width * SCREEN_SAFE_PADDING.left;
+  const safeY = canvas.height * SCREEN_SAFE_PADDING.top;
+  const safeWidth = canvas.width * (1 - SCREEN_SAFE_PADDING.left - SCREEN_SAFE_PADDING.right);
+  const safeHeight = canvas.height * (1 - SCREEN_SAFE_PADDING.top - SCREEN_SAFE_PADDING.bottom);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -86,16 +96,27 @@ export function attachTvVideo(THREE, television) {
 
   let animationFrame = 0;
   function drawVideo() {
+    context.fillStyle = "#000";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    if (screenBackground) {
+      context.drawImage(screenBackground, 0, 0, canvas.width, canvas.height);
+      context.fillStyle = `rgba(0, 0, 0, ${SCREEN_BACKGROUND_DIM_AMOUNT})`;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    }
     if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      const scale = Math.min(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
+      const scale = Math.max(safeWidth / video.videoWidth, safeHeight / video.videoHeight);
       const width = video.videoWidth * scale;
       const height = video.videoHeight * scale;
-      const x = (canvas.width - width) / 2;
-      const y = (canvas.height - height) / 2;
-      context.fillRect(0, 0, canvas.width, canvas.height);
+      const x = safeX + (safeWidth - width) / 2;
+      const y = safeY + (safeHeight - height) / 2;
+      context.save();
+      context.beginPath();
+      context.rect(safeX, safeY, safeWidth, safeHeight);
+      context.clip();
       context.drawImage(video, x, y, width, height);
-      texture.needsUpdate = true;
+      context.restore();
     }
+    texture.needsUpdate = true;
     animationFrame = requestAnimationFrame(drawVideo);
   }
 

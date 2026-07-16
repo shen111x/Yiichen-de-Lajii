@@ -1,3 +1,3 @@
-import { startGame } from "./core/game.js?v=responsive-fov";
+import { startGame } from "./core/game.js?v=dim-screen-frame";
 
 startGame();

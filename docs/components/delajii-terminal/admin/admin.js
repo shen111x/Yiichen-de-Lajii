@@ -1,4 +1,4 @@
-import { ASSET_CATALOG, findAsset } from "./asset-catalog.js?v=phantom-chair";
+import { ASSET_CATALOG, findAsset } from "./asset-catalog.js?v=dim-screen-frame";
 import { saveMap } from "./map-persistence.js?v=1";
 import { colliderForObject } from "../core/physics/asset-collider.js?v=boundary-1";
 import { colliderDistanceSquared } from "../core/physics/collision.js?v=boundary-1";

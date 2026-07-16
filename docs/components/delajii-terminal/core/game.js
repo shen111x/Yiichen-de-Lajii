@@ -9,7 +9,7 @@ import { createHud } from "./ui/hud.js";
 import { createMinimap } from "./ui/minimap.js?v=map-100";
 import { createPanels } from "./ui/panels.js?v=map-toggle-exact";
 import { createCharacter } from "../asset/character/yiichen/create-character.js?v=head-fade-range";
-import { renderMap } from "./world/render-map.js?v=phantom-chair";
+import { renderMap } from "./world/render-map.js?v=dim-screen-frame";
 
 export async function startGame() {
   createGameInteractionGuard();
@@ -44,7 +44,7 @@ export async function startGame() {
   const gameAdmin = new URLSearchParams(location.search).get("game-admin") === "1"
     && (location.hostname === "127.0.0.1" || location.hostname === "localhost");
   if (gameAdmin) {
-    const { createAdminMode } = await import("../admin/admin.js?v=spawn-view");
+    const { createAdminMode } = await import("../admin/admin.js?v=dim-screen-frame");
     createAdminMode({
       THREE,
       worldObject: world.object,
