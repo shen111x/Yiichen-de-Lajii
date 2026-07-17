@@ -1,7 +1,7 @@
 import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/GLTFLoader.js/+esm";
 import { attachTvVideo } from "./video/create-tv-video.js?v=video-aspect";
 
-const WORLD_HEIGHT = 2.8;
+const WORLD_HEIGHT = 3.5;
 
 function useUnlitMaterials(THREE, object) {
   object.traverse(child => {
