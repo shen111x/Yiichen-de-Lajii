@@ -1,17 +1,26 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js";
 import { createRuntime } from "./base/runtime.js?v=responsive-fov";
-import { createOrbitCamera } from "./camera/orbit-camera.js?v=spawn-view";
+import { createOrbitCamera } from "./camera/orbit-camera.js?v=decoupled-1";
 import { createKeyboard } from "./input/keyboard.js";
 import { createGameInteractionGuard } from "./input/game-interaction-guard.js";
 import { createLighting } from "./lighting.js?v=studio-rig";
-import { landingHeight, moveWithCollisions, supportHeightAt } from "./physics/collision.js?v=boundary-1";
+import {
+  colliderDistanceSquared,
+  landingHeight,
+  moveWithCollisions,
+  supportHeightAt
+} from "./physics/collision.js?v=collision-strategies-1";
+import { colliderForObject } from "./physics/object-collider.js?v=collision-strategies-1";
 import { createHud } from "./ui/hud.js";
 import { createMinimap } from "./ui/minimap.js?v=map-100";
 import { createPanels } from "./ui/panels.js?v=map-toggle-exact";
 import { createCharacter } from "../asset/character/yiichen/create-character.js?v=head-fade-range";
-import { renderMap } from "./world/render-map.js?v=dim-screen-frame";
+import { renderMap } from "./world/render-map.js?v=collision-strategies-1";
 
-export async function startGame() {
+export async function startGame({
+  extensionFactory = null,
+  unlimitedJumps = false
+} = {}) {
   createGameInteractionGuard();
   const runtime = createRuntime(THREE, document.querySelector("#game"));
   const { scene, camera, renderer, loader, resize } = runtime;
@@ -23,8 +32,14 @@ export async function startGame() {
   const character = await createCharacter(THREE, loader);
   const world = await renderMap(THREE, loader, mapData);
   const keyboard = createKeyboard(document.querySelector(".control-panel"));
+  const cameraCollisionExclusions = new WeakSet();
+  const cameraCollision = Object.freeze({
+    exclude: object => cameraCollisionExclusions.add(object),
+    include: object => cameraCollisionExclusions.delete(object)
+  });
   const orbit = createOrbitCamera(THREE, renderer.domElement, camera, {
-    collisionRoot: world.object
+    collisionRoot: world.object,
+    collisionExclusions: cameraCollisionExclusions
   });
   const hud = createHud();
   createPanels();
@@ -41,11 +56,9 @@ export async function startGame() {
   const colliders = world.colliders;
   character.object.position.set(mapData.spawn.x, mapData.spawn.y, mapData.spawn.z);
   orbit.setOrientation(mapData.spawn.yaw, mapData.spawn.pitch);
-  const gameAdmin = new URLSearchParams(location.search).get("game-admin") === "1"
-    && (location.hostname === "127.0.0.1" || location.hostname === "localhost");
-  if (gameAdmin) {
-    const { createAdminMode } = await import("../admin/admin.js?v=dim-screen-frame");
-    createAdminMode({
+  let extension = null;
+  if (extensionFactory) {
+    extension = await extensionFactory({
       THREE,
       worldObject: world.object,
       worldEntities: world.entities,
@@ -53,7 +66,10 @@ export async function startGame() {
       character: character.object,
       orbit,
       colliders,
-      mapData
+      mapData,
+      createCollider: object => colliderForObject(THREE, object),
+      colliderDistanceSquared,
+      cameraCollision
     });
   }
   addEventListener("resize", resize);
@@ -72,11 +88,13 @@ export async function startGame() {
     const moveZ = input.z;
     const moving = Boolean(moveX || moveZ);
 
+    extension?.update?.();
+
     if (input.x) orbit.turn(input.x, dt);
 
-    if (keyboard.consumeJump() && (gameAdmin || jumpsUsed < 2)) {
+    if (keyboard.consumeJump() && (unlimitedJumps || jumpsUsed < 2)) {
       verticalVelocity = 8.5;
-      if (!gameAdmin) jumpsUsed += 1;
+      if (!unlimitedJumps) jumpsUsed += 1;
       grounded = false;
     }
 

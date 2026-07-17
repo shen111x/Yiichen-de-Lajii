@@ -1,7 +1,7 @@
 import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/GLTFLoader.js/+esm";
-import { attachTvVideo } from "./video/create-tv-video.js?v=dim-screen-frame";
+import { attachTvVideo } from "./video/create-tv-video.js?v=video-aspect";
 
-const WORLD_HEIGHT = 1.8;
+const WORLD_HEIGHT = 2.8;
 
 function useUnlitMaterials(THREE, object) {
   object.traverse(child => {
@@ -29,13 +29,13 @@ export async function createLoungeTv(THREE) {
     if (materials.some(material => material?.name === "Screen.001")) child.name = "screen_reference";
   });
   useUnlitMaterials(THREE, object);
-  const bounds = new THREE.Box3().setFromObject(object);
+  const bounds = new THREE.Box3().setFromObject(object, true);
   const size = bounds.getSize(new THREE.Vector3());
   if (!Number.isFinite(size.y) || size.y <= 0) throw new Error("Lounge TV model has no measurable size");
   object.scale.multiplyScalar(WORLD_HEIGHT / size.y);
   object.updateMatrixWorld(true);
 
-  bounds.setFromObject(object);
+  bounds.setFromObject(object, true);
   const center = bounds.getCenter(new THREE.Vector3());
   object.position.x -= center.x;
   object.position.y -= bounds.min.y;

@@ -68,9 +68,22 @@ export function attachTvVideo(THREE, television) {
   if (!screens.length) throw new Error("Lounge TV screen mesh was not found");
 
   const screenBackground = screens[0].material?.map?.image || null;
+  screens[0].geometry.computeBoundingBox();
+  screens[0].updateWorldMatrix(true, false);
+  const screenSize = screens[0].geometry.boundingBox.getSize(new THREE.Vector3());
+  const screenScale = screens[0].getWorldScale(new THREE.Vector3());
+  const screenDimensions = [
+    screenSize.x * Math.abs(screenScale.x),
+    screenSize.y * Math.abs(screenScale.y),
+    screenSize.z * Math.abs(screenScale.z)
+  ].sort((a, b) => b - a);
+  const screenAspect = screenDimensions[0] / screenDimensions[1];
+  if (!Number.isFinite(screenAspect) || screenAspect <= 0) {
+    throw new Error("Lounge TV screen has no measurable aspect ratio");
+  }
   const canvas = document.createElement("canvas");
   canvas.width = 1024;
-  canvas.height = 1024;
+  canvas.height = Math.max(1, Math.round(canvas.width / screenAspect));
   const context = canvas.getContext("2d");
   context.fillStyle = "#000";
   context.fillRect(0, 0, canvas.width, canvas.height);

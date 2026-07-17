@@ -1,12 +1,18 @@
-export function boundaryColliderForObject(THREE, object, id) {
+import { attachSurfaceSupport } from "./surface-support.js";
+
+export function environmentColliderForObject(THREE, object) {
   object.updateMatrixWorld(true);
   const segments = [];
+  let solid = false;
+  let blocksWhileSupported = false;
 
   object.traverse(node => {
-    const boundary = node.userData.collisionBoundary;
-    if (!Array.isArray(boundary)) return;
+    const definition = node.userData.environmentCollision;
+    if (!definition || !Array.isArray(definition.boundary)) return;
+    if (definition.solid) solid = true;
+    if (definition.blocksWhileSupported) blocksWhileSupported = true;
 
-    boundary.forEach(segment => {
+    definition.boundary.forEach(segment => {
       const startBottom = new THREE.Vector3(segment.startX, segment.bottom, segment.startZ)
         .applyMatrix4(node.matrixWorld);
       const startTop = new THREE.Vector3(segment.startX, segment.top, segment.startZ)
@@ -27,31 +33,16 @@ export function boundaryColliderForObject(THREE, object, id) {
   });
 
   if (!segments.length) return null;
-  return {
+  return attachSurfaceSupport(THREE, {
+    collisionRule: "environment",
     minX: Math.min(...segments.flatMap(segment => [segment.startX, segment.endX])),
     maxX: Math.max(...segments.flatMap(segment => [segment.startX, segment.endX])),
     minZ: Math.min(...segments.flatMap(segment => [segment.startZ, segment.endZ])),
     maxZ: Math.max(...segments.flatMap(segment => [segment.startZ, segment.endZ])),
+    bottom: Math.min(...segments.map(segment => segment.bottom)),
     top: Math.max(...segments.map(segment => segment.top)),
     segments,
-    adminObjectId: id
-  };
-}
-
-export function boxColliderForObject(THREE, object, id) {
-  object.updateMatrixWorld(true);
-  const bounds = new THREE.Box3().setFromObject(object);
-  return {
-    minX: bounds.min.x,
-    maxX: bounds.max.x,
-    minZ: bounds.min.z,
-    maxZ: bounds.max.z,
-    top: bounds.max.y,
-    adminObjectId: id
-  };
-}
-
-export function colliderForObject(THREE, object, id) {
-  return boundaryColliderForObject(THREE, object, id)
-    || boxColliderForObject(THREE, object, id);
+    solid,
+    blocksWhileSupported
+  }, object);
 }

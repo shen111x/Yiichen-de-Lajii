@@ -1,7 +1,5 @@
-import { ASSET_CATALOG, findAsset } from "./asset-catalog.js?v=dim-screen-frame";
+import { ASSET_CATALOG, findAsset } from "../asset/asset-catalog.js?v=collision-strategies-1";
 import { saveMap } from "./map-persistence.js?v=1";
-import { colliderForObject } from "../core/physics/asset-collider.js?v=boundary-1";
-import { colliderDistanceSquared } from "../core/physics/collision.js?v=boundary-1";
 
 const DOUBLE_PRESS_MS = 320;
 
@@ -13,7 +11,10 @@ export function createAdminMode({
   character,
   orbit,
   colliders,
-  mapData
+  mapData,
+  createCollider,
+  colliderDistanceSquared,
+  cameraCollision
 }) {
   const chat = document.querySelector("#chat-panel");
   const chatInput = chat.querySelector('input[aria-label="Chat message"]');
@@ -29,6 +30,8 @@ export function createAdminMode({
   let lastDeleteKey = 0;
   let lastDeletePointer = 0;
   let nextObjectId = 1;
+  const pendingCollisionRecords = new Set();
+  const placementAppearances = new WeakMap();
 
   const stylesheet = document.createElement("link");
   stylesheet.rel = "stylesheet";
@@ -92,19 +95,63 @@ export function createAdminMode({
     expandButton.click();
   }
 
-  function colliderFor(object, id) {
-    return colliderForObject(THREE, object, id);
+  function playerTouches(collider) {
+    if (Array.isArray(collider.segments) && !collider.solid
+      && character.position.x >= collider.minX && character.position.x <= collider.maxX
+      && character.position.z >= collider.minZ && character.position.z <= collider.maxZ) {
+      return true;
+    }
+    return colliderDistanceSquared(character.position.x, character.position.z, collider) <= 0.42 ** 2;
   }
 
-  function playerStartsInside(collider) {
-    return colliderDistanceSquared(character.position.x, character.position.z, collider) <= 0.42 ** 2
-      && character.position.y < collider.top - 0.05;
+  function setPlacementOpacity(object, amount) {
+    const visitedMaterials = new Set();
+    object.traverse(node => {
+      if (!node.isMesh) return;
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      materials.filter(Boolean).forEach(material => {
+        if (visitedMaterials.has(material)) return;
+        visitedMaterials.add(material);
+        let original = placementAppearances.get(material);
+        if (!original && amount !== null) {
+          original = {
+            opacity: material.opacity,
+            transparent: material.transparent,
+            depthWrite: material.depthWrite
+          };
+          placementAppearances.set(material, original);
+        }
+        if (amount === null) {
+          if (!original) return;
+          material.opacity = original.opacity;
+          material.transparent = original.transparent;
+          material.depthWrite = original.depthWrite;
+          placementAppearances.delete(material);
+        } else {
+          material.opacity = original.opacity * amount;
+          material.transparent = true;
+          material.depthWrite = false;
+        }
+        material.needsUpdate = true;
+      });
+    });
+  }
+
+  function activatePlacedCollider(record) {
+    if (record.colliderActive) return;
+    record.colliderActive = true;
+    colliders.push(record.collider);
+    pendingCollisionRecords.delete(record);
+    cameraCollision.include(record.object);
+    setPlacementOpacity(record.object, null);
   }
 
   function removeRuntimeEntity(record) {
     record.object.removeFromParent();
     const colliderIndex = colliders.indexOf(record.collider);
     if (colliderIndex >= 0) colliders.splice(colliderIndex, 1);
+    pendingCollisionRecords.delete(record);
+    cameraCollision.include(record.object);
     const mapIndex = mapData.entities.indexOf(record.mapEntity);
     if (mapIndex >= 0) mapData.entities.splice(mapIndex, 1);
     const runtimeIndex = worldEntities.indexOf(record);
@@ -123,27 +170,36 @@ export function createAdminMode({
       const object = new THREE.Group();
       const id = `admin-${Date.now().toString(36)}-${nextObjectId++}`;
       object.name = id;
-      object.userData.adminAsset = { category, name, id };
+      cameraCollision.exclude(object);
       object.add(content);
-      object.position.set(position.x, position.y, position.z);
+      object.position.set(position.x, 0, position.z);
       object.rotation.y = rotation;
       worldObject.add(object);
-      const collider = colliderFor(object, id);
-      collider.allowExit = playerStartsInside(collider);
+      object.updateMatrixWorld(true);
+      const bounds = new THREE.Box3().setFromObject(object, true);
+      object.position.y += position.y - bounds.min.y;
+      object.updateMatrixWorld(true);
+      const collider = createCollider(object);
+      const placedPosition = {
+        x: object.position.x,
+        y: object.position.y,
+        z: object.position.z
+      };
       const mapEntity = {
         id,
         asset: name,
         category,
-        position: { x: position.x, y: position.y, z: position.z },
+        position: placedPosition,
         rotation,
         collider
       };
-      record = { id, object, collider, mapEntity, category, name };
-      colliders.push(collider);
+      record = { id, object, collider, colliderActive: false, mapEntity, category, name };
+      setPlacementOpacity(object, 0.5);
+      pendingCollisionRecords.add(record);
       mapData.entities.push(mapEntity);
       worldEntities.push(record);
       await saveMap(mapData);
-      setStatus(`${name} saved at ${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)}`);
+      setStatus(`${name} saved at ${placedPosition.x.toFixed(1)}, ${position.y.toFixed(1)}, ${placedPosition.z.toFixed(1)}`);
       return object;
     } catch (error) {
       if (record) {
@@ -235,7 +291,11 @@ export function createAdminMode({
     } catch (error) {
       worldObject.add(target.object);
       worldEntities.splice(runtimeIndex, 0, target);
-      colliders.splice(colliderIndex, 0, target.collider);
+      if (target.colliderActive !== false) colliders.splice(Math.max(0, colliderIndex), 0, target.collider);
+      else {
+        pendingCollisionRecords.add(target);
+        cameraCollision.exclude(target.object);
+      }
       mapData.entities.splice(mapIndex, 0, target.mapEntity);
       console.error(`Unable to delete ${target.name}`, error);
       setStatus(`Unable to save deletion of ${target.name}`);
@@ -304,5 +364,11 @@ export function createAdminMode({
   document.body.classList.add("admin-active");
   renderAssetBrowser("Game Admin active · map writes enabled");
 
-  return { placeSelected, deleteTouchingObject };
+  function update() {
+    [...pendingCollisionRecords].forEach(record => {
+      if (!playerTouches(record.collider)) activatePlacedCollider(record);
+    });
+  }
+
+  return { placeSelected, deleteTouchingObject, update };
 }

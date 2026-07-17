@@ -1,8 +1,8 @@
 import { createTableSet } from "../../asset/furniture/table-set/create-table-set.js?v=static-map-2";
 import { createGround } from "../../asset/surface/ground/create-ground.js?v=static-map-1";
 import { createWall } from "../../asset/structure/wall/create-wall.js?v=static-map-2";
-import { findAsset } from "../../admin/asset-catalog.js?v=dim-screen-frame";
-import { boundaryColliderForObject } from "../physics/asset-collider.js?v=boundary-1";
+import { findAsset } from "../../asset/asset-catalog.js?v=collision-strategies-1";
+import { colliderForObject } from "../physics/object-collider.js?v=collision-strategies-1";
 
 async function renderEntity(THREE, loader, entity) {
   if (entity.category) {
@@ -34,7 +34,7 @@ export async function renderMap(THREE, loader, mapData) {
   for (const mapEntity of mapData.entities) {
     const entityObject = await renderEntity(THREE, loader, mapEntity);
     object.add(entityObject);
-    const collider = boundaryColliderForObject(THREE, entityObject, mapEntity.id)
+    const collider = colliderForObject(THREE, entityObject)
       || mapEntity.collider;
     if (collider) mapEntity.collider = collider;
     entities.push({

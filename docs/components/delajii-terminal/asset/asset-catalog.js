@@ -1,11 +1,11 @@
-import { createCharacter } from "../asset/character/yiichen/create-character.js";
-import { createRamen } from "../asset/food/ramen/create-ramen.js?v=size-3x";
-import { createLoungeTv } from "../asset/furniture/lounge-tv/create-lounge-tv.js?v=dim-screen-frame";
-import { createPhantomChair } from "../asset/furniture/phantom-chair/create-phantom-chair.js";
-import { createTableSet } from "../asset/furniture/table-set/create-table-set.js";
-import { createLounge } from "../asset/rooms/lounge/create-lounge.js?v=wall-boundary-1";
-import { createWall } from "../asset/structure/wall/create-wall.js";
-import { createGround } from "../asset/surface/ground/create-ground.js";
+import { createCharacter } from "./character/yiichen/create-character.js";
+import { createRamen } from "./food/ramen/create-ramen.js?v=size-3x";
+import { createLoungeTv } from "./furniture/lounge-tv/create-lounge-tv.js?v=precise-bounds-1";
+import { createPhantomChair } from "./furniture/phantom-chair/create-phantom-chair.js?v=decoupled-1";
+import { createTableSet } from "./furniture/table-set/create-table-set.js";
+import { createLounge } from "./rooms/lounge/create-lounge.js?v=collision-strategies-1";
+import { createWall } from "./structure/wall/create-wall.js";
+import { createGround } from "./surface/ground/create-ground.js";
 
 export const ASSET_CATALOG = [
   {

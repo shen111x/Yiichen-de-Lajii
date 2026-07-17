@@ -2,7 +2,7 @@ export function createOrbitCamera(
   THREE,
   canvas,
   camera,
-  { collisionRoot = null } = {}
+  { collisionRoot = null, collisionExclusions = null } = {}
 ) {
   const target = new THREE.Vector3();
   const focus = new THREE.Vector3();
@@ -15,7 +15,7 @@ export function createOrbitCamera(
   const minPitch = THREE.MathUtils.degToRad(-5);
   const maxPitch = THREE.MathUtils.degToRad(80);
   const focusHeight = 3.3;
-  const defaultDistance = 8;
+  const defaultDistance = 15;
   const firstPersonDistance = 0.12;
   const obstacleClearance = 0.05;
   const yawEase = 5.6;
@@ -24,6 +24,13 @@ export function createOrbitCamera(
   let dragging = false;
   let pointerX = 0;
   let pointerY = 0;
+
+  function participatesInCameraCollision(object) {
+    for (let node = object; node; node = node.parent) {
+      if (collisionExclusions?.has(node)) return false;
+    }
+    return true;
+  }
 
   canvas.addEventListener("pointerdown", event => {
     if (event.button !== 0) return;
@@ -60,7 +67,7 @@ export function createOrbitCamera(
     raycaster.far = defaultDistance;
     const obstacle = raycaster
       .intersectObject(collisionRoot, true)
-      .find(hit => hit.object.isMesh && hit.object.userData.cameraCollision !== false);
+      .find(hit => hit.object.isMesh && participatesInCameraCollision(hit.object));
     return obstacle
       ? Math.max(firstPersonDistance, obstacle.distance - obstacleClearance)
       : defaultDistance;

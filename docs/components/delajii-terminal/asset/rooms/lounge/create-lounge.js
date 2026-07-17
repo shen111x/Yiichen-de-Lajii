@@ -115,7 +115,12 @@ export async function createLounge(
   object.updateMatrixWorld(true);
 
   const result = new THREE.Group();
-  result.userData.collisionBoundary = createWallBoundary(THREE, object, targetHeight);
+  result.userData.environmentCollision = {
+    boundary: createWallBoundary(THREE, object, targetHeight),
+    // The room floor and walls share one model. Standing on its floor must not
+    // disable the wall boundary that surrounds it.
+    blocksWhileSupported: true
+  };
   result.add(object);
   return result;
 }
