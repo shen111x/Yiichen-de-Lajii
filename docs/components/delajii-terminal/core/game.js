@@ -15,7 +15,7 @@ import { createHud } from "./ui/hud.js";
 import { createMinimap } from "./ui/minimap.js?v=map-100";
 import { createPanels } from "./ui/panels.js?v=map-toggle-exact";
 import { createCharacter } from "../asset/character/yiichen/create-character.js?v=head-fade-range";
-import { renderMap } from "./world/render-map.js?v=collision-strategies-1";
+import { renderMap } from "./world/render-map.js?v=kev-proximity-1";
 
 export async function startGame({
   extensionFactory = null,
@@ -136,6 +136,7 @@ export async function startGame({
     }
 
     character.update(now, moving, input.sprinting);
+    world.entities.forEach(entity => entity.update?.(dt, character.object.position));
     orbit.update(character.object.position, dt);
     character.updateCameraProximity(camera.position);
     hud.update(character.object.position, orbit.yaw);

@@ -1,7 +1,7 @@
 import { createTableSet } from "../../asset/furniture/table-set/create-table-set.js?v=static-map-2";
 import { createGround } from "../../asset/surface/ground/create-ground.js?v=static-map-1";
 import { createWall } from "../../asset/structure/wall/create-wall.js?v=static-map-2";
-import { findAsset } from "../../asset/asset-catalog.js?v=collision-strategies-1";
+import { findAsset } from "../../asset/asset-catalog.js?v=kev-proximity-1";
 import { colliderForObject } from "../physics/object-collider.js?v=collision-strategies-1";
 
 async function renderEntity(THREE, loader, entity) {
@@ -11,6 +11,7 @@ async function renderEntity(THREE, loader, entity) {
     const content = await asset.create({ THREE, textureLoader: loader });
     const object = new THREE.Group();
     object.add(content);
+    object.userData.update = content.userData.update;
     object.position.set(entity.position.x, entity.position.y, entity.position.z);
     object.rotation.y = entity.rotation || 0;
     return object;
@@ -43,7 +44,8 @@ export async function renderMap(THREE, loader, mapData) {
       collider,
       mapEntity,
       category: mapEntity.category || null,
-      name: mapEntity.asset
+      name: mapEntity.asset,
+      update: entityObject.userData.update
     });
   }
 

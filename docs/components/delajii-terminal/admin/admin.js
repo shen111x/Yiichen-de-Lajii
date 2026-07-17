@@ -1,4 +1,4 @@
-import { ASSET_CATALOG, findAsset } from "../asset/asset-catalog.js?v=collision-strategies-1";
+import { ASSET_CATALOG, findAsset } from "../asset/asset-catalog.js?v=kev-proximity-1";
 import { saveMap } from "./map-persistence.js?v=1";
 
 const DOUBLE_PRESS_MS = 320;
@@ -172,6 +172,7 @@ export function createAdminMode({
       object.name = id;
       cameraCollision.exclude(object);
       object.add(content);
+      object.userData.update = content.userData.update;
       object.position.set(position.x, 0, position.z);
       object.rotation.y = rotation;
       worldObject.add(object);
@@ -193,7 +194,16 @@ export function createAdminMode({
         rotation,
         collider
       };
-      record = { id, object, collider, colliderActive: false, mapEntity, category, name };
+      record = {
+        id,
+        object,
+        collider,
+        colliderActive: false,
+        mapEntity,
+        category,
+        name,
+        update: object.userData.update
+      };
       setPlacementOpacity(object, 0.5);
       pendingCollisionRecords.add(record);
       mapData.entities.push(mapEntity);
