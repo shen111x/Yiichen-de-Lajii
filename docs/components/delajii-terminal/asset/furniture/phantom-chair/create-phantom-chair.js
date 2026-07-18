@@ -1,5 +1,5 @@
-import { MTLLoader } from "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/MTLLoader.js/+esm";
-import { OBJLoader } from "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/OBJLoader.js/+esm";
+import { MTLLoader } from "three/addons/loaders/MTLLoader.js";
+import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 
 export const PHANTOM_CHAIR_SIZE_HANDLE = Object.freeze({ height: 3.1 });
 

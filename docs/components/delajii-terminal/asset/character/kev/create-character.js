@@ -1,4 +1,4 @@
-import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/GLTFLoader.js/+esm";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 // Kev owns its proximity animation behavior so it also works when the asset is
 // placed somewhere else on the map.

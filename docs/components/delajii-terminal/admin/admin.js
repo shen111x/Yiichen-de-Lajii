@@ -1,4 +1,4 @@
-import { ASSET_CATALOG, findAsset } from "../asset/asset-catalog.js?v=kev-proximity-1";
+import { ASSET_CATALOG, findAsset } from "../asset/asset-catalog.js?v=self-hosted-three-1";
 import { saveMap } from "./map-persistence.js?v=1";
 
 const DOUBLE_PRESS_MS = 320;

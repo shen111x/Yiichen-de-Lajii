@@ -1,4 +1,4 @@
-import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/GLTFLoader.js/+esm";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 // Public size handle for this asset. Change height, or pass an override to
 // createLounge(), to resize the model uniformly in world units.

@@ -1,4 +1,4 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js";
+import * as THREE from "three";
 import { createRuntime } from "./base/runtime.js?v=responsive-fov";
 import { createOrbitCamera } from "./camera/orbit-camera.js?v=character-ignore-1";
 import {
@@ -19,7 +19,7 @@ import { createHud } from "./ui/hud.js";
 import { createMinimap } from "./ui/minimap.js?v=deferred-minimap-1";
 import { createPanels } from "./ui/panels.js?v=map-toggle-exact";
 import { createCharacter } from "../asset/character/yiichen/create-character.js?v=head-fade-range";
-import { renderMap } from "./world/render-map.js?v=deferred-tv-canvas-1";
+import { renderMap } from "./world/render-map.js?v=self-hosted-three-1";
 import { releaseMediaAfterFirstFrame } from "./media/deferred-media.js?v=deferred-tv-3";
 
 const MEDIA_START_AFTER_PAINT_DELAY_MS = 120;
