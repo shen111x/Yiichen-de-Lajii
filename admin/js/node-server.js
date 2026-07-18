@@ -268,13 +268,7 @@ function normalizeMapEntity(entity, index) {
     asset: entity.asset,
     position: normalizePosition(entity.position, `${entity.id} position`),
     rotation: finiteNumber(entity.rotation || 0, `${entity.id} rotation`),
-    collider: {
-      minX: finiteNumber(entity.collider && entity.collider.minX, `${entity.id} collider minX`),
-      maxX: finiteNumber(entity.collider && entity.collider.maxX, `${entity.id} collider maxX`),
-      minZ: finiteNumber(entity.collider && entity.collider.minZ, `${entity.id} collider minZ`),
-      maxZ: finiteNumber(entity.collider && entity.collider.maxZ, `${entity.id} collider maxZ`),
-      top: finiteNumber(entity.collider && entity.collider.top, `${entity.id} collider top`)
-    }
+    collider: normalizeCollider(entity.collider, `${entity.id} collider`)
   };
 
   if (typeof entity.category === 'string') normalized.category = entity.category;
@@ -285,6 +279,47 @@ function normalizeMapEntity(entity, index) {
       depth: finiteNumber(entity.size.depth, `${entity.id} depth`)
     };
   }
+  return normalized;
+}
+
+function normalizeCollider(collider, label) {
+  const normalized = {
+    minX: finiteNumber(collider && collider.minX, `${label} minX`),
+    maxX: finiteNumber(collider && collider.maxX, `${label} maxX`),
+    minZ: finiteNumber(collider && collider.minZ, `${label} minZ`),
+    maxZ: finiteNumber(collider && collider.maxZ, `${label} maxZ`),
+    top: finiteNumber(collider && collider.top, `${label} top`)
+  };
+
+  if (Number.isFinite(collider && collider.bottom)) normalized.bottom = collider.bottom;
+  if (collider && collider.version === 1) normalized.version = 1;
+  if (collider && (
+    collider.collisionRule === 'item'
+    || collider.collisionRule === 'environment'
+    || collider.collisionRule === 'character'
+  )) {
+    normalized.collisionRule = collider.collisionRule;
+  }
+  if (collider && collider.collisionRule === 'character') {
+    normalized.centerX = finiteNumber(collider.centerX, `${label} centerX`);
+    normalized.centerZ = finiteNumber(collider.centerZ, `${label} centerZ`);
+    normalized.radius = finiteNumber(collider.radius, `${label} radius`);
+  }
+  if (collider && collider.solid === true) normalized.solid = true;
+  if (collider && collider.blocksWhileSupported === true) {
+    normalized.blocksWhileSupported = true;
+  }
+  if (Array.isArray(collider && collider.segments)) {
+    normalized.segments = collider.segments.map((segment, index) => ({
+      startX: finiteNumber(segment && segment.startX, `${label} segment ${index} startX`),
+      startZ: finiteNumber(segment && segment.startZ, `${label} segment ${index} startZ`),
+      endX: finiteNumber(segment && segment.endX, `${label} segment ${index} endX`),
+      endZ: finiteNumber(segment && segment.endZ, `${label} segment ${index} endZ`),
+      bottom: finiteNumber(segment && segment.bottom, `${label} segment ${index} bottom`),
+      top: finiteNumber(segment && segment.top, `${label} segment ${index} top`)
+    }));
+  }
+
   return normalized;
 }
 

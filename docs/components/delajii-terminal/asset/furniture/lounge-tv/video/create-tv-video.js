@@ -1,3 +1,8 @@
+import {
+  loadMark,
+  loadMeasure
+} from "../../../../core/performance/load-performance.js?v=load-timing-1";
+
 const SCREEN_SAFE_PADDING = Object.freeze({
   left: 13 / 256,
   right: 13 / 256,
@@ -5,8 +10,12 @@ const SCREEN_SAFE_PADDING = Object.freeze({
   bottom: 19 / 256
 });
 const SCREEN_BACKGROUND_DIM_AMOUNT = 0.9;
+let tvVideoInstance = 0;
 
 export function attachTvVideo(THREE, television) {
+  tvVideoInstance += 1;
+  const timingName = `delajii:tv-video:${tvVideoInstance}`;
+  loadMark(`${timingName}:setup:start`);
   const video = document.createElement("video");
   video.muted = true;
   video.defaultMuted = true;
@@ -32,6 +41,35 @@ export function attachTvVideo(THREE, television) {
   });
   document.body.append(video);
   video.src = new URL("./lounge-tv.mp4", import.meta.url).href;
+  loadMark(`${timingName}:source-assigned`, { url: new URL(video.src).pathname });
+
+  const measuredEvents = new Set();
+  const recordVideoEvent = eventName => {
+    loadMark(`${timingName}:${eventName}`, {
+      readyState: video.readyState,
+      networkState: video.networkState,
+      duration: Number.isFinite(video.duration) ? video.duration : null,
+      videoWidth: video.videoWidth,
+      videoHeight: video.videoHeight
+    });
+    if (!measuredEvents.has(eventName)) {
+      measuredEvents.add(eventName);
+      loadMeasure(
+        `${timingName}:time-to-${eventName}`,
+        `${timingName}:setup:start`,
+        `${timingName}:${eventName}`
+      );
+    }
+  };
+  ["loadstart", "loadedmetadata", "loadeddata", "canplay", "playing"].forEach(eventName => {
+    video.addEventListener(eventName, () => recordVideoEvent(eventName));
+  });
+  video.addEventListener("error", () => {
+    loadMark(`${timingName}:error`, {
+      code: video.error?.code ?? null,
+      message: video.error?.message ?? "Unknown media error"
+    });
+  });
 
   const screens = [];
   television.traverse(child => {
@@ -144,6 +182,12 @@ export function attachTvVideo(THREE, television) {
   video.load();
   startPlayback();
   addEventListener("pointerdown", startPlayback, { once: true });
+  loadMark(`${timingName}:setup:end`);
+  loadMeasure(
+    `${timingName}:setup`,
+    `${timingName}:setup:start`,
+    `${timingName}:setup:end`
+  );
 
   television.userData.disposeMedia = () => {
     removeEventListener("pointerdown", startPlayback);

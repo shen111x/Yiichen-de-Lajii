@@ -27,6 +27,11 @@ function pointInsideSegmentPolygon(x, z, segments) {
 }
 
 export function colliderDistanceSquared(x, z, box) {
+  if (box.collisionRule === "character") {
+    const centerDistance = Math.hypot(x - box.centerX, z - box.centerZ);
+    const outsideDistance = Math.max(0, centerDistance - box.radius);
+    return outsideDistance ** 2;
+  }
   if (Array.isArray(box.segments) && box.segments.length) {
     if (box.solid && pointInsideSegmentPolygon(x, z, box.segments)) return 0;
     return Math.min(...box.segments.map(segment => pointToSegmentDistanceSquared(x, z, segment)));
@@ -84,6 +89,7 @@ export function moveWithCollisions(position, dx, dz, colliders, radius = COLLISI
 export function supportHeightAt(position, colliders, floorHeight, radius = COLLISION_RADIUS) {
   let support = floorHeight;
   colliders.forEach(box => {
+    if (box.collisionRule === "character") return;
     const hasSurfaceSampler = typeof box.supportHeightAt === "function";
     if (!hasSurfaceSampler && !overlaps(position.x, position.z, radius, box)) return;
     const localSupport = hasSurfaceSampler
@@ -99,6 +105,7 @@ export function supportHeightAt(position, colliders, floorHeight, radius = COLLI
 export function landingHeight(position, fromY, toY, colliders, floorHeight, radius = COLLISION_RADIUS) {
   let landing = fromY >= floorHeight && toY <= floorHeight ? floorHeight : null;
   colliders.forEach(box => {
+    if (box.collisionRule === "character") return;
     const hasSurfaceSampler = typeof box.supportHeightAt === "function";
     if (!hasSurfaceSampler && !overlaps(position.x, position.z, radius, box)) return;
     const localSupport = hasSurfaceSampler

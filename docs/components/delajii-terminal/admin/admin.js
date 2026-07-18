@@ -180,7 +180,7 @@ export function createAdminMode({
       const bounds = new THREE.Box3().setFromObject(object, true);
       object.position.y += position.y - bounds.min.y;
       object.updateMatrixWorld(true);
-      const collider = createCollider(object);
+      const collider = createCollider(object, { category, name });
       const placedPosition = {
         x: object.position.x,
         y: object.position.y,

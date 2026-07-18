@@ -1,7 +1,7 @@
 import { createCharacter } from "./character/yiichen/create-character.js";
 import { createKev } from "./character/kev/create-character.js?v=height-handle-1";
 import { createRamen } from "./food/ramen/create-ramen.js?v=size-3x";
-import { createLoungeTv } from "./furniture/lounge-tv/create-lounge-tv.js?v=precise-bounds-1";
+import { createLoungeTv } from "./furniture/lounge-tv/create-lounge-tv.js?v=load-timing-1";
 import { createPhantomChair } from "./furniture/phantom-chair/create-phantom-chair.js?v=decoupled-1";
 import { createTableSet } from "./furniture/table-set/create-table-set.js";
 import { createLounge } from "./rooms/lounge/create-lounge.js?v=collision-strategies-1";
