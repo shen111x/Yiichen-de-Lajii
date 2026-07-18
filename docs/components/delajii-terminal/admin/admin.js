@@ -170,7 +170,8 @@ export function createAdminMode({
       const object = new THREE.Group();
       const id = `admin-${Date.now().toString(36)}-${nextObjectId++}`;
       object.name = id;
-      cameraCollision.exclude(object);
+      if (category === "character") cameraCollision.ignore(object);
+      else cameraCollision.exclude(object);
       object.add(content);
       object.userData.update = content.userData.update;
       object.position.set(position.x, 0, position.z);

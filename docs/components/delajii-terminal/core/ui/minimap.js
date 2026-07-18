@@ -1,3 +1,5 @@
+import { afterFirstFrame } from "../media/deferred-media.js?v=deferred-tv-3";
+
 export function createMinimap(THREE, canvas, worldSize, renderer, scene, player) {
   const context = canvas.getContext("2d");
   context.imageSmoothingEnabled = false;
@@ -20,6 +22,11 @@ export function createMinimap(THREE, canvas, worldSize, renderer, scene, player)
   mapCamera.lookAt(0, 0, 0);
   mapCamera.updateProjectionMatrix();
   let nextCapture = 0;
+  let captureEnabled = false;
+  afterFirstFrame(() => {
+    captureEnabled = true;
+    nextCapture = 0;
+  });
 
   function captureWorld(position) {
     const previousTarget = renderer.getRenderTarget();
@@ -44,7 +51,7 @@ export function createMinimap(THREE, canvas, worldSize, renderer, scene, player)
 
   return {
     update(position, yaw, now) {
-      if (now >= nextCapture) {
+      if (captureEnabled && now >= nextCapture) {
         captureWorld(position);
         nextCapture = now + 100;
       }

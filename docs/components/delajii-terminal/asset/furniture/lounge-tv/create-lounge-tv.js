@@ -1,5 +1,5 @@
 import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/GLTFLoader.js/+esm";
-import { attachTvVideo } from "./video/create-tv-video.js?v=load-timing-1";
+import { attachTvVideo } from "./video/create-tv-video.js?v=deferred-tv-canvas-1";
 
 const WORLD_HEIGHT = 3.5;
 
@@ -40,6 +40,6 @@ export async function createLoungeTv(THREE) {
   object.position.x -= center.x;
   object.position.y -= bounds.min.y;
   object.position.z -= center.z;
-  attachTvVideo(THREE, object);
+  await attachTvVideo(THREE, object);
   return object;
 }

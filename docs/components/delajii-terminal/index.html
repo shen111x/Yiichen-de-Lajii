@@ -4,10 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <title>DeLajii Terminal</title>
-  <script>
-    performance.mark("delajii:navigation-start", { startTime: 0 });
-    console.log("[DeLajii Load]", "+0.0ms", "delajii:navigation-start");
-  </script>
+  <link
+    rel="preload"
+    href="data/maps/current-map.json"
+    as="fetch"
+    type="application/json"
+    crossorigin="anonymous"
+  >
   <link rel="stylesheet" href="../../css/universal.css">
   <link rel="stylesheet" href="style.css?v=admin-touch-2">
 </head>
@@ -77,6 +80,6 @@
   <script src="../../js/universal.js"></script>
   <script src="../../js/utility/disable-fast-double-tap-zoom.js"></script>
   <script src="../../js/utility/disable-ios-pinch-zoom.js"></script>
-  <script type="module" src="game.js?v=load-timing-1"></script>
+  <script type="module" src="game.js?v=deferred-minimap-1"></script>
 </body>
 </html>

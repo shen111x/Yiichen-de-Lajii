@@ -1,7 +1,4 @@
-import {
-  loadMark,
-  loadMeasure
-} from "../../../../core/performance/load-performance.js?v=load-timing-1";
+import { afterFirstFrame } from "../../../../core/media/deferred-media.js?v=deferred-tv-3";
 
 const SCREEN_SAFE_PADDING = Object.freeze({
   left: 13 / 256,
@@ -9,68 +6,8 @@ const SCREEN_SAFE_PADDING = Object.freeze({
   top: 19 / 256,
   bottom: 19 / 256
 });
-const SCREEN_BACKGROUND_DIM_AMOUNT = 0.9;
-let tvVideoInstance = 0;
 
-export function attachTvVideo(THREE, television) {
-  tvVideoInstance += 1;
-  const timingName = `delajii:tv-video:${tvVideoInstance}`;
-  loadMark(`${timingName}:setup:start`);
-  const video = document.createElement("video");
-  video.muted = true;
-  video.defaultMuted = true;
-  video.setAttribute("muted", "");
-  video.setAttribute("playsinline", "");
-  video.setAttribute("webkit-playsinline", "");
-  video.loop = true;
-  video.autoplay = true;
-  video.playsInline = true;
-  video.preload = "auto";
-  video.disablePictureInPicture = true;
-  video.tabIndex = -1;
-  video.setAttribute("aria-hidden", "true");
-  Object.assign(video.style, {
-    position: "fixed",
-    left: "0",
-    bottom: "0",
-    width: "1px",
-    height: "1px",
-    opacity: "0.001",
-    zIndex: "-1",
-    pointerEvents: "none"
-  });
-  document.body.append(video);
-  video.src = new URL("./lounge-tv.mp4", import.meta.url).href;
-  loadMark(`${timingName}:source-assigned`, { url: new URL(video.src).pathname });
-
-  const measuredEvents = new Set();
-  const recordVideoEvent = eventName => {
-    loadMark(`${timingName}:${eventName}`, {
-      readyState: video.readyState,
-      networkState: video.networkState,
-      duration: Number.isFinite(video.duration) ? video.duration : null,
-      videoWidth: video.videoWidth,
-      videoHeight: video.videoHeight
-    });
-    if (!measuredEvents.has(eventName)) {
-      measuredEvents.add(eventName);
-      loadMeasure(
-        `${timingName}:time-to-${eventName}`,
-        `${timingName}:setup:start`,
-        `${timingName}:${eventName}`
-      );
-    }
-  };
-  ["loadstart", "loadedmetadata", "loadeddata", "canplay", "playing"].forEach(eventName => {
-    video.addEventListener(eventName, () => recordVideoEvent(eventName));
-  });
-  video.addEventListener("error", () => {
-    loadMark(`${timingName}:error`, {
-      code: video.error?.code ?? null,
-      message: video.error?.message ?? "Unknown media error"
-    });
-  });
-
+export async function attachTvVideo(THREE, television) {
   const screens = [];
   television.traverse(child => {
     if (!child.isMesh) return;
@@ -105,7 +42,6 @@ export function attachTvVideo(THREE, television) {
 
   if (!screens.length) throw new Error("Lounge TV screen mesh was not found");
 
-  const screenBackground = screens[0].material?.map?.image || null;
   screens[0].geometry.computeBoundingBox();
   screens[0].updateWorldMatrix(true, false);
   const screenSize = screens[0].geometry.boundingBox.getSize(new THREE.Vector3());
@@ -119,88 +55,168 @@ export function attachTvVideo(THREE, television) {
   if (!Number.isFinite(screenAspect) || screenAspect <= 0) {
     throw new Error("Lounge TV screen has no measurable aspect ratio");
   }
-  const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = Math.max(1, Math.round(canvas.width / screenAspect));
-  const context = canvas.getContext("2d");
-  context.fillStyle = "#000";
-  context.fillRect(0, 0, canvas.width, canvas.height);
 
-  const safeX = canvas.width * SCREEN_SAFE_PADDING.left;
-  const safeY = canvas.height * SCREEN_SAFE_PADDING.top;
-  const safeWidth = canvas.width * (1 - SCREEN_SAFE_PADDING.left - SCREEN_SAFE_PADDING.right);
-  const safeHeight = canvas.height * (1 - SCREEN_SAFE_PADDING.top - SCREEN_SAFE_PADDING.bottom);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.flipY = false;
-  texture.minFilter = THREE.LinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-
-  const screenMaterial = new THREE.MeshBasicMaterial({
-    map: texture,
+  const coverTexture = await new THREE.TextureLoader().loadAsync(
+    new URL("./lounge-tv-cover.webp?v=deferred-tv-canvas-1", import.meta.url).href
+  );
+  coverTexture.colorSpace = THREE.SRGBColorSpace;
+  coverTexture.flipY = false;
+  coverTexture.generateMipmaps = false;
+  coverTexture.minFilter = THREE.LinearFilter;
+  coverTexture.magFilter = THREE.LinearFilter;
+  const coverMaterial = new THREE.MeshBasicMaterial({
+    map: coverTexture,
     toneMapped: false
   });
   screens.forEach(child => {
-    child.material = screenMaterial;
+    child.material = coverMaterial;
   });
 
+  let video = null;
+  let canvas = null;
+  let context = null;
+  let texture = null;
+  let screenMaterial = null;
   let animationFrame = 0;
+  let mediaStarted = false;
+  let videoSurfaceReady = false;
+  let safeX = 0;
+  let safeY = 0;
+  let safeWidth = 0;
+  let safeHeight = 0;
+
+  function createVideoElement() {
+    video = document.createElement("video");
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.loop = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.disablePictureInPicture = true;
+    video.tabIndex = -1;
+    video.setAttribute("aria-hidden", "true");
+    Object.assign(video.style, {
+      position: "fixed",
+      left: "0",
+      bottom: "0",
+      width: "1px",
+      height: "1px",
+      opacity: "0.001",
+      zIndex: "-1",
+      pointerEvents: "none"
+    });
+    document.body.append(video);
+  }
+
+  function createVideoSurface() {
+    if (videoSurfaceReady) return;
+    videoSurfaceReady = true;
+    canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = Math.max(1, Math.round(canvas.width / screenAspect));
+    context = canvas.getContext("2d");
+    context.fillStyle = "#000";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    safeX = canvas.width * SCREEN_SAFE_PADDING.left;
+    safeY = canvas.height * SCREEN_SAFE_PADDING.top;
+    safeWidth = canvas.width * (1 - SCREEN_SAFE_PADDING.left - SCREEN_SAFE_PADDING.right);
+    safeHeight = canvas.height * (1 - SCREEN_SAFE_PADDING.top - SCREEN_SAFE_PADDING.bottom);
+
+    texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.flipY = false;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    screenMaterial = new THREE.MeshBasicMaterial({
+      map: texture,
+      toneMapped: false
+    });
+    screens.forEach(child => {
+      child.material = screenMaterial;
+    });
+  }
+
+  function drawContainedMedia(source, sourceWidth, sourceHeight) {
+    if (!sourceWidth || !sourceHeight) return;
+    const scale = Math.max(safeWidth / sourceWidth, safeHeight / sourceHeight);
+    const width = sourceWidth * scale;
+    const height = sourceHeight * scale;
+    const x = safeX + (safeWidth - width) / 2;
+    const y = safeY + (safeHeight - height) / 2;
+    context.save();
+    context.beginPath();
+    context.rect(safeX, safeY, safeWidth, safeHeight);
+    context.clip();
+    context.drawImage(source, x, y, width, height);
+    context.restore();
+  }
+
   function drawVideo() {
     context.fillStyle = "#000";
     context.fillRect(0, 0, canvas.width, canvas.height);
-    if (screenBackground) {
-      context.drawImage(screenBackground, 0, 0, canvas.width, canvas.height);
-      context.fillStyle = `rgba(0, 0, 0, ${SCREEN_BACKGROUND_DIM_AMOUNT})`;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-    }
     if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      const scale = Math.max(safeWidth / video.videoWidth, safeHeight / video.videoHeight);
-      const width = video.videoWidth * scale;
-      const height = video.videoHeight * scale;
-      const x = safeX + (safeWidth - width) / 2;
-      const y = safeY + (safeHeight - height) / 2;
-      context.save();
-      context.beginPath();
-      context.rect(safeX, safeY, safeWidth, safeHeight);
-      context.clip();
-      context.drawImage(video, x, y, width, height);
-      context.restore();
+      drawContainedMedia(video, video.videoWidth, video.videoHeight);
     }
     texture.needsUpdate = true;
     animationFrame = requestAnimationFrame(drawVideo);
   }
 
   const startPlayback = () => {
+    if (!video) return Promise.resolve();
     video.muted = true;
     return video.play().catch(() => {});
   };
-  const resumeWhenReady = () => startPlayback();
-  drawVideo();
-  video.addEventListener("loadeddata", resumeWhenReady);
-  video.addEventListener("canplay", resumeWhenReady);
-  video.load();
-  startPlayback();
-  addEventListener("pointerdown", startPlayback, { once: true });
-  loadMark(`${timingName}:setup:end`);
-  loadMeasure(
-    `${timingName}:setup`,
-    `${timingName}:setup:start`,
-    `${timingName}:setup:end`
-  );
-
-  television.userData.disposeMedia = () => {
-    removeEventListener("pointerdown", startPlayback);
-    video.removeEventListener("loadeddata", resumeWhenReady);
-    video.removeEventListener("canplay", resumeWhenReady);
-    cancelAnimationFrame(animationFrame);
-    video.pause();
-    video.removeAttribute("src");
-    video.load();
-    video.remove();
-    texture.dispose();
-    screenMaterial.dispose();
+  const resumeWhenReady = () => {
+    createVideoSurface();
+    if (!animationFrame) drawVideo();
+    return startPlayback();
   };
 
-  return { video, texture, screens };
+  function startMedia() {
+    if (mediaStarted) return;
+    mediaStarted = true;
+    createVideoElement();
+    video.addEventListener("loadeddata", resumeWhenReady);
+    video.addEventListener("canplay", resumeWhenReady);
+    addEventListener("pointerdown", startPlayback, { once: true });
+    video.src = new URL("./lounge-tv.mp4?v=deferred-tv-canvas-1", import.meta.url).href;
+    video.load();
+    startPlayback();
+  }
+
+  const cancelDeferredStart = afterFirstFrame(startMedia);
+
+  television.userData.disposeMedia = () => {
+    cancelDeferredStart();
+    removeEventListener("pointerdown", startPlayback);
+    cancelAnimationFrame(animationFrame);
+    if (video) {
+      video.removeEventListener("loadeddata", resumeWhenReady);
+      video.removeEventListener("canplay", resumeWhenReady);
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+      video.remove();
+    }
+    texture?.dispose();
+    screenMaterial?.dispose();
+    coverTexture.dispose();
+    coverMaterial.dispose();
+  };
+
+  return {
+    get video() {
+      return video;
+    },
+    get texture() {
+      return texture || coverTexture;
+    },
+    screens,
+    startMedia
+  };
 }

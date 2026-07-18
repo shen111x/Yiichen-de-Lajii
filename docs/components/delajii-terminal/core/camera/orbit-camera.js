@@ -1,3 +1,8 @@
+import {
+  CAMERA_COLLISION_LAYER,
+  setCameraCollisionEnabled
+} from "./camera-collision.js?v=character-ignore-1";
+
 export function createOrbitCamera(
   THREE,
   canvas,
@@ -8,6 +13,8 @@ export function createOrbitCamera(
   const focus = new THREE.Vector3();
   const rayDirection = new THREE.Vector3();
   const raycaster = new THREE.Raycaster();
+  raycaster.layers.set(CAMERA_COLLISION_LAYER);
+  if (collisionRoot) setCameraCollisionEnabled(collisionRoot, true);
   let yaw = Math.atan2(18, 30);
   let desiredYaw = yaw;
   let pitch = THREE.MathUtils.degToRad(12);
@@ -27,6 +34,7 @@ export function createOrbitCamera(
 
   function participatesInCameraCollision(object) {
     for (let node = object; node; node = node.parent) {
+      if (node.userData.cameraCollisionIgnored === true) return false;
       if (collisionExclusions?.has(node)) return false;
     }
     return true;
