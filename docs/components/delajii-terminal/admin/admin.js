@@ -1,4 +1,4 @@
-import { ASSET_CATALOG, findAsset } from "../asset/asset-catalog.js?v=self-hosted-three-1";
+import { ASSET_CATALOG, findAsset } from "../asset/asset-catalog.js?v=asset-cleanup-1";
 import { saveMap } from "./map-persistence.js?v=1";
 
 const DOUBLE_PRESS_MS = 320;
@@ -23,7 +23,7 @@ export function createAdminMode({
   const actionButtons = [...document.querySelectorAll(".action-large")];
   const placeButton = actionButtons.find(button => button.textContent.trim() === "＊");
   const deleteButton = actionButtons.find(button => button.textContent.trim() === "#");
-  let selected = { category: "food", name: "ramen" };
+  let selected = { category: "furniture", name: "phantom-chair" };
   let placing = false;
   let deleting = false;
   let settingSpawn = false;

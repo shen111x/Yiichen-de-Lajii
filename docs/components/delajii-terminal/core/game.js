@@ -19,7 +19,7 @@ import { createHud } from "./ui/hud.js";
 import { createMinimap } from "./ui/minimap.js?v=deferred-minimap-1";
 import { createPanels } from "./ui/panels.js?v=map-toggle-exact";
 import { createCharacter } from "../asset/character/yiichen/create-character.js?v=head-fade-range";
-import { renderMap } from "./world/render-map.js?v=self-hosted-three-1";
+import { renderMap } from "./world/render-map.js?v=asset-cleanup-1";
 import { releaseMediaAfterFirstFrame } from "./media/deferred-media.js?v=deferred-tv-3";
 
 const MEDIA_START_AFTER_PAINT_DELAY_MS = 120;

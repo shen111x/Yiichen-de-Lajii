@@ -1,7 +1,7 @@
 import { createTableSet } from "../../asset/furniture/table-set/create-table-set.js?v=static-map-2";
 import { createGround } from "../../asset/surface/ground/create-ground.js?v=static-map-1";
 import { createWall } from "../../asset/structure/wall/create-wall.js?v=static-map-2";
-import { findAsset } from "../../asset/asset-catalog.js?v=self-hosted-three-1";
+import { findAsset } from "../../asset/asset-catalog.js?v=asset-cleanup-1";
 import {
   persistentColliderForObject,
   restorePersistentCollider

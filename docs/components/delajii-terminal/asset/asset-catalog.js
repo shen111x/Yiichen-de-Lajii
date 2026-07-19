@@ -1,6 +1,5 @@
 import { createCharacter } from "./character/yiichen/create-character.js";
 import { createKev } from "./character/kev/create-character.js?v=self-hosted-three-1";
-import { createRamen } from "./food/ramen/create-ramen.js?v=self-hosted-three-1";
 import { createLoungeTv } from "./furniture/lounge-tv/create-lounge-tv.js?v=self-hosted-three-1";
 import { createPhantomChair } from "./furniture/phantom-chair/create-phantom-chair.js?v=self-hosted-three-1";
 import { createTableSet } from "./furniture/table-set/create-table-set.js";
@@ -21,10 +20,6 @@ export const ASSET_CATALOG = [
         create: ({ THREE }) => createKev(THREE)
       }
     ]
-  },
-  {
-    category: "food",
-    items: [{ name: "ramen", create: ({ THREE }) => createRamen(THREE) }]
   },
   {
     category: "furniture",
