@@ -13,13 +13,13 @@ import {
   landingHeight,
   moveWithCollisions,
   supportHeightAt
-} from "./physics/collision.js?v=character-collider-1";
-import { persistentColliderForObject } from "./physics/object-collider.js?v=character-collider-1";
+} from "./physics/collision.js?v=player-box-3";
+import { persistentColliderForObject } from "./physics/object-collider.js?v=player-box-2";
 import { createHud } from "./ui/hud.js";
 import { createMinimap } from "./ui/minimap.js?v=deferred-minimap-1";
 import { createPanels } from "./ui/panels.js?v=map-toggle-exact";
-import { createCharacter } from "../asset/character/yiichen/create-character.js?v=head-fade-range";
-import { renderMap } from "./world/render-map.js?v=asset-cleanup-1";
+import { createYiichenPlayer } from "../asset/character/yiichen/player.js?v=glb-player-2";
+import { renderMap } from "./world/render-map.js?v=player-box-2";
 import { releaseMediaAfterFirstFrame } from "./media/deferred-media.js?v=deferred-tv-3";
 
 const MEDIA_START_AFTER_PAINT_DELAY_MS = 120;
@@ -38,7 +38,7 @@ export async function startGame({
     if (!response.ok) throw new Error(`Unable to load map: ${response.status}`);
     return response.json();
   });
-  const characterPromise = createCharacter(THREE, loader);
+  const characterPromise = createYiichenPlayer(THREE);
   const worldPromise = mapDataPromise.then(async mapData => ({
     mapData,
     world: await renderMap(THREE, loader, mapData)
@@ -165,7 +165,7 @@ export async function startGame({
       }
     }
 
-    character.update(now, moving, input.sprinting);
+    character.update(dt, moving, input.sprinting);
     world.entities.forEach(entity => entity.update?.(dt, character.object.position));
     orbit.update(character.object.position, dt);
     character.updateCameraProximity(camera.position);

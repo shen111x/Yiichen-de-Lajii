@@ -1,9 +1,10 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { STANDARD_CHARACTER_HEIGHT } from "../../../core/character/player-body.js?v=character-height-1";
 
 // Kev owns its proximity animation behavior so it also works when the asset is
 // placed somewhere else on the map.
 export const KEV_ACTION_DISTANCE = 12;
-export const KEV_SIZE_HANDLE = Object.freeze({ height: 5.86 });
+export const KEV_SIZE_HANDLE = Object.freeze({ height: STANDARD_CHARACTER_HEIGHT });
 
 export async function createKev(
   THREE,

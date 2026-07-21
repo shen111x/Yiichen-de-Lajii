@@ -1,6 +1,6 @@
-const DEFAULT_CAMERA_FOV = 32;
+const DEFAULT_CAMERA_FOV = 42;
 const FISHEYE_START_WIDTH = 1000;
-const FISHEYE_MAX_FOV = 37;
+const FISHEYE_MAX_FOV = 42;
 const FISHEYE_FULL_EFFECT_WIDTH = 320;
 
 export function createRuntime(THREE, host) {

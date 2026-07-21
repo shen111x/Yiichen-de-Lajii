@@ -3,7 +3,7 @@ import { itemColliderForObject } from "./item-collider.js";
 import { attachSurfaceSupport } from "./surface-support.js";
 import { characterColliderForObject } from "./character-collider.js";
 
-export const PERSISTED_COLLIDER_VERSION = 1;
+export const PERSISTED_COLLIDER_VERSION = 2;
 
 export function colliderForObject(THREE, object) {
   return environmentColliderForObject(THREE, object)

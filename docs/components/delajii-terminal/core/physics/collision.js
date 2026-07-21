@@ -1,4 +1,5 @@
-const COLLISION_RADIUS = 0.42;
+import { PLAYER_BODY_BOX } from "../character/player-body.js?v=character-height-1";
+
 const SUPPORT_TOLERANCE = 0.06;
 
 function pointToSegmentDistanceSquared(x, z, segment) {
@@ -27,11 +28,6 @@ function pointInsideSegmentPolygon(x, z, segments) {
 }
 
 export function colliderDistanceSquared(x, z, box) {
-  if (box.collisionRule === "character") {
-    const centerDistance = Math.hypot(x - box.centerX, z - box.centerZ);
-    const outsideDistance = Math.max(0, centerDistance - box.radius);
-    return outsideDistance ** 2;
-  }
   if (Array.isArray(box.segments) && box.segments.length) {
     if (box.solid && pointInsideSegmentPolygon(x, z, box.segments)) return 0;
     return Math.min(...box.segments.map(segment => pointToSegmentDistanceSquared(x, z, segment)));
@@ -41,13 +37,79 @@ export function colliderDistanceSquared(x, z, box) {
   return (x - nearestX) ** 2 + (z - nearestZ) ** 2;
 }
 
-function overlaps(x, z, radius, box) {
-  return colliderDistanceSquared(x, z, box) < radius ** 2;
+function pointInsideBox(x, z, minX, maxX, minZ, maxZ) {
+  return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
 }
 
-function blocksAtHeight(position, x, z, radius, box) {
+function segmentIntersectsBox(segment, minX, maxX, minZ, maxZ) {
+  const dx = segment.endX - segment.startX;
+  const dz = segment.endZ - segment.startZ;
+  let near = 0;
+  let far = 1;
+
+  for (const [origin, delta, minimum, maximum] of [
+    [segment.startX, dx, minX, maxX],
+    [segment.startZ, dz, minZ, maxZ]
+  ]) {
+    if (Math.abs(delta) < Number.EPSILON) {
+      if (origin < minimum || origin > maximum) return false;
+      continue;
+    }
+    const first = (minimum - origin) / delta;
+    const second = (maximum - origin) / delta;
+    near = Math.max(near, Math.min(first, second));
+    far = Math.min(far, Math.max(first, second));
+    if (near > far) return false;
+  }
+  return true;
+}
+
+function footprintOverlaps(x, z, body, box) {
+  const halfWidth = body.width / 2;
+  const halfDepth = body.depth / 2;
+  const minX = x - halfWidth;
+  const maxX = x + halfWidth;
+  const minZ = z - halfDepth;
+  const maxZ = z + halfDepth;
+
+  if (!Array.isArray(box.segments) || !box.segments.length) {
+    return minX < box.maxX && maxX > box.minX
+      && minZ < box.maxZ && maxZ > box.minZ;
+  }
+
+  if (box.segments.some(segment => segmentIntersectsBox(
+    segment,
+    minX,
+    maxX,
+    minZ,
+    maxZ
+  ))) return true;
+  if (!box.solid) return false;
+
+  const corners = [
+    [minX, minZ],
+    [minX, maxZ],
+    [maxX, minZ],
+    [maxX, maxZ]
+  ];
+  if (corners.some(([cornerX, cornerZ]) => pointInsideSegmentPolygon(
+    cornerX,
+    cornerZ,
+    box.segments
+  ))) return true;
+  return box.segments.some(segment => pointInsideBox(
+    segment.startX,
+    segment.startZ,
+    minX,
+    maxX,
+    minZ,
+    maxZ
+  ));
+}
+
+function blocksAtHeight(position, x, z, body, box) {
+  if (!footprintOverlaps(x, z, body, box)) return false;
   const nextDistance = colliderDistanceSquared(x, z, box);
-  if (nextDistance >= radius ** 2) return false;
   const currentDistance = colliderDistanceSquared(position.x, position.z, box);
   if (nextDistance > currentDistance + Number.EPSILON) return false;
   const localSupport = typeof box.supportHeightAt === "function"
@@ -70,28 +132,42 @@ function blocksAtHeight(position, x, z, radius, box) {
   const top = box.blocksWhileSupported
     ? box.top ?? Infinity
     : localSupport ?? box.top ?? Infinity;
-  return position.y < top - 0.05;
+  const bottom = box.bottom ?? -Infinity;
+  return position.y < top - 0.05
+    && position.y + body.height > bottom + 0.05;
 }
 
-export function moveWithCollisions(position, dx, dz, colliders, radius = COLLISION_RADIUS) {
-  const steps = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dz)) / (radius * 0.5)));
+export function moveWithCollisions(
+  position,
+  dx,
+  dz,
+  colliders,
+  body = PLAYER_BODY_BOX
+) {
+  const stepSize = Math.min(body.width, body.depth) * 0.25;
+  const steps = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dz)) / stepSize));
   const stepX = dx / steps;
   const stepZ = dz / steps;
   for (let step = 0; step < steps; step += 1) {
     const nextX = position.x + stepX;
-    if (!colliders.some(box => blocksAtHeight(position, nextX, position.z, radius, box))) position.x = nextX;
+    if (!colliders.some(box => blocksAtHeight(position, nextX, position.z, body, box))) position.x = nextX;
 
     const nextZ = position.z + stepZ;
-    if (!colliders.some(box => blocksAtHeight(position, position.x, nextZ, radius, box))) position.z = nextZ;
+    if (!colliders.some(box => blocksAtHeight(position, position.x, nextZ, body, box))) position.z = nextZ;
   }
 }
 
-export function supportHeightAt(position, colliders, floorHeight, radius = COLLISION_RADIUS) {
+export function supportHeightAt(
+  position,
+  colliders,
+  floorHeight,
+  body = PLAYER_BODY_BOX
+) {
   let support = floorHeight;
   colliders.forEach(box => {
     if (box.collisionRule === "character") return;
     const hasSurfaceSampler = typeof box.supportHeightAt === "function";
-    if (!hasSurfaceSampler && !overlaps(position.x, position.z, radius, box)) return;
+    if (!hasSurfaceSampler && !footprintOverlaps(position.x, position.z, body, box)) return;
     const localSupport = hasSurfaceSampler
       ? box.supportHeightAt(position.x, position.z, -Infinity, position.y + SUPPORT_TOLERANCE)
       : box.top;
@@ -102,12 +178,19 @@ export function supportHeightAt(position, colliders, floorHeight, radius = COLLI
   return support;
 }
 
-export function landingHeight(position, fromY, toY, colliders, floorHeight, radius = COLLISION_RADIUS) {
+export function landingHeight(
+  position,
+  fromY,
+  toY,
+  colliders,
+  floorHeight,
+  body = PLAYER_BODY_BOX
+) {
   let landing = fromY >= floorHeight && toY <= floorHeight ? floorHeight : null;
   colliders.forEach(box => {
     if (box.collisionRule === "character") return;
     const hasSurfaceSampler = typeof box.supportHeightAt === "function";
-    if (!hasSurfaceSampler && !overlaps(position.x, position.z, radius, box)) return;
+    if (!hasSurfaceSampler && !footprintOverlaps(position.x, position.z, body, box)) return;
     const localSupport = hasSurfaceSampler
       ? box.supportHeightAt(position.x, position.z, toY, fromY)
       : box.top;

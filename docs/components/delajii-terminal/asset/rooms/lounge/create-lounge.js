@@ -2,7 +2,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 // Public size handle for this asset. Change height, or pass an override to
 // createLounge(), to resize the model uniformly in world units.
-export const LOUNGE_SIZE_HANDLE = Object.freeze({ height: 10 });
+export const LOUNGE_SIZE_HANDLE = Object.freeze({ height: 13 });
 export const LOUNGE_FLOOR_OFFSET = 0.01;
 
 function createWallBoundary(THREE, object, targetHeight) {

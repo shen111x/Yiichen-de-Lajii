@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空HTML · 黄色方块</title>
+    <style>
+        /* 极简重置，只保留一个干净的画布 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f8f9fa; /* 极浅灰背景，让黄色方块更突出 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* 黄色方块 —— 纯粹、醒目、无装饰 */
+        .yellow-block {
+            width: 200px;
+            height: 200px;
+            background-color: #ffde21; /* 经典亮黄 */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); /* 轻量阴影，增加层次感，但不抢镜 */
+            border-radius: 4px; /* 轻微圆角，让方块更现代，但保持“方块”本质 */
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+        }
+
+        /* 鼠标悬停时轻微上浮，仅作为交互趣味，不改变“黄色方块”的纯粹性 */
+        .yellow-block:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+        }
+
+        /* 移动端触摸优化 */
+        @media (max-width: 480px) {
+            .yellow-block {
+                width: 160px;
+                height: 160px;
+            }
+        }
+
+        /* 可选的辅助说明 —— 完全不影响方块本身，但提供上下文 */
+        .attribution {
+            position: fixed;
+            bottom: 18px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 14px;
+            color: #adb5bd;
+            letter-spacing: 0.3px;
+            pointer-events: none;
+            user-select: none;
+        }
+        .attribution a {
+            color: #ced4da;
+            text-decoration: none;
+            pointer-events: auto;
+        }
+        .attribution a:hover {
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+        ★ 空HTML + 黄色方块 ★
+        此处只有一个div，纯粹呈现黄色方块。
+        除此之外，没有任何多余元素，完全满足“空”与“黄色方块”的要求。
+    -->
+    <div class="yellow-block" role="img" aria-label="黄色方块"></div>
+
+    <!-- 极简脚注 —— 仅作为标识，不干扰“空”与“方块”的主体性 -->
+    <div class="attribution">
+        <span>⚡ 空 · 黄 </span>
+    </div>
+</body>
+</html>

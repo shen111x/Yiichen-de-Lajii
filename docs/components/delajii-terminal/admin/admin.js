@@ -1,4 +1,4 @@
-import { ASSET_CATALOG, findAsset } from "../asset/asset-catalog.js?v=asset-cleanup-1";
+import { ASSET_CATALOG, findAsset } from "../asset/asset-catalog.js?v=glb-player-2";
 import { saveMap } from "./map-persistence.js?v=1";
 
 const DOUBLE_PRESS_MS = 320;

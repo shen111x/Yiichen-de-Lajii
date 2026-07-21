@@ -1,5 +1,5 @@
-import { createCharacter } from "./character/yiichen/create-character.js";
-import { createKev } from "./character/kev/create-character.js?v=self-hosted-three-1";
+import { createYiichenCharacter } from "./character/yiichen/player.js?v=glb-player-2";
+import { createKev } from "./character/kev/create-character.js?v=character-height-1";
 import { createLoungeTv } from "./furniture/lounge-tv/create-lounge-tv.js?v=self-hosted-three-1";
 import { createPhantomChair } from "./furniture/phantom-chair/create-phantom-chair.js?v=self-hosted-three-1";
 import { createTableSet } from "./furniture/table-set/create-table-set.js";
@@ -13,7 +13,7 @@ export const ASSET_CATALOG = [
     items: [
       {
         name: "yiichen",
-        create: async ({ THREE, textureLoader }) => (await createCharacter(THREE, textureLoader)).object
+        create: ({ THREE }) => createYiichenCharacter(THREE)
       },
       {
         name: "kev",

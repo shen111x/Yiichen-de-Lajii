@@ -1,11 +1,11 @@
 import { createTableSet } from "../../asset/furniture/table-set/create-table-set.js?v=static-map-2";
 import { createGround } from "../../asset/surface/ground/create-ground.js?v=static-map-1";
 import { createWall } from "../../asset/structure/wall/create-wall.js?v=static-map-2";
-import { findAsset } from "../../asset/asset-catalog.js?v=asset-cleanup-1";
+import { findAsset } from "../../asset/asset-catalog.js?v=glb-player-2";
 import {
   persistentColliderForObject,
   restorePersistentCollider
-} from "../physics/object-collider.js?v=character-collider-1";
+} from "../physics/object-collider.js?v=player-box-2";
 
 async function renderEntity(THREE, loader, entity) {
   if (entity.category) {
