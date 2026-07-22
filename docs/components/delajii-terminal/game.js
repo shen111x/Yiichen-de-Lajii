@@ -1,9 +1,9 @@
-import { startGame } from "./core/game.js?v=glb-player-2";
+import { startGame } from "./core/game.js?v=ydlpd-1";
 
 const adminEnabled = new URLSearchParams(location.search).get("game-admin") === "1"
   && (location.hostname === "127.0.0.1" || location.hostname === "localhost");
 const extensionFactory = adminEnabled
-  ? (await import("./admin/admin.js?v=glb-player-2")).createAdminMode
+  ? (await import("./admin/admin.js?v=video-flip-1")).createAdminMode
   : null;
 
 startGame({

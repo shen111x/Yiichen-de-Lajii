@@ -1,6 +1,6 @@
 import { createYiichenCharacter } from "./character/yiichen/player.js?v=glb-player-2";
 import { createKev } from "./character/kev/create-character.js?v=character-height-1";
-import { createLoungeTv } from "./furniture/lounge-tv/create-lounge-tv.js?v=self-hosted-three-1";
+import { createLoungeTv } from "./furniture/lounge-tv/create-lounge-tv.js?v=video-flip-1";
 import { createPhantomChair } from "./furniture/phantom-chair/create-phantom-chair.js?v=self-hosted-three-1";
 import { createTableSet } from "./furniture/table-set/create-table-set.js";
 import { createLounge } from "./rooms/lounge/create-lounge.js?v=self-hosted-three-1";

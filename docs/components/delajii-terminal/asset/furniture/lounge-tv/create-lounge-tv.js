@@ -1,7 +1,8 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { attachTvVideo } from "./video/create-tv-video.js?v=deferred-tv-canvas-1";
+import { attachTvVideo } from "./video/create-tv-video.js?v=video-flip-1";
 
 const WORLD_HEIGHT = 3.5;
+const SCREEN_MESH_NAME = "mesh_screen";
 
 function useUnlitMaterials(THREE, object) {
   object.traverse(child => {
@@ -22,12 +23,8 @@ function useUnlitMaterials(THREE, object) {
 }
 
 export async function createLoungeTv(THREE) {
-  const gltf = await new GLTFLoader().loadAsync(new URL("./lounge-tv-v2.glb", import.meta.url).href);
+  const gltf = await new GLTFLoader().loadAsync(new URL("./lounge-tv-v3.glb", import.meta.url).href);
   const object = gltf.scene;
-  object.traverse(child => {
-    const materials = Array.isArray(child.material) ? child.material : [child.material];
-    if (materials.some(material => material?.name === "Screen.001")) child.name = "screen_reference";
-  });
   useUnlitMaterials(THREE, object);
   const bounds = new THREE.Box3().setFromObject(object, true);
   const size = bounds.getSize(new THREE.Vector3());
@@ -40,6 +37,6 @@ export async function createLoungeTv(THREE) {
   object.position.x -= center.x;
   object.position.y -= bounds.min.y;
   object.position.z -= center.z;
-  await attachTvVideo(THREE, object);
+  await attachTvVideo(THREE, object, { screenMeshName: SCREEN_MESH_NAME });
   return object;
 }

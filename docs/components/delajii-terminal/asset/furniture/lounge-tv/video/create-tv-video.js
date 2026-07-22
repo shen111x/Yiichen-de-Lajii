@@ -7,7 +7,11 @@ const SCREEN_SAFE_PADDING = Object.freeze({
   bottom: 19 / 256
 });
 
-export async function attachTvVideo(THREE, television) {
+export async function attachTvVideo(
+  THREE,
+  television,
+  { screenMeshName = "mesh_screen" } = {}
+) {
   const screens = [];
   television.traverse(child => {
     if (!child.isMesh) return;
@@ -15,7 +19,7 @@ export async function attachTvVideo(THREE, television) {
       child.visible = false;
       return;
     }
-    if (!/screen_reference/i.test(child.name)) return;
+    if (child.name !== screenMeshName) return;
 
     child.geometry = child.geometry.clone();
     const sourceUv = child.geometry.getAttribute("uv");
@@ -40,7 +44,9 @@ export async function attachTvVideo(THREE, television) {
     screens.push(child);
   });
 
-  if (!screens.length) throw new Error("Lounge TV screen mesh was not found");
+  if (!screens.length) {
+    throw new Error(`Lounge TV screen mesh "${screenMeshName}" was not found`);
+  }
 
   screens[0].geometry.computeBoundingBox();
   screens[0].updateWorldMatrix(true, false);
@@ -129,7 +135,7 @@ export async function attachTvVideo(THREE, television) {
 
     texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    texture.flipY = false;
+    texture.flipY = true;
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
     screenMaterial = new THREE.MeshBasicMaterial({

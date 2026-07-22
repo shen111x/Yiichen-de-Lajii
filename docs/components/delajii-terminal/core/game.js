@@ -19,7 +19,8 @@ import { createHud } from "./ui/hud.js";
 import { createMinimap } from "./ui/minimap.js?v=deferred-minimap-1";
 import { createPanels } from "./ui/panels.js?v=map-toggle-exact";
 import { createYiichenPlayer } from "../asset/character/yiichen/player.js?v=glb-player-2";
-import { renderMap } from "./world/render-map.js?v=player-box-2";
+import { createYdlPolice } from "../asset/character/ydlpd/police.js?v=ydlpd-1";
+import { renderMap } from "./world/render-map.js?v=video-flip-1";
 import { releaseMediaAfterFirstFrame } from "./media/deferred-media.js?v=deferred-tv-3";
 
 const MEDIA_START_AFTER_PAINT_DELAY_MS = 120;
@@ -85,6 +86,34 @@ export async function startGame({
   const colliders = world.colliders;
   character.object.position.set(mapData.spawn.x, mapData.spawn.y, mapData.spawn.z);
   orbit.setOrientation(mapData.spawn.yaw, mapData.spawn.pitch);
+  let police = null;
+  async function spawnPolice() {
+    try {
+      const createdPolice = await createYdlPolice(THREE, {
+        colliders,
+        floorHeight: mapData.floorHeight
+      });
+      const backwardYaw = character.object.rotation.y + Math.PI;
+      createdPolice.object.position.set(
+        character.object.position.x + Math.sin(backwardYaw) * 5,
+        character.object.position.y,
+        character.object.position.z + Math.cos(backwardYaw) * 5
+      );
+      createdPolice.object.rotation.y = backwardYaw;
+      createdPolice.object.position.y = supportHeightAt(
+        createdPolice.object.position,
+        colliders,
+        mapData.floorHeight
+      );
+      createdPolice.collider.sync();
+      colliders.push(createdPolice.collider);
+      cameraCollision.ignore(createdPolice.object);
+      scene.add(createdPolice.object);
+      police = createdPolice;
+    } catch (error) {
+      console.error("Unable to create ydlpd:", error);
+    }
+  }
   let extension = null;
   if (extensionFactory) {
     extension = await extensionFactory({
@@ -166,6 +195,10 @@ export async function startGame({
     }
 
     character.update(dt, moving, input.sprinting);
+    police?.update(dt, {
+      playerPosition: character.object.position,
+      playerMoving: moving
+    });
     world.entities.forEach(entity => entity.update?.(dt, character.object.position));
     orbit.update(character.object.position, dt);
     character.updateCameraProximity(camera.position);
@@ -174,6 +207,7 @@ export async function startGame({
     renderer.render(scene, camera);
     if (!firstFrameRendered) {
       firstFrameRendered = true;
+      requestAnimationFrame(spawnPolice);
       // Safari may submit WebGL work without compositing it before the next
       // animation callback. Cross two display frames and yield once more so the
       // scene is visibly painted before assigning any deferred media source.
