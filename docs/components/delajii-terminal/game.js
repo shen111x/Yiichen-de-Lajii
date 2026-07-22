@@ -1,4 +1,4 @@
-import { startGame } from "./core/game.js?v=ydlpd-1";
+import { startGame } from "./core/game.js?v=ydlpd-cheat-2";
 
 const adminEnabled = new URLSearchParams(location.search).get("game-admin") === "1"
   && (location.hostname === "127.0.0.1" || location.hostname === "localhost");

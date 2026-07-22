@@ -109,13 +109,17 @@ function createPoliceBehavior(THREE, object, animation, colliders, floorHeight) 
     distanceRemaining = randomBetween(2, 10);
   }
 
+  function startCrazy() {
+    state = "crazy";
+    stateTime = 10;
+    crazyTurnTime = 0;
+    crazyJumpTime = randomBetween(0.35, 1.2);
+  }
+
   function judgeNextAction() {
     const roll = Math.random();
     if (roll < 0.01) {
-      state = "crazy";
-      stateTime = 10;
-      crazyTurnTime = 0;
-      crazyJumpTime = randomBetween(0.35, 1.2);
+      startCrazy();
       return;
     }
     if (roll < 0.09) {
@@ -267,7 +271,7 @@ function createPoliceBehavior(THREE, object, animation, colliders, floorHeight) 
     animation.update(dt, moving, running);
   }
 
-  return { collider, update };
+  return { collider, forceCrazy: startCrazy, update };
 }
 
 export async function createYdlPolice(THREE, { colliders, floorHeight }) {
@@ -292,6 +296,7 @@ export async function createYdlPolice(THREE, { colliders, floorHeight }) {
   return {
     object,
     collider: behavior.collider,
+    forceCrazy: behavior.forceCrazy,
     update: behavior.update
   };
 }

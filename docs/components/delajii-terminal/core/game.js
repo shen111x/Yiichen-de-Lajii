@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { createRuntime } from "./base/runtime.js?v=responsive-fov";
 import { createOrbitCamera } from "./camera/orbit-camera.js?v=character-ignore-1";
+import { createCheatCommands } from "./cheat.js?v=ydlpd-cheat-1";
 import {
   ignoreCameraCollision,
   setCameraCollisionEnabled
@@ -29,6 +30,7 @@ export async function startGame({
   extensionFactory = null,
   unlimitedJumps = false
 } = {}) {
+  let unlimitedJumpsEnabled = unlimitedJumps;
   createGameInteractionGuard();
   const runtime = createRuntime(THREE, document.querySelector("#game"));
   const { scene, camera, renderer, loader, resize } = runtime;
@@ -87,6 +89,15 @@ export async function startGame({
   character.object.position.set(mapData.spawn.x, mapData.spawn.y, mapData.spawn.z);
   orbit.setOrientation(mapData.spawn.yaw, mapData.spawn.pitch);
   let police = null;
+  let policeCrazyQueued = false;
+  function triggerPoliceCrazy() {
+    if (police) {
+      police.forceCrazy();
+      return true;
+    }
+    policeCrazyQueued = true;
+    return false;
+  }
   async function spawnPolice() {
     try {
       const createdPolice = await createYdlPolice(THREE, {
@@ -110,6 +121,10 @@ export async function startGame({
       cameraCollision.ignore(createdPolice.object);
       scene.add(createdPolice.object);
       police = createdPolice;
+      if (policeCrazyQueued) {
+        policeCrazyQueued = false;
+        police.forceCrazy();
+      }
     } catch (error) {
       console.error("Unable to create ydlpd:", error);
     }
@@ -130,6 +145,12 @@ export async function startGame({
       cameraCollision
     });
   }
+  createCheatCommands({
+    enableUnlimitedJumps() {
+      unlimitedJumpsEnabled = true;
+    },
+    triggerPoliceCrazy
+  });
   addEventListener("resize", resize);
   resize();
 
@@ -151,9 +172,9 @@ export async function startGame({
 
     if (input.x) orbit.turn(input.x, dt);
 
-    if (keyboard.consumeJump() && (unlimitedJumps || jumpsUsed < 2)) {
+    if (keyboard.consumeJump() && (unlimitedJumpsEnabled || jumpsUsed < 2)) {
       verticalVelocity = 8.5;
-      if (!unlimitedJumps) jumpsUsed += 1;
+      if (!unlimitedJumpsEnabled) jumpsUsed += 1;
       grounded = false;
     }
 
